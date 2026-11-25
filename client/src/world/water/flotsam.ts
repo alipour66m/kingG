@@ -45,27 +45,16 @@ function crateTexture(): THREE.CanvasTexture {
       for (const nx of [x0 + 22, x0 + w - 22]) { g.fillStyle = "#2a2622"; g.beginPath(); g.arc(nx, y + ph * 0.5, 4, 0, Math.PI * 2); g.fill(); g.fillStyle = "rgba(255,255,255,0.25)"; g.beginPath(); g.arc(nx - 1, y + ph * 0.5 - 1, 1.5, 0, Math.PI * 2); g.fill(); }
     }
     if (logo) {
-      // stencilled BANANA CO. logo: a banana bunch + the wordmark, weathered
+      // Stencilled tactical cargo marking: SECTOR-04
       const cx = x0 + w / 2, cy = 120;
       g.save();
-      // a bunch of 4 curved bananas hanging from one crown (crescents: an outer arc and an inner arc)
-      g.fillStyle = "#e9bf22"; g.strokeStyle = "#3a2a0a"; g.lineWidth = 5;
-      for (let k = 0; k < 4; k++) {
-        g.save(); g.translate(cx - 6, cy - 62); g.rotate(-0.62 + k * 0.36);
-        g.beginPath();
-        g.moveTo(0, 0);
-        g.quadraticCurveTo(-46, 58, 8, 128);            // outer curve down to the tip
-        g.quadraticCurveTo(-14, 60, 16, 4);             // inner curve back up
-        g.closePath(); g.fill(); g.stroke();
-        g.fillStyle = "rgba(160,110,10,0.45)"; g.beginPath(); g.ellipse(6, 124, 6, 5, 0, 0, Math.PI * 2); g.fill();   // dark tip
-        g.fillStyle = "#e9bf22";
-        g.restore();
-      }
-      g.fillStyle = "#5e4a1a"; g.beginPath(); g.roundRect(cx - 18, cy - 82, 26, 24, 5); g.fill();
-      g.font = "bold 58px Impact, 'Arial Black', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
-      g.lineWidth = 8; g.strokeText("BANANA CO.", cx, cy + 112); g.fillText("BANANA CO.", cx, cy + 112);
+      g.strokeStyle = "#3a4236"; g.fillStyle = "#5a634f"; g.lineWidth = 6;
+      g.strokeRect(cx - 86, cy - 66, 172, 112);
+      g.fillRect(cx - 72, cy - 50, 144, 24);
+      g.fillStyle = "#dcdad0"; g.font = "bold 46px Impact, 'Arial Black', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.lineWidth = 7; g.strokeText("MIL-SPEC", cx, cy + 14); g.fillText("MIL-SPEC", cx, cy + 14);
+      g.fillStyle = "#c8bfa8"; g.strokeText("SECTOR-04", cx, cy + 112); g.fillText("SECTOR-04", cx, cy + 112);
       g.restore();
-      // wear: scratch the paint off in places
       for (let k = 0; k < 220; k++) { g.fillStyle = `rgba(${125 + rnd() * 30},${85 + rnd() * 20},${45 + rnd() * 15},${0.3 + rnd() * 0.45})`; g.fillRect(cx - 170 + rnd() * 340, cy - 80 + rnd() * 230, 2 + rnd() * 9, 1 + rnd() * 3); }
     }
     // wet band: the lower ~45 % has been in the water — darker, a green-brown algae tint at the waterline

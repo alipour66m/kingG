@@ -17,7 +17,7 @@ import { wheel } from "../world/pois/_kit/coast-vehicles";
 import { bananaHand, crate } from "../world/pois/_kit/coast-props";
 import { TUK, VF, VS } from "../../../shared/sim/vehicle";
 
-const Y = 0xf8d42c, YD = 0xe2a81a, BR = 0x4a2c17, BD = 0x2a1d14, CO = 0xe2553d, COD = 0xb93f2c, TQ = 0x2bb6b0, CR = 0xfff0d2, CH = 0xe2e2e2, DK = 0x27272b, BRASS = 0xdfa63c;
+const Y = 0x4b533e, YD = 0x3b4230, BR = 0x262922, BD = 0x1a1c18, CO = 0x5c5340, COD = 0x443d2e, TQ = 0x3e4a44, CR = 0xb8b2a0, CH = 0x4f5356, DK = 0x222426, BRASS = 0x8c7c52;
 /** small props (fringe, dice, cargo, bolts) are drawn within this distance (m) */
 const DETAIL_M = 70;
 /** steering head (body frame) and the fork's rake (rad): the bars, the fork and the front wheel turn about this axis */
@@ -64,11 +64,11 @@ function taxiSign(burnt: boolean): THREE.MeshStandardMaterial {
   if (!signTex) {
     const c = document.createElement("canvas"); c.width = 512; c.height = 160;
     const g = c.getContext("2d")!;
-    g.fillStyle = "#ffd83a"; g.fillRect(0, 0, 512, 160);
-    g.fillStyle = "#3a2412"; g.fillRect(0, 0, 512, 12); g.fillRect(0, 148, 512, 12);
-    for (let i = 0; i < 16; i++) { g.fillStyle = i % 2 ? "#3a2412" : "#ffd83a"; g.fillRect(i * 32, 16, 32, 14); g.fillRect(i * 32, 130, 32, 14); }
-    g.fillStyle = "#3a2412"; g.font = "900 104px 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillText("TAXI", 256, 84);
+    g.fillStyle = "#3b4230"; g.fillRect(0, 0, 512, 160);
+    g.fillStyle = "#1c1f18"; g.fillRect(0, 0, 512, 12); g.fillRect(0, 148, 512, 12);
+    for (let i = 0; i < 16; i++) { g.fillStyle = i % 2 ? "#282d22" : "#6c735c"; g.fillRect(i * 32, 16, 32, 14); g.fillRect(i * 32, 130, 32, 14); }
+    g.fillStyle = "#d8d4c4"; g.font = "900 96px 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText("RECON", 256, 84);
     signTex = new THREE.CanvasTexture(c); signTex.colorSpace = THREE.SRGBColorSpace; signTex.anisotropy = 8;
   }
   if (burnt) return (signOff ??= Object.assign(new THREE.MeshStandardMaterial({ map: signTex, color: 0x1a1512, roughness: 0.9 }), { name: "tuk:sign-off" }));
@@ -182,31 +182,18 @@ function build(burnt: boolean): Parts {
     roof.add(rbox(1.92, 0.09, 2.72, 0.045), "fabric", { m: M(0, 2.075, 0.3), color: BR });
     roof.add(rbox(1.72, 0.035, 2.5, 0.015), "fabric", { m: M(0, 2.13, 0.3), color: Y });
     { const crown = new THREE.SphereGeometry(1, 20, 6, 0, Math.PI * 2, 0, Math.PI / 2); crown.scale(0.84, 0.085, 1.23); roof.add(crown, "fabric", { m: M(0, 2.143, 0.3), uv: "local", tile: 1, color: Y }); }
-    // valance: scallops (half discs) alternating cream / yellow all round
-    const scal = (x: number, y: number, z: number, ry: number, i: number) => { const g = new THREE.CircleGeometry(0.085, 8, Math.PI, Math.PI); roof.add(g, "fabric", { m: M(x, y, z, 0, ry, 0), uv: "keep", color: i % 2 ? CR : Y, shadow: false, lod: 1 }); };
-    for (let i = 0; i < 16; i++) { const z = -0.97 + i * 0.17; scal(-0.962, 2.035, z, -Math.PI / 2, i); scal(0.962, 2.035, z, Math.PI / 2, i); }
-    for (let i = 0; i < 11; i++) { const x = -0.85 + i * 0.17; scal(x, 2.035, 1.662, 0, i); scal(x, 2.035, -1.062, Math.PI, i); }
-    // the fringe: pom-poms in coral / turquoise / cream
-    const POM = [CO, TQ, CR];
-    for (let i = 0; i < 15; i++) for (const s of [-1, 1]) d.add(sph(0.042, 6, 5), "fabric", { m: M(s * 0.965, 1.93, -0.9 + i * 0.176), color: POM[i % 3], ...D2 });
-    for (let i = 0; i < 10; i++) d.add(sph(0.042, 6, 5), "fabric", { m: M(-0.79 + i * 0.176, 1.93, 1.665), color: POM[(i + 1) % 3], ...D2 });
-    // a string of little lamps along the rear edge
-    for (let i = 0; i < 6; i++) d.add(sph(0.034, 6, 5), "lamp", { m: M(-0.7 + i * 0.28, 1.985, 1.68), color: i % 2 ? 0xffd27a : 0xff8a5a, ...D2 });
-    // ---- the TAXI lightbox with a giant banana lying on it
-    roof.add(rbox(0.78, 0.26, 0.2, 0.05), "gloss", { m: M(0, 2.31, -0.62), color: Y });
-    for (const s of [-1, 1]) { const f = new THREE.PlaneGeometry(0.7, 0.2); roof.add(f, taxiSign(false), { m: M(0, 2.31, -0.62 + s * 0.102, 0, s > 0 ? 0 : Math.PI, 0), uv: "keep", shadow: false }); }
+    // Tactical recon rack + roof beacon (no carnival pom-poms or giant roof banana)
+    roof.add(rbox(0.78, 0.22, 0.18, 0.04), "gloss", { m: M(0, 2.29, -0.62), color: DK });
+    for (const s of [-1, 1]) { const f = new THREE.PlaneGeometry(0.7, 0.18); roof.add(f, taxiSign(false), { m: M(0, 2.29, -0.62 + s * 0.092, 0, s > 0 ? 0 : Math.PI, 0), uv: "keep", shadow: false }); }
     for (const s of [-1, 1]) roof.add(rbox(0.06, 0.12, 0.12, 0.02), "pmetal", { m: M(s * 0.26, 2.17, -0.62), color: DK, lod: 1 });
-    roof.add(bigBanana(1.16, 0.082, false), "bananaFruit", { m: M(0, 2.445 + 0.078, -0.62, 0.12, 0, 0), uv: "keep" });
-    // ---- roof rack: a BANANA CO. crate heaped with ripe hands, strapped down, and a rolled beach mat
     for (const s of [-1, 1]) rod(roof, V(s * 0.7, 2.2, -0.05), V(s * 0.7, 2.2, 1.45), 0.02, "chrome", CH, 6, { lod: 1 });
     for (const z of [0.0, 0.7, 1.4]) rod(roof, V(-0.7, 2.2, z), V(0.7, 2.2, z), 0.02, "chrome", CH, 6, { lod: 1 });
     crate(roof, M(-0.12, 2.2, 0.72, 0, Math.PI / 2 + 0.06, 0, 0.82));
-    const hand = bananaHand(true);
-    for (let i = 0; i < 9; i++) { const a = i * 2.4, r = 0.1 + (i % 3) * 0.1; roof.add(hand, "bananaFruit", { m: M(-0.12 + Math.cos(a) * r * 0.9, 2.86 + (i % 4) * 0.035 + (i < 3 ? 0.07 : 0), 0.72 + Math.sin(a) * r * 1.3, (i % 3 - 1) * 0.35, a, 0.2, 1.75), uv: "keep", color: new THREE.Color().setHSL(0.135, 0.9, 0.86), shadow: false, lod: 1 }); }
     for (const z of [0.42, 1.02]) roof.add(box(0.72, 0.012, 0.045), "rubber", { m: M(-0.12, 2.875, z), color: 0x1d1d1d, lod: 2 });
     const mat2 = cyl(0.11, 0.11, 1.3, 12); mat2.rotateX(Math.PI / 2);
     roof.add(mat2, "fabric", { m: M(0.56, 2.31, 0.72), uv: "local", tile: 0.4, color: TQ, lod: 1 });
     for (const z of [0.3, 1.14]) { const st = cyl(0.115, 0.115, 0.05, 12); st.rotateX(Math.PI / 2); roof.add(st, "fabric", { m: M(0.56, 2.31, z), color: CR, lod: 2 }); }
+    void bananaHand;
   } else {
     // the wreck: a buckled frame where the canopy was
     rod(b, V(-0.86, 2.03, 0.36), V(0.86, 1.9, 0.36), 0.03, "pmetal", C(BR));

@@ -49,16 +49,14 @@ export const ATLAS = {
 export interface Scheme { base: string; text: string; logo: string; rail: string }
 /** base = the (sRGB) paint colour the tint reproduces on lit steel; text/logo = decal colours */
 export const SCHEMES: Record<ContainerColor, Scheme> = {
-  // yellow: a lemon-shifted, bright paint (target lit ≈ #e3a51c S 0.82–0.91, shade ≈ #9a6512; a plain ripe yellow
-  // renders lit #9c6e29 H 36 S 0.74, mustard cardboard: the sun + ACES bleach it, and the
-  // fill + tone curve + grade pull a yellow ~10° toward orange) + lighter weathering; the shader keeps the sky sheen off
-  yellow: { base: "#f2ca00", text: "#3e3514", logo: "#3e3514", rail: "#d9a010" },
-  green: { base: "#3d8a3a", text: "#f3cf3a", logo: "#f3cf3a", rail: "#2f6f2d" },
-  red: { base: "#c4452b", text: "#f3cf3a", logo: "#f3cf3a", rail: "#9a3521" },
-  blue: { base: "#2d5e9e", text: "#f3cf3a", logo: "#f3cf3a", rail: "#224a7d" },
-  teal: { base: "#2f8f86", text: "#f3cf3a", logo: "#f3cf3a", rail: "#25716a" },
-  /** refrigerated boxes (the reefer row): off-white, dark-blue print */
-  white: { base: "#e4e2da", text: "#1f3f78", logo: "#1f3f78", rail: "#bdbab0" },
+  // Weathered military/industrial cargo container palette (olive drab, khaki-olive, crimson rust, navy slate, steel grey)
+  yellow: { base: "#6e6b48", text: "#dcdad0", logo: "#dcdad0", rail: "#4c4a32" },
+  green: { base: "#3d4e37", text: "#dcdad0", logo: "#dcdad0", rail: "#2c3828" },
+  red: { base: "#7e3328", text: "#dcdad0", logo: "#dcdad0", rail: "#5e251d" },
+  blue: { base: "#2f4966", text: "#dcdad0", logo: "#dcdad0", rail: "#21354a" },
+  teal: { base: "#46585c", text: "#dcdad0", logo: "#dcdad0", rail: "#324043" },
+  /** refrigerated medical/cargo boxes: off-white, charcoal print */
+  white: { base: "#d6d4cc", text: "#263442", logo: "#263442", rail: "#aba9a0" },
 };
 
 /** the stencil font stack (condensed heavy sans; falls back cleanly off macOS) */
@@ -488,29 +486,27 @@ export function decalStamps(): THREE.Texture {
 function paintStamps(): Record<string, HTMLCanvasElement> {
   const [el, c] = canvas(STAMPS.w, STAMPS.h);
   c.clearRect(0, 0, STAMPS.w, STAMPS.h);
-  // "BANANA CO." fills the stamp: measure + scale to width
+  // "MIL-SPEC 04" military logistics stencil
   const T = STAMPS.text;
-  stencilText(c, "BANANA CO.", T.x + T.w / 2, T.y + 262, { size: 290, color: "#ffffff", align: "center", wear: 0.05, seed: 7, letterSpacing: 10, font: CONTAINER_FONT, weight: 800 });
-  // edge wear instead of holes: a few thin horizontal scrapes through the print (brush / chassis rub), no camo blotches
+  stencilText(c, "MIL-SPEC 04", T.x + T.w / 2, T.y + 262, { size: 280, color: "#ffffff", align: "center", wear: 0.05, seed: 7, letterSpacing: 10, font: CONTAINER_FONT, weight: 800 });
   { const R = rng(71); c.save(); c.globalCompositeOperation = "destination-out"; for (let i = 0; i < 22; i++) { const y = T.y + 40 + R() * 230, x = T.x + R() * T.w, l = 30 + R() * 160; c.globalAlpha = 0.5 + R() * 0.5; c.fillRect(x, y, l, 1.5 + R() * 3); } c.restore(); }
+  const starStamp = (cx: number, cy: number, rad: number, col: string) => {
+    c.save(); c.translate(cx, cy); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = rad * 0.14;
+    c.beginPath(); c.arc(0, 0, rad * 0.9, 0, Math.PI * 2); c.stroke();
+    c.beginPath();
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 === 0 ? rad * 0.72 : rad * 0.3; if (i) c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else c.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+    c.closePath(); c.fill(); c.restore();
+  };
   const B = STAMPS.bananaMask;
-  // the small dark banana left of the text (a banana standing on its tip, stem up) — a fruit silhouette
-  // (fattened 1.55× across its length — thinner, it reads as a "J" next to the text; it should be a chunky fruit)
-  c.save(); c.translate(B.x + B.w / 2 + 6, B.y + B.h / 2 + 10); c.scale(1.55, 1);
-  drawFruitBanana(c, 0, 0, 410, -1.25, { color: "#ffffff", stem: "#ffffff", flat: true });
-  c.restore();
+  starStamp(B.x + B.w / 2, B.y + B.h / 2, 195, "#ffffff");
   scrapeOut(c, B.x, B.y, B.w, B.h, 40, 81);
   const C = STAMPS.bananaColor;
-  // the big logo on green / red boxes: a fat ripe banana tilted ~25° (stem end up on the right), shade + highlight +
-  // ridges, dark tip, olive stem, dark outline — reads as fruit (not a smile) from 150 m
-  // (ripe yellow #f2c200 with a darker GOLD shade + outline — an orange shade reads #e08a30 on the boxes)
-  drawFruitBanana(c, C.x + C.w / 2 + 6, C.y + C.h / 2 + 18, 452, -0.44, { color: "#f4c800", shade: "rgba(196,150,0,0.5)", highlight: "rgba(255,248,196,0.75)", ridge: "rgba(168,128,10,0.5)", tip: "#3b2a10", stem: "#6d6a22", outline: "#5a4406" });
+  starStamp(C.x + C.w / 2, C.y + C.h / 2, 200, "#d2c8a8");
   scrapeOut(c, C.x, C.y, C.w, C.h, 55, 91);
   const W = STAMPS.bananaWhite;
-  // the wreck's faded logo: a white banana BUNCH (three fruits from one crown), grey shade on the bellies
-  // (a light belly shade + a thin warm outline — grey shading reads as a dirty glove at 1–3 m)
-  drawBananaBunch(c, W.x + W.w / 2 - 20, W.y + W.h / 2 + 10, 360, -0.18, { color: "#f6f2e8", shade: "rgba(206,198,178,0.35)", stem: "#ece6d6", outline: "rgba(150,138,118,0.55)" });
+  starStamp(W.x + W.w / 2, W.y + W.h / 2, 200, "#e6e2d4");
   scrapeOut(c, W.x, W.y, W.w, W.h, 60, 101);
+  void drawBanana; void drawBananaBunch; void drawFruitBanana;
   // the stamp ALPHA is a signed distance
   // field (the shader thresholds it at 0.5 with a screen-space AA ramp) — edges stay razor-sharp at any magnification;
   // the RGB is dilated past the edges so the bilinear fetch never pulls in the transparent black

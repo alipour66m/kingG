@@ -22,17 +22,15 @@ export const VEG_UNIFORMS = {
   uSunDir: { value: new THREE.Vector3(0.3, 0.8, 0.5) },
   uCamPos: { value: new THREE.Vector3() },
   /** global foliage grade (tunable live via __kr.veg.grade): x = shade fill mult, y = translucency mult, z = saturation */
-  // (measured against the target art: its foliage shade is much darker and the greens more saturated and
-  // yellower than ours were — shade fill 0.62, full saturation, a yellow push in F_GRADE)
-  uGrade: { value: new THREE.Vector3(0.62, 0.7, 1.0) },
-  /** warm sun tint (direct light) and cool shade tint (GI fill) — the target art's warm-sun / blue-green-shade split */
-  uSunTint: { value: new THREE.Vector3(1.06, 1.0, 0.86) },
-  uShadeTint: { value: new THREE.Vector3(0.84, 1.0, 1.12) },
+  // Muted Erangel pine/olive temperate forest palette (less neon lime saturation/translucency)
+  uGrade: { value: new THREE.Vector3(0.54, 0.28, 0.66) },
+  /** warm sun tint (direct light) and cool shade tint */
+  uSunTint: { value: new THREE.Vector3(1.02, 0.98, 0.88) },
+  uShadeTint: { value: new THREE.Vector3(0.76, 0.86, 0.96) },
   /** LOD crossfade clock (s, same clock as lod.ts SpeciesPool.update's `now`) */
   uFadeNow: { value: 0 },
-  /** post-lighting saturation boost of leaves under a closed canopy (× the canopy occlusion) — the target art's
-   * jungle greens measure S p50 .93 (deep, nearly pure greens); the lit result (sky fill + sheen) came out ~.80 */
-  uPostSat: { value: 0.3 },
+  /** subtle desaturation for grounded woodland foliage */
+  uPostSat: { value: -0.14 },
   /** the terrain's linear albedo bake (ctx.shared "terrainAlbedoMap", top-down over the island; veg/index.ts sets it):
    *  rootFade blades blend into the real ground colour under them */
   uTerrainAlbedo: { value: null as THREE.Texture | null },

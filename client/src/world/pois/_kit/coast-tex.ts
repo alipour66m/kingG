@@ -664,83 +664,36 @@ export function bananaLogo(style: "flat" | "badge" = "flat"): TexSet {
     const S = 512, A = cv(S, S);
     const g = A.g;
     if (style === "badge") {
-      g.fillStyle = "#2b2418"; g.beginPath(); g.arc(S / 2, S / 2, S * 0.48, 0, 7); g.fill();
-      g.fillStyle = "#f2c230"; g.beginPath(); g.arc(S / 2, S / 2, S * 0.44, 0, 7); g.fill();
-      g.fillStyle = "#3a8f3e"; g.beginPath(); g.arc(S / 2, S / 2, S * 0.36, 0, 7); g.fill();
-      g.fillStyle = "#f7e9b8"; g.font = `900 ${S * 0.085}px "Arial Black", Impact, sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillStyle = "#1f231e"; g.beginPath(); g.arc(S / 2, S / 2, S * 0.48, 0, 7); g.fill();
+      g.fillStyle = "#4d5540"; g.beginPath(); g.arc(S / 2, S / 2, S * 0.44, 0, 7); g.fill();
+      g.fillStyle = "#2b3026"; g.beginPath(); g.arc(S / 2, S / 2, S * 0.34, 0, 7); g.fill();
+      g.fillStyle = "#d8d4c4"; g.font = `900 ${S * 0.08}px "Arial Black", Impact, sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
       g.save(); g.translate(S / 2, S / 2);
-      const txt = "BANANA CO. • BANANA CO. • ";
-      for (let i = 0; i < txt.length; i++) { g.save(); g.rotate((i / txt.length) * Math.PI * 2); g.fillStyle = "#2b2418"; g.fillText(txt[i], 0, -S * 0.4); g.restore(); }
+      const txt = "MIL-SPEC • SECTOR-04 • ";
+      for (let i = 0; i < txt.length; i++) { g.save(); g.rotate((i / txt.length) * Math.PI * 2); g.fillStyle = "#dcd8c8"; g.fillText(txt[i], 0, -S * 0.39); g.restore(); }
       g.restore();
     }
-    // a fat bunch of three bananas fanned from one brown crown (a thin outlined crescent + a cable above it reads
-    // as a smiley face): chunky fingers, dark outline, a light highlight stripe, a warm shade band and dark tips
-    const cx = S * 0.54, cy = S * 0.5, sc = style === "badge" ? 0.6 : 0.95;
-    g.save(); g.translate(cx, cy); g.scale(sc, sc);
-    const finger = (rot: number, len: number, fat: number, bend: number) => {
-      g.save(); g.rotate(rot);
-      const path = () => {
-        g.beginPath();
-        g.moveTo(-10, -18);
-        g.bezierCurveTo(len * 0.25, -fat * 1.25 - bend, len * 0.75, -fat * 1.1 - bend * 0.4, len, -bend * 0.2 - 6);
-        g.quadraticCurveTo(len + 14, 2 - bend * 0.2, len - 4, 12);
-        g.bezierCurveTo(len * 0.7, fat * 0.55 - bend * 0.2, len * 0.3, fat * 0.8, -10, 18);
-        g.closePath();
-      };
-      g.lineJoin = "round"; g.strokeStyle = "#2a2110"; g.lineWidth = 16; path(); g.stroke();
-      g.fillStyle = "#f6cb2a"; path(); g.fill();
-      g.save(); path(); g.clip();
-      g.fillStyle = "rgba(205,140,20,0.55)"; g.beginPath(); g.ellipse(len * 0.5, fat * 0.75, len * 0.62, fat * 0.55, 0, 0, 7); g.fill();
-      g.fillStyle = "rgba(255,248,190,0.85)"; g.beginPath(); g.ellipse(len * 0.45, -fat * 0.62 - bend * 0.6, len * 0.36, fat * 0.2, -0.05, 0, 7); g.fill();
-      g.fillStyle = "#3b2d12"; g.beginPath(); g.ellipse(len + 2, 2 - bend * 0.2, 11, 12, 0, 0, 7); g.fill();
-      g.restore(); g.restore();
-    };
-    finger(0.05, 235, 46, 38);
-    finger(0.55, 215, 42, 32);
-    finger(-0.45, 212, 42, 28);
-    // the crown (stem) the fingers hang from
-    g.fillStyle = "#2a2110"; g.beginPath(); g.ellipse(-12, 0, 46, 40, 0, 0, 7); g.fill();
-    g.fillStyle = "#6a5220"; g.beginPath(); g.ellipse(-12, 0, 36, 30, 0, 0, 7); g.fill();
-    g.fillStyle = "#8a7030"; g.beginPath(); g.ellipse(-20, -8, 16, 12, 0, 0, 7); g.fill();
-    g.strokeStyle = "#2a2110"; g.lineWidth = 16; g.lineCap = "round"; g.beginPath(); g.moveTo(-40, -8); g.quadraticCurveTo(-95, -20, -118, -70); g.stroke();
-    g.strokeStyle = "#6a5220"; g.lineWidth = 8; g.beginPath(); g.moveTo(-40, -8); g.quadraticCurveTo(-95, -20, -118, -70); g.stroke();
+    const cx = S * 0.5, cy = S * 0.5, rad = style === "badge" ? S * 0.25 : S * 0.38;
+    g.save(); g.translate(cx, cy);
+    g.strokeStyle = "#2b3026"; g.lineWidth = 18; g.beginPath(); g.arc(0, 0, rad, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "#c8bfa4";
+    g.beginPath();
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 === 0 ? rad * 0.82 : rad * 0.34; if (i) g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else g.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+    g.closePath(); g.fill(); g.lineWidth = 10; g.stroke();
     g.restore();
     return { a: A.c, repeat: false };
   });
 }
 
-/** ONE chunky outlined banana (a fanned bunch reads as an insect from the deck) — the tower +
- *  hangar mural: a fat crescent lying on its back, dark outline, a light highlight band along the top, a warm shade
- *  band along the belly, a dark stem stub + tip. Transparent background. */
 export function bananaSingle(): TexSet {
   return make("logo:single2", () => {
     const S = 512, A = cv(S, S), g = A.g;
-    g.save(); g.translate(S / 2, S / 2); g.rotate(-0.62);
-    const path = () => {
-      g.beginPath();
-      // outer (convex) edge from the stem end sweeping round to the tip, then the inner (concave) edge back
-      g.moveTo(-200, -40);
-      g.bezierCurveTo(-190, 150, 160, 190, 205, -10);
-      g.quadraticCurveTo(215, -40, 188, -44);
-      g.bezierCurveTo(140, 40, -100, 40, -150, -58);
-      g.quadraticCurveTo(-170, -80, -200, -40);
-      g.closePath();
-    };
-    g.lineJoin = "round"; g.strokeStyle = "#2b2310"; g.lineWidth = 26; path(); g.stroke();
-    g.fillStyle = "#f7cf2c"; path(); g.fill();
-    g.save(); path(); g.clip();
-    // warm shade on the belly, light band along the ridge, faint ribs
-    g.fillStyle = "rgba(214,150,18,0.6)"; g.beginPath(); g.ellipse(0, 125, 230, 70, 0, 0, 7); g.fill();
-    g.fillStyle = "rgba(255,247,196,0.8)"; g.beginPath(); g.ellipse(10, 40, 170, 22, 0.02, 0, 7); g.fill();
-    g.strokeStyle = "rgba(160,110,20,0.45)"; g.lineWidth = 6;
-    g.beginPath(); g.moveTo(-170, 10); g.bezierCurveTo(-120, 120, 120, 140, 196, -18); g.stroke();
-    g.restore();
-    // stem stub + dark tip
-    g.fillStyle = "#2b2310"; g.beginPath(); g.ellipse(198, -26, 22, 22, 0, 0, 7); g.fill();
-    g.save(); g.translate(-196, -52); g.rotate(-0.5);
-    g.fillStyle = "#2b2310"; g.fillRect(-26, -40, 52, 70);
-    g.fillStyle = "#7a5a22"; g.fillRect(-16, -32, 32, 56);
-    g.restore();
+    g.save(); g.translate(S / 2, S / 2);
+    g.strokeStyle = "#252922"; g.fillStyle = "#b8b296"; g.lineWidth = 18;
+    for (const [y, w] of [[-70, 310], [-10, 230], [50, 150]] as const) {
+      g.fillRect(-w / 2, y, w, 34);
+      g.strokeRect(-w / 2, y, w, 34);
+    }
     g.restore();
     return { a: A.c, repeat: false };
   });

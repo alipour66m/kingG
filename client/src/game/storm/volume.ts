@@ -300,10 +300,9 @@ void main() {
   float behind = r - faceR(p.y);
   float core = smoothstep(-30.0, 170.0, behind) * (1.0 - deck);          // deep inside the wall: darker, bluer
   float hgt = clamp(p.y / uH, 0.0, 1.2);
-  // stylised storm ramp (linear, pre-tone-map; target colours: creases #2a2238, body #5a4a7a, crowns lavender, the
-  // sunlit leading face cream-pink #e8d0d0)
-  vec3 cCrease = vec3(0.022, 0.016, 0.052), cShade = vec3(0.060, 0.042, 0.135), cBody = vec3(0.17, 0.12, 0.36);
-  vec3 cLit = vec3(0.40, 0.32, 0.64), cCrown = vec3(0.95, 0.80, 0.86);
+  // Electric Blue Zone palette (deep cobalt recesses → glowing electric cyan-blue energy crests)
+  vec3 cCrease = vec3(0.010, 0.028, 0.11), cShade = vec3(0.026, 0.082, 0.29), cBody = vec3(0.06, 0.24, 0.68);
+  vec3 cLit = vec3(0.18, 0.54, 1.0), cCrown = vec3(0.48, 0.84, 1.05);
   vec3 col = mix(cShade, cBody, smoothstep(0.0, 0.45, lit));
   col = mix(col, cLit, smoothstep(0.4, 0.8, lit));
   // the palest crowns only where the real sun reaches them too (a sunlit leading edge), never the whole face
@@ -396,7 +395,7 @@ void main() {
     float e = clamp(uLipK * radial * (0.25 + 0.75 * facing) * crest, 0.0, 1.0);
     // saturated banana gold on the lit inner faces, deeper amber in the folds; a little HDR on the hottest faces for bloom
     // (the post's haze dulls a plainer ramp to mustard, so it is authored saturated and bright)
-    vec3 yel = mix(vec3(0.85, 0.38, 0.02), vec3(1.0, 0.8, 0.12), facing * litR) * 1.15;
+    vec3 yel = mix(vec3(0.08, 0.36, 0.96), vec3(0.26, 0.78, 1.15), facing * litR) * 1.18;
     // billow definition inside the glow: lit crowns hot gold, the undersides deep amber (never brown pits)
     col = mix(col, yel * (0.22 + 0.78 * litR), e) + yel * e * e * (0.15 + 0.7 * litR * litR);
   }
@@ -424,8 +423,8 @@ void main() {
   // line under a fainter gold haze a little higher (HDR so it blooms)
   float band = exp(-max(hAb, 0.0) / 4.0) * (1.0 - deck) * smoothstep(-8.0, 0.0, hAb);
   float haze = exp(-max(hAb, 0.0) / 16.0) * (1.0 - deck) * (0.6 + 0.4 * wisp);
-  col = mix(col, vec3(0.75, 0.52, 0.30), haze * 0.35);
-  col = mix(col, vec3(1.7, 1.2, 0.62) * (0.8 + 0.35 * wisp), band * 0.8);
+  col = mix(col, vec3(0.16, 0.48, 0.92), haze * 0.38);
+  col = mix(col, vec3(0.32, 0.82, 1.68) * (0.85 + 0.35 * wisp), band * 0.85);
   a = max(a, band * 0.9 * edgeA);
   emit(col, a, (uView * vec4(p, 1.0)).z, murk, zMurk);
 }

@@ -170,8 +170,8 @@ void main() {
   float toward = clamp(dot(hd, normalize(uGapDir + vec2(1e-4))) * 0.5 + 0.5, 0.0, 1.0);
   float gap = pow(toward, 8.0) * exp(-abs(d.y - 0.05) * 3.0);
   vec3 m = mix(vec3(1.0), uGradeCol, uIns);
-  m = mix(m, vec3(1.15, 1.02, 0.86), clamp(gap * uIns * 0.85, 0.0, 1.0));
-  m += vec3(0.22, 0.18, 0.36) * uFlashV;
+  m = mix(m, vec3(1.06, 1.12, 1.24), clamp(gap * uIns * 0.85, 0.0, 1.0));
+  m += vec3(0.16, 0.42, 0.88) * uFlashV;
   m *= 1.0 + (hash12(gl_FragCoord.xy) - 0.5) * 0.05 * uIns;   // ≥ 1 quantum of the R11G11B10F scene buffer
   gl_FragColor = vec4(m, 1.0);
 }
@@ -195,7 +195,7 @@ void main() {
   // about one quantum of the SUM (otherwise: a banded ellipse facing the safe zone)
   vec3 p3 = fract(vec3(gl_FragCoord.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33);
   float nz = fract((p3.x + p3.y) * p3.z) - 0.5;
-  vec3 add = uGapCol * g * 0.2 + vec3(0.013, 0.009, 0.028);
+  vec3 add = uGapCol * g * 0.2 + vec3(0.008, 0.020, 0.048);
   gl_FragColor = vec4(max(add * (1.0 + nz * 0.5) + nz * 0.004, 0.0) * uIns, 1.0);
 }
 `;

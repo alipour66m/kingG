@@ -162,55 +162,29 @@ export const PRESETS: Record<PresetId, AtmosPreset> = {
   jungle: null as unknown as AtmosPreset,
   midday: {
     id: "midday",
-    sunElev: 42, sunAz: -32,
-    sunColor: "#fff1dc", sunIntensity: 4.8,
-    // measured on the target art at OUR view cameras' pixel elevations: poi-01 column x=1150 (18.5° #2992d7, 17°
-    // #3399da, 15.7° #41a2dc, 14.1° #4ba9df, 12.5° #5bb5e4, 10.8° #6fc2e8, 9.7° #79c9ee), 4.9° #9ed3eb, firefight 25.5°
-    // #197cd6, beach 42° #0275d4 (kept a touch off the gamut edge)
-    sky: [[0, "#b3e1f1"], [4.9, "#9ed3eb"], [9.7, "#79c9ee"], [10.8, "#6fc2e8"], [12.5, "#5bb5e4"], [14.1, "#4ba9df"],
-      [15.7, "#41a2dc"], [17, "#3399da"], [18.5, "#2992d7"], [25.5, "#197cd6"], [42, "#0674d3"], [90, "#0a6cc8"]],
-    // a cyan-white halo (a neutral #e8f2f5 mixed with the deep blue drifts violet: #7ca8ee instead of the target #87b1d5,
-    // hue 216° vs 207–211°) + a little desaturation inside it
-    glowColor: "#bfe4ef", glow: 1.0, glowSize: 0.134, discDeg: 0.9, rays: 0.28, glowDesat: 0.2,
-    // lens veil from a sun in / just above the frame (the beach target art's white-hot top-right corner — its camera
-    // looks up into the sun; ours sits 13° below it)
-    glare: 1.3,
-    sunHorizon: "#e8f2f6", sunHorizonAmt: 0.2,
-    cirrus: 0.0, cirrusOpacity: 0.0, cirrusLit: "#ffffff", cirrusShade: "#b9cce4",
-    // fill: soft blue-grey sky, warm pale horizon band (bounce off the sunlit island), warm sand/leaf ground
-    // (a trimmed fill and warm ground keep the shade's punch: lit/shade target 2.6)
-    envZenith: "#b3c2d4", envHorizon: "#ddd6c8", groundHorizon: "#a89a82", groundNadir: "#7a6d5a",
-    // 0.52 — measured shade vs the target art: concrete .26–.31 (target .28), sand .48–.53 (target .47)
-    envIntensity: 0.52, envGlow: 0.35,
-    // measured: harbor hero belly #afbdd8–#bdcbe0, flanks #cfd2dc–#dfdfe4; aerial puff shade #b7c9d9–#cbd6e1, lit #e8f0f5;
-    // beach lit #f7f8f9, shade #d2d8e1
-    // cloud look: a directional, NEUTRAL white key (keyToCam low) so every cloud has a lit and a blue-grey side; the shade /
-    // belly a cool neutral with a lavender cast (the target shade is #c5cadc / #b8c0d6, hue ~225°, not cyan-blue 211°;
-    // a cyan tint lifts the median saturation above the target .09–.13); a tight fringe (a wide soft one blends every
-    // silhouette with the blue sky into a cyan halo band); the lit tops capped below blown white (near-white harbor
-    // target ~.35 %) while the beach clouds near the sun keep their brilliance (keyNearSun + rim); crisp edges, floret-scale
-    // shading and cauliflower detail so ground-view clouds never read as smooth grey balloons; detail noise only a soft
-    // irregularity (the sculpted florets carry the cauliflower)
-    cloudLit: "#fffdfa", cloudSun: 1.75, cloudShade: "#a4aec3", cloudTop: "#e8ecf1", cloudBase: "#939db3", cloudRim: 1.0,
-    cloudKeyToCam: 0.05, cloudKeyNearSun: 0.3, cloudWrap: 0.2, cloudBigNormal: 0.45, cloudFuzz: 3.5, cloudOpacity: 1.0,
+    sunElev: 40, sunAz: -35,
+    sunColor: "#fff4e4", sunIntensity: 4.3,
+    // Crisp Eastern-European Erangel afternoon sky: steel blue zenith to pale coastal atmospheric haze
+    sky: [[0, "#b8ccd8"], [4.9, "#a7bfd0"], [9.7, "#8eb1cb"], [10.8, "#84a9c5"], [12.5, "#789fc0"], [14.1, "#6f97b9"],
+      [15.7, "#668fb4"], [17, "#5e88af"], [18.5, "#5681a9"], [25.5, "#4a739c"], [42, "#3c628a"], [90, "#31537a"]],
+    glowColor: "#dbe7ef", glow: 0.78, glowSize: 0.134, discDeg: 0.85, rays: 0.22, glowDesat: 0.3,
+    glare: 0.9,
+    sunHorizon: "#dce4ea", sunHorizonAmt: 0.24,
+    cirrus: 0.15, cirrusOpacity: 0.22, cirrusLit: "#eff2f5", cirrusShade: "#9fb0c2",
+    envZenith: "#99aec2", envHorizon: "#cfd6d8", groundHorizon: "#8e8878", groundNadir: "#5e5a4e",
+    envIntensity: 0.50, envGlow: 0.30,
+    cloudLit: "#f7f8fa", cloudSun: 1.55, cloudShade: "#8f9cae", cloudTop: "#dde3ea", cloudBase: "#7a8798", cloudRim: 0.85,
+    cloudKeyToCam: 0.05, cloudKeyNearSun: 0.25, cloudWrap: 0.2, cloudBigNormal: 0.45, cloudFuzz: 3.5, cloudOpacity: 1.0,
     cloudDetailAmp: 0.02, cloudDetailFreq: 2.4, cloudWisp: 0.35, cloudCotton: 0.5, cloudFluff: 0.009,
-    cloudCapFar: "#f0f2f5", cloudCapNear: "#fcfcfd", cloudNearSunBoost: 0.5,
-    // 1/2600: land at 1–2 km needs a light blue depth cue from the drop and the hills
-    hazeColor: "#a9d3ef", hazeDensity: 1 / 2600, hazeHeight: 700, hazeSun: 1.2,
-    fogColor: "#dbeefb", fogDensity: 0.0, fogHeight: 30,
-    // grade: a soft toe (PBR-Neutral's full black offset crushed the darkest 1 % to L* 0.01, the target keeps ~0.07, and
-    // made up to 1.2 % zero-channel pixels); the highlight knee at 0.985 so lit cloud tops / foam reach #f8–#fe (near-white
-    // share beach 3.3 %, firefight 1.5 %, harbor 1.4 % vs the targets' 3.1 / 1.2 / 0.3); contrast about pivot .70 (mids
-    // down, the lit sand / whites kept) and exposure tuned to the targets' mid-tone L* (harbor p50 ~.546, firefight ~.540).
-    // The sky / clouds are inverse-graded, they do not move with it.
-    exposure: 0.93, saturation: 1.1, contrast: 1.33, pivot: 0.7, knee: 0.985, warmth: 0.015, shadeWarmth: 0.11, vignette: 0.03, bloom: 0.3,
-    // AO: contact-weighted, small depth bias (stones / crates / feet stay grounded)
-    ao: 1.0, toe: 0.15, aoBias: 0.004, aoRadius: 0.75, aoIntensity: 2.2,
-    // warm multi-bounce on warm albedos (sand in palm shade: hue 34°, S .35+ instead of a grey #92897a S .17)
-    cloudShadow: 0.88, rimLight: 0.12, warmBounce: 1.2,
-    // jungle god rays — humid air under the canopy, a whisper in the open
-    shafts: 1.0, shaftOpen: 0.00015, shaftCanopy: 0.05, shaftMist: 0, shaftDist: 40, shaftG: 0.45,
-    gi: 3.0, interiorLoss: 0.62,
+    cloudCapFar: "#e8ecf0", cloudCapNear: "#f5f7f9", cloudNearSunBoost: 0.45,
+    // Realistic atmospheric haze across the military island
+    hazeColor: "#9eb8c9", hazeDensity: 1 / 2100, hazeHeight: 650, hazeSun: 1.05,
+    fogColor: "#c8d6df", fogDensity: 0.0, fogHeight: 30,
+    exposure: 0.92, saturation: 0.94, contrast: 1.24, pivot: 0.68, knee: 0.985, warmth: 0.005, shadeWarmth: 0.06, vignette: 0.06, bloom: 0.26,
+    ao: 1.0, toe: 0.18, aoBias: 0.004, aoRadius: 0.75, aoIntensity: 2.3,
+    cloudShadow: 0.85, rimLight: 0.1, warmBounce: 0.85,
+    shafts: 1.0, shaftOpen: 0.00018, shaftCanopy: 0.04, shaftMist: 0, shaftDist: 40, shaftG: 0.45,
+    gi: 2.6, interiorLoss: 0.62,
   },
   dawn: {
     id: "dawn",

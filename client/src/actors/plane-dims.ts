@@ -15,9 +15,9 @@ export const GEAR_TRAVEL = 0.45, WHEEL_R = 0.52, NOSE_WHEEL_R = 0.36, NOSE_GEAR_
 export const STAB_Y = 5.3, STAB_LE = 11.0, STAB_HALF = 6.3;
 export const FIN_Y0 = 4.9, FIN_Y1 = 12.35, FIN_ZMIN = 6.2, FIN_ZMAX = 14.45;
 
-// palette (sampled from the drop-01 + char-02 target art, pushed back to albedo)
-export const YEL = "#f7d418", BROWN = "#4a2a17", BROWN_TIP = "#3a2319", CREAM = "#f4e6bf";
-export const LEAF_D = "#2d6a2b", LEAF_L = "#4f9a39", LEAF_RIB = "#b9d36b";
+// Tactical military airlift C-130 palette (olive drab, charcoal trim, subdued stencil grey)
+export const YEL = "#4d5446", BROWN = "#282c26", BROWN_TIP = "#1e211d", CREAM = "#8b9182";
+export const LEAF_D = "#363c32", LEAF_L = "#565e4f", LEAF_RIB = "#788072";
 
 // ============================================================================ small maths
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));

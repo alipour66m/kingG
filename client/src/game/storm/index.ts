@@ -43,28 +43,25 @@ function knobColor(k: KnobC, cur: THREE.Color, target: THREE.Color, amt: number)
 const K_FOG = mkKnob(), K_FOGSTART = mkKnob(), K_GLARE = mkKnob(), K_FOGM = mkKnob(), K_FOGH = mkKnob(), K_FOGC = mkKnobC();
 const HIDE: Set<string> | null = (() => { const v = flag("stormhide"); return v ? new Set(v.split(",")) : null; })();             // half-width of the soft band at the wall
 const COL = {
-  dust: new THREE.Color("#f0c878"),
-  bolt: new THREE.Color("#ffc21a"),
-  boltCore: new THREE.Color("#fff6d0"),
-  skyBolt: new THREE.Color("#c8b4ff"),
-  skyCore: new THREE.Color("#ffffff"),
-  murk: new THREE.Color("#3c2c58"),
-  murkDark: new THREE.Color("#18122c"),
-  murkLit: new THREE.Color("#8478a8"),
-  murkFog: new THREE.Color("#4e4468"),
-  /** inside-sky palette (linear; #382a4b … #4d3862 overhead, lit rims lavender, never black) */
-  skyDark: new THREE.Color(0.022, 0.014, 0.046),
-  skyMid: new THREE.Color(0.12, 0.085, 0.23),
-  skyLit: new THREE.Color(0.46, 0.36, 0.66),
-  // (darker, more violet: a deep purple murk with a bright gap, not a washed-out lavender)
-  grade: new THREE.Color(0.40, 0.27, 0.66),
-  gap: new THREE.Color("#ffd9a8"),
-  /** the murk fog inside the storm (post fog colour, linear) */
-  murkFogLin: new THREE.Color(0.082, 0.056, 0.165),
-  violetFlash: new THREE.Color("#b9a4ff"),
-  haze: new THREE.Color("#a9c4e0"),
-  /** the storm's own aerial perspective: far billows fade to a lavender grey (never sky blue) */
-  stormHaze: new THREE.Color("#9c98b8"),
+  // PUBG-style electric Blue Zone field palette
+  dust: new THREE.Color("#2b82ff"),
+  bolt: new THREE.Color("#45c8ff"),
+  boltCore: new THREE.Color("#dff8ff"),
+  skyBolt: new THREE.Color("#5cb8ff"),
+  skyCore: new THREE.Color("#e8f8ff"),
+  murk: new THREE.Color("#0b2c6b"),
+  murkDark: new THREE.Color("#05143a"),
+  murkLit: new THREE.Color("#2c74e6"),
+  murkFog: new THREE.Color("#143b82"),
+  skyDark: new THREE.Color(0.008, 0.025, 0.085),
+  skyMid: new THREE.Color(0.03, 0.12, 0.36),
+  skyLit: new THREE.Color(0.16, 0.48, 0.92),
+  grade: new THREE.Color(0.22, 0.44, 0.88),
+  gap: new THREE.Color("#b4e2ff"),
+  murkFogLin: new THREE.Color(0.025, 0.075, 0.22),
+  violetFlash: new THREE.Color("#48b6ff"),
+  haze: new THREE.Color("#6aa4e0"),
+  stormHaze: new THREE.Color("#3b70c4"),
 };
 
 // ---------------------------------------------------------------- geometry builders
