@@ -16,7 +16,7 @@ import { gunInstance } from "./guns/index";
 import { buildHeal } from "./heals";
 import { PartBuilder } from "./lib/builder";
 import { C, mats } from "./lib/mats";
-import { bananaGeometry, bananaEnd, filletCyl, tf, alignY } from "./lib/geo";
+import { filletCyl, rbox, tf, alignY } from "./lib/geo";
 import { InstanceBatch, ViewCull, drawn } from "./lib/batch";
 import { bake, cluster } from "./held";
 import { tintAccent } from "./rarity";
@@ -25,7 +25,7 @@ import { cashStack } from "./loot-lane";
 import type { LootView } from "./api";
 
 type Item = WeaponId | ConsumableId | "ammo" | "cash";
-const BEAM_H = 2.1;
+const BEAM_H = 1.45;
 
 // ------------------------------------------------------------------------------------------------ shared beam
 const BEAM_VERT = /* glsl */ `
@@ -117,30 +117,28 @@ export function lootGlowColor(item: Item, rarity: Rarity): string {
 const beamCol = (item: Item, r: Rarity) => new THREE.Color(lootGlowColor(item, r));
 
 // ------------------------------------------------------------------------------------------------ items
-let bunchCache: THREE.Group | null = null;
-/** ammo: a hand of five bananas lying on its side (stems joined in a brown crown at one end, fanning, curling up) */
+let ammoBoxCache: THREE.Group | null = null;
+/** ammo pickup: military olive-drab steel ammunition box with brass cartridge strip and latch */
 function ammoBunch(): THREE.Group {
-  if (!bunchCache) {
+  if (!ammoBoxCache) {
     const b = new PartBuilder();
-    const crown = new THREE.Vector3(-0.13, 0.05, 0);
+    // olive drab steel box body
+    b.add(rbox(0.26, 0.15, 0.16, 0.01, 2), C.odGreen, "matte", tf([0, 0.08, 0]));
+    // recessed lid seam & overhanging top lid
+    b.add(rbox(0.272, 0.032, 0.172, 0.008, 2), C.odDark, "matte", tf([0, 0.158, 0]));
+    // steel side latch + carry handle
+    b.add(rbox(0.036, 0.055, 0.014, 0.004, 1), C.gunmetal, "metal", tf([0, 0.115, 0.086]));
+    b.add(rbox(0.11, 0.012, 0.022, 0.004, 1), C.gunmetalDark, "metal", tf([0, 0.18, 0]));
+    // amber caliber stencil bar + 5 visible brass cartridges lined on top/front
+    b.add(rbox(0.14, 0.026, 0.004, 0.001, 1), C.brass, "matte", tf([0, 0.08, 0.081]));
     for (let i = 0; i < 5; i++) {
-      const fan = (i - 2) * 0.2, lift = 0.05 + Math.abs(i - 2) * 0.012;
-      const len = 0.25 - Math.abs(i - 2) * 0.012, r = 0.034;
-      const g = bananaGeometry({ length: len, radius: r, bend: 0.85, facets: 5, round: 0.45, along: 30, radial: 26 });
-      // banana +X runs from the crown outward (fanning in XZ), its back (+Y) up → curls upward at the tip
-      const dir = new THREE.Vector3(Math.cos(fan), 0.12, Math.sin(fan)).normalize();
-      const up = new THREE.Vector3(0, 1, 0).projectOnPlane(dir).normalize();
-      const zp = new THREE.Vector3().crossVectors(dir, up);
-      const m = new THREE.Matrix4().makeBasis(dir, up, zp).setPosition(crown.clone().add(new THREE.Vector3(0, lift - 0.05 + (i % 2) * 0.012, (i - 2) * 0.012)));
-      b.addGradient(g, C.bananaDeep, C.banana, "y", "gloss", m);
-      const t = bananaEnd({ length: len, radius: r, bend: 0.85 }, true);
-      b.add(new THREE.SphereGeometry(r * 0.24, 8, 6), "#3a2414", "matte", tf(t.center.clone().applyMatrix4(m).toArray() as [number, number, number]));
+      const cx = (i - 2) * 0.028;
+      b.add(filletCyl(0.009, 0.062, 0.002, 10), C.brass, "metal", alignY(new THREE.Vector3(cx, 0.176, 0.045), new THREE.Vector3(0, 0, 1)));
+      b.add(filletCyl(0.006, 0.018, 0.002, 10, 0.002, 0.008), C.copper, "metal", alignY(new THREE.Vector3(cx, 0.176, 0.01), new THREE.Vector3(0, 0, -1)));
     }
-    b.add(filletCyl(0.035, 0.07, 0.01, 12, 0.028, 0.04), C.brownDark, "matte", alignY(crown.clone().add(new THREE.Vector3(-0.02, 0.012, 0)), new THREE.Vector3(-1, 0.3, 0)));
-    b.add(filletCyl(0.022, 0.012, 0.004, 12), "#7a5030", "matte", alignY(crown.clone().add(new THREE.Vector3(-0.058, 0.024, 0)), new THREE.Vector3(-1, 0.3, 0)));
-    bunchCache = b.build({ name: "ammo-bunch" }).root;
+    ammoBoxCache = b.build({ name: "ammo-box" }).root;
   }
-  return bunchCache.clone(true) as THREE.Group;
+  return ammoBoxCache.clone(true) as THREE.Group;
 }
 function itemMesh(item: Item, scale: number, grounded: boolean, rarity?: Rarity, skin: string | null = null): THREE.Object3D {
   if ((WEAPONS as readonly string[]).includes(item)) {

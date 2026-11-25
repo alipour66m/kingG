@@ -1,7 +1,7 @@
 // HUD presentation derived from the real game rules (movement state, the CURRENT storm circle, ...). No network or
 // simulation mutation.
 import { AMMO_CAP, CONSUMABLE_DEFS, WEAPON_DEFS } from "../../../shared/sim/const";
-import { CONSUMABLES, POIS, WEAPONS, type ConsumableId } from "../../../shared/world/map";
+import { CONSUMABLES, POIS, WEAPONS, type ConsumableId, type WeaponId } from "../../../shared/world/map";
 import { AMMO_TYPES, PS, SK, consumableId, eyeY, rarityOf, weaponId, type Player } from "../../../shared/sim/player";
 import { mythicOf } from "../../../shared/sim/mythic";
 import { IK, type Item } from "../../../shared/sim/loot";
@@ -9,12 +9,22 @@ import { aimedItem, standNear } from "../../../shared/sim/pickup";
 import type { StaticWorld } from "../../../shared/sim/world";
 import type { HudState } from "../ui/api";
 
+/** Rarity-tiered tactical weapon display names while preserving the 6 compact wire IDs. */
+export function weaponVariantName(id: WeaponId, rarity: number): string {
+  if (id === "pistol") return rarity >= 2 ? "Desert Eagle (.45 ACP)" : "P92 (9mm)";
+  if (id === "smg") return rarity >= 2 ? "Vector (9mm)" : "UMP45 (.45 ACP)";
+  if (id === "ar") return rarity >= 2 ? "AKM (7.62mm)" : "M416 (5.56mm)";
+  if (id === "shotgun") return "S12K (12 Gauge)";
+  if (id === "sniper") return rarity >= 3 ? "AWM (.300 Magnum)" : "Kar98k (7.62mm)";
+  return "RPG-7 (HEAT)";
+}
+
 /** what each gun is for, on the pickup card and the inventory cards */
-export const WEAPON_ROLES = { pistol: "Sidearm", smg: "Close range", ar: "All round", shotgun: "Close range burst", sniper: "Long range · hitscan", rocket: "Explosive" } as const;
+export const WEAPON_ROLES = { pistol: "Sidearm", smg: "Close range SMG", ar: "Assault rifle", shotgun: "Tactical shotgun", sniper: "Bolt-action sniper", rocket: "Anti-armor launcher" } as const;
 /** what each consumable does, on the pickup card and the inventory cards */
 export const CONSUMABLE_ROLES: Record<ConsumableId, string> = {
-  "leaf-bundle": "+25 Health", smoothie: "+25 Shield", "golden-banana": "+100 Health · +100 Shield", "red-banana": "Speed + jump boost · 8 s",
-  "banana-bomb": "Frag grenade · cook, then throw", "crate-wall": "Portable cover · set it down",
+  "leaf-bundle": "+25 Health", smoothie: "+25 Armor", "golden-banana": "+100 Health · +100 Armor", "red-banana": "Adrenaline boost · 8 s",
+  "banana-bomb": "M67 Frag · cook, then throw", "crate-wall": "Ballistic cover · deployable",
 };
 
 /** the hotbar, ammo and reload / use prompts belong to a kong on its feet (or hanging off a zipline / a ledge) —
@@ -45,7 +55,7 @@ export function lootCard(p: Player, it: Item, range: boolean): NonNullable<HudSt
   const rarity = rarityOf(it.rarity), empty = p.slots.findIndex((s) => s.kind === SK.Empty);
   let index = empty, name = "", role = "", ammo = "", reason = "";
   if (it.kind === IK.Weapon) {
-    const id = WEAPONS[it.sub], w = WEAPON_DEFS[id], my = mythicOf(it.rarity); name = my ? my.name : w.name; role = my ? `${POIS.find((q) => q.id === my.poi)?.name ?? ""} SIGNATURE ${w.name}` : WEAPON_ROLES[id];
+    const id = WEAPONS[it.sub], w = WEAPON_DEFS[id], my = mythicOf(it.rarity); name = my ? my.name : weaponVariantName(id, it.rarity); role = my ? `${POIS.find((q) => q.id === my.poi)?.name ?? ""} SIGNATURE ${w.name}` : WEAPON_ROLES[id];
     ammo = `${w.ammo.toUpperCase()} AMMO · ${p.ammo[AMMO_TYPES.indexOf(w.ammo)]} RESERVE`;
     if (index < 0) index = p.active;
   } else if (it.kind === IK.Consumable) {
@@ -65,7 +75,7 @@ export function lootCard(p: Player, it: Item, range: boolean): NonNullable<HudSt
   }
   const previous = index >= 0 ? p.slots[index] : null;
   const replaced = !!previous && previous.kind !== SK.Empty && !(it.kind === IK.Consumable && previous.kind === SK.Consumable && previous.id === it.sub);
-  const previousName = previous?.kind === SK.Weapon ? (mythicOf(previous.rarity)?.name ?? WEAPON_DEFS[weaponId(previous.id)].name) : previous?.kind === SK.Consumable ? CONSUMABLE_DEFS[consumableId(previous.id)].name : "";
+  const previousName = previous?.kind === SK.Weapon ? (mythicOf(previous.rarity)?.name ?? weaponVariantName(weaponId(previous.id), previous.rarity)) : previous?.kind === SK.Consumable ? CONSUMABLE_DEFS[consumableId(previous.id)].name : "";
   const change = reason || index < 0 ? "" : replaced ? `REPLACES SLOT ${index + 1} · ${previousName}` : previous?.kind === SK.Consumable ? `ADDS TO SLOT ${index + 1}` : `TAKES SLOT ${index + 1}`;
   return { label: `${replaced ? "SWAP FOR" : "TAKE"} ${name}`, key: "E", rarity, detail: `${rarity.toUpperCase()} · ${role}`, ammo, change, blocked: reason || undefined, candidateId: it.id };
 }

@@ -14,8 +14,6 @@ import { bombLaunch, bombStep, type BombBody } from "../../../shared/sim/bomb";
 import type { StaticWorld } from "../../../shared/sim/world";
 import { buildHeal } from "../weapons/heals";
 import { createHand, handMaterials, type Hand } from "../weapons/hands";
-import { BOMB_SHAPE } from "../weapons/loot-lane";
-import { bananaAt } from "../weapons/lib/geo";
 
 interface View { id: number; obj: THREE.Object3D; ember: THREE.Object3D | null; body: BombBody; fuse: number; spin: THREE.Vector3; live: boolean }
 const AX = new THREE.Vector3(), Q = new THREE.Quaternion();
@@ -90,27 +88,23 @@ export class BombFx {
     const inner = hb.children[0];
     this.pinChrome = (inner.children.find((o) => /:chrome$/.test(o.name)) ?? null);
     {
-      const o = BOMB_SHAPE, s0 = bananaAt(o, 0.42), side = new THREE.Vector3(0, 0, 1), r = bananaAt(o, 0.12);
-      const rp = r.center.clone().addScaledVector(side, r.radius + 0.022);
       const home = new THREE.Object3D(); home.name = "bomb-pin-home";
-      home.matrix.makeBasis(s0.dir, side, new THREE.Vector3().crossVectors(s0.dir, side).normalize()).setPosition(rp);
-      home.matrix.decompose(home.position, home.quaternion, home.scale); inner.add(home);
+      home.position.set(-0.032, 0.158, 0.01);
+      home.rotation.set(0.2, 0.4, 0);
+      inner.add(home);
       this.pinHome = home;
       const chrome = res.material(pinChromeMaterial());
-      const ring = new THREE.Mesh(res.geometry("geo.actor", new THREE.TorusGeometry(0.017, 0.0035, 8, 22)), chrome); ring.name = "bomb-pin-ring";
+      const ring = new THREE.Mesh(res.geometry("geo.actor", new THREE.TorusGeometry(0.018, 0.0035, 8, 22)), chrome); ring.name = "bomb-pin-ring";
       this.pin.add(ring); this.pin.name = "bomb-pin";
-      // the strip's anchor: on the skin at the stem end (pin space), where it peels from
-      const st = bananaAt(o, 0.04), A = st.center.clone().addScaledVector(side, st.radius * 0.95);
-      home.updateMatrix(); const inv = home.matrix.clone().invert(); this.stripA.copy(A).applyMatrix4(inv);
-      // the peel line runs down the banana: the strip's root slides from the stem toward the middle while it is pulled
-      const s1 = bananaAt(o, 0.3); this.stripB.copy(s1.center.clone().addScaledVector(side, s1.radius * 0.97)).applyMatrix4(inv);
+      this.stripA.set(0.032, 0, 0);
+      this.stripB.set(0.032, 0, 0);
       const N = 10; this.stripPos = new Float32Array((N + 1) * 2 * 3); this.stripNrm = new Float32Array((N + 1) * 2 * 3);
       const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(this.stripPos, 3)); g.setAttribute("normal", new THREE.BufferAttribute(this.stripNrm, 3));
       const uv = new Float32Array((N + 1) * 2 * 2); for (let i = 0; i <= N; i++) { uv[i * 4] = i / N; uv[i * 4 + 1] = 0; uv[i * 4 + 2] = i / N; uv[i * 4 + 3] = 1; } g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
       const idx: number[] = []; for (let i = 0; i < N; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } g.setIndex(idx);
       res.geometry("geo.actor", g);
       const peelM = res.material(pinPeelMaterial());
-      this.strip = new THREE.Mesh(g, peelM); this.strip.name = "bomb-pin-strip"; this.strip.frustumCulled = false;
+      this.strip = new THREE.Mesh(g, peelM); this.strip.name = "bomb-pin-strip"; this.strip.frustumCulled = false; this.strip.visible = false;
       this.pin.add(this.strip);
       this.pin.traverse((q) => { (q as THREE.Mesh).castShadow = false; (q as THREE.Mesh).frustumCulled = false; });
       this.homePin();

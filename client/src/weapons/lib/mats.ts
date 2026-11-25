@@ -15,6 +15,9 @@ export const C = {
   rope: "#d2b078", wood: "#a8703f", woodDark: "#6b4326", steel: "#b9bec6", steelDark: "#5c6168",
   gold: "#f4b90e", goldDeep: "#c98d05", olive: "#6f7d3a", leaf: "#579a2a", leafDark: "#2f6b1a", coconut: "#5a3a22",
   red: "#c8392b", canvas: "#e8dcc0", pink: "#e8608a", white: "#ffffff",
+  gunmetal: "#2b3036", gunmetalLight: "#444b54", gunmetalDark: "#181b1f", polymer: "#22252a",
+  tan: "#8e7b5c", coyote: "#78664b", odGreen: "#4a5338", odDark: "#2f3623", walnut: "#5c3820",
+  brass: "#c8a248", copper: "#b86b35", slate: "#3a4048",
 };
 
 export type Kind = "gloss" | "matte" | "metal" | "rope" | "slice" | "emissive" | "fur" | "leaf" | "chrome" | "glass" | "gold";

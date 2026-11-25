@@ -558,11 +558,11 @@ export class GameRender implements EventSink {
     if (victim === me && killer >= 0 && killer !== me) this.acc.died(killer);
     if (victim === me) {
       const deathNow = performance.now();
-      this.deathSummary = { weapon: myth ? myth.name : weapon < 6 ? WEAPON_DEFS[WEAPONS[weapon]].name : wid === "storm" ? "Storm" : wid === "fall" ? "Fall damage" : weapon === KILL_TUK ? "Tuk-tuk" : weapon === KILL_BOMB ? "Banana bomb" : weapon === KILL_HELI ? "Helicopter" : weapon === KILL_GUN ? `${TOP_BANANA.name} (door gun)` : "Unknown cause", incomingDamage: Math.round(this.incomingHits.filter((q) => deathNow - q.at <= 10000).reduce((a, q) => a + q.damage, 0)), windowS: 10 };
+      this.deathSummary = { weapon: myth ? myth.name : weapon < 6 ? WEAPON_DEFS[WEAPONS[weapon]].name : wid === "storm" ? "Blue Zone" : wid === "fall" ? "Fall damage" : weapon === KILL_TUK ? "Tactical Buggy" : weapon === KILL_BOMB ? "Frag Grenade" : weapon === KILL_HELI ? "Helicopter" : weapon === KILL_GUN ? `${TOP_BANANA.name} (door gun)` : "Unknown cause", incomingDamage: Math.round(this.incomingHits.filter((q) => deathNow - q.at <= 10000).reduce((a, q) => a + q.damage, 0)), windowS: 10 };
       this.incomingHits.length = 0;
       this.cm.resetJitter();                  // the view changes (death cam → spectate): re-learn the buffer from fresh arrivals
       const p = this.cm.pred; this.cm.localPose(V3); this.deathX = V3.x; this.deathY = V3.y; this.deathZ = V3.z; void p;
-      this.deadAt = performance.now(); this.killedBy = killer >= 0 && killer !== me ? this.name(killer) : wid === "storm" ? "THE STORM" : weapon === KILL_TUK ? "A TUK-TUK" : weapon === KILL_HELI ? "A HELICOPTER" : weapon === KILL_BOMB ? "A BANANA BOMB" : "THE FALL";
+      this.deadAt = performance.now(); this.killedBy = killer >= 0 && killer !== me ? this.name(killer) : wid === "storm" ? "THE BLUE ZONE" : weapon === KILL_TUK ? "A TACTICAL BUGGY" : weapon === KILL_HELI ? "A HELICOPTER" : weapon === KILL_BOMB ? "A FRAG GRENADE" : "THE FALL";
       this.resCountdown = final ? null : resurgenceDelay(this.cm.mode, this.cm.storm.phase);
       if (!final && this.cm.phase !== 0) this.redeploysUsed++;
       this.sfx("elim:self");
@@ -611,7 +611,7 @@ export class GameRender implements EventSink {
     const v = this.lootViews.get(id); if (v) { this.drops.delete(v); this.grow.delete(v.object); v.dispose(); this.lootViews.delete(id); }
     if (by === this.cm.me) {
       const k = this.itemKind.get(id), item = this.pickupItems.get(id);
-      if (item) this.hud.pickup = { at: performance.now(), label: item.kind === IK.Cash ? `$${(item.count * 10).toLocaleString("en-US")} BANANA BUCKS` : item.kind === IK.Weapon ? (mythicOf(item.rarity)?.name ?? WEAPON_DEFS[WEAPONS[item.sub]].name) : item.kind === IK.Consumable ? CONSUMABLE_DEFS[CONSUMABLES[item.sub]].name : `${AMMO_TYPES[item.sub].toUpperCase()} AMMO` };
+      if (item) this.hud.pickup = { at: performance.now(), label: item.kind === IK.Cash ? `$${(item.count * 10).toLocaleString("en-US")} CREDITS` : item.kind === IK.Weapon ? (mythicOf(item.rarity)?.name ?? WEAPON_DEFS[WEAPONS[item.sub]].name) : item.kind === IK.Consumable ? CONSUMABLE_DEFS[CONSUMABLES[item.sub]].name : `${AMMO_TYPES[item.sub].toUpperCase()} AMMO` };
       this.sfx(k === IK.Ammo || k === IK.Cash ? "pickup:ammo" : k === IK.Consumable ? "pickup:heal" : "pickup:weapon", { volume: 0.8 });
       const my = item && item.kind === IK.Weapon ? mythicOf(item.rarity) : null;
       if (my) this.announce(`MYTHIC · ${my.name}`, `${POIS.find((q) => q.id === my.poi)?.name ?? ""} SIGNATURE ${WEAPON_DEFS[my.weapon].name} — hits harder than any legendary`, "victory");

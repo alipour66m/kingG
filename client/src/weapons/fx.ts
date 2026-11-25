@@ -20,28 +20,28 @@ const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3
 
 /** muzzle look per weapon: flash size (m), flame length factor, prongs, spark count, smoke puffs, tracer speed (m/s) */
 const MZ: Record<WeaponId, { size: number; flame: number; prongs: number; sparks: number; smoke: number; speed: number; tint: [number, number, number] }> = {
-  pistol: { size: 0.2, flame: 1.1, prongs: 0, sparks: 3, smoke: 1, speed: 260, tint: [1, 0.92, 0.7] },
-  smg: { size: 0.19, flame: 1.0, prongs: 2, sparks: 2, smoke: 1, speed: 280, tint: [1, 0.9, 0.62] },
-  ar: { size: 0.25, flame: 1.3, prongs: 3, sparks: 4, smoke: 1, speed: 340, tint: [1, 0.88, 0.58] },
-  shotgun: { size: 0.4, flame: 1.5, prongs: 4, sparks: 9, smoke: 3, speed: 230, tint: [1, 0.8, 0.5] },
-  sniper: { size: 0.34, flame: 1.8, prongs: 3, sparks: 5, smoke: 2, speed: 900, tint: [1, 0.92, 0.75] },
-  rocket: { size: 0.5, flame: 0.8, prongs: 0, sparks: 6, smoke: 5, speed: 60, tint: [1, 0.75, 0.4] },
+  pistol: { size: 0.18, flame: 1.0, prongs: 0, sparks: 4, smoke: 1, speed: 340, tint: [1, 0.9, 0.65] },
+  smg: { size: 0.17, flame: 0.95, prongs: 2, sparks: 3, smoke: 1, speed: 380, tint: [1, 0.88, 0.58] },
+  ar: { size: 0.24, flame: 1.25, prongs: 3, sparks: 5, smoke: 1, speed: 520, tint: [1, 0.85, 0.52] },
+  shotgun: { size: 0.38, flame: 1.45, prongs: 4, sparks: 11, smoke: 3, speed: 320, tint: [1, 0.78, 0.46] },
+  sniper: { size: 0.34, flame: 1.8, prongs: 3, sparks: 7, smoke: 2, speed: 1050, tint: [1, 0.9, 0.72] },
+  rocket: { size: 0.5, flame: 0.9, prongs: 0, sparks: 8, smoke: 6, speed: 60, tint: [1, 0.72, 0.36] },
 };
 
 /** per-surface impact recipe */
 interface Imp { decal: number | -1; dsize: number; dust: [number, number, number] | null; chunk: number | -1; nchunk: number; ccol: [number, number, number]; sparks: number; bits: number | -1; bitcol: [number, number, number] }
 const IMP: Record<Surface | "flesh", Imp> = {
   wood: { decal: D.WOOD, dsize: 0.3, dust: [0.62, 0.46, 0.3], chunk: K.SPLINTER, nchunk: 18, ccol: [0.78, 0.55, 0.32], sparks: 0, bits: -1, bitcol: [0, 0, 0] },
-  metal: { decal: D.METAL, dsize: 0.2, dust: null, chunk: -1, nchunk: 0, ccol: [0, 0, 0], sparks: 12, bits: -1, bitcol: [0, 0, 0] },
-  concrete: { decal: D.STONE, dsize: 0.3, dust: [0.78, 0.76, 0.72], chunk: K.CHIP, nchunk: 18, ccol: [0.72, 0.7, 0.66], sparks: 3, bits: -1, bitcol: [0, 0, 0] },
-  stone: { decal: D.STONE, dsize: 0.3, dust: [0.74, 0.7, 0.64], chunk: K.CHIP, nchunk: 18, ccol: [0.62, 0.58, 0.52], sparks: 4, bits: -1, bitcol: [0, 0, 0] },
+  metal: { decal: D.METAL, dsize: 0.2, dust: null, chunk: -1, nchunk: 0, ccol: [0, 0, 0], sparks: 14, bits: -1, bitcol: [0, 0, 0] },
+  concrete: { decal: D.STONE, dsize: 0.3, dust: [0.78, 0.76, 0.72], chunk: K.CHIP, nchunk: 18, ccol: [0.72, 0.7, 0.66], sparks: 4, bits: -1, bitcol: [0, 0, 0] },
+  stone: { decal: D.STONE, dsize: 0.3, dust: [0.74, 0.7, 0.64], chunk: K.CHIP, nchunk: 18, ccol: [0.62, 0.58, 0.52], sparks: 5, bits: -1, bitcol: [0, 0, 0] },
   sand: { decal: D.DIVOT, dsize: 0.34, dust: [0.96, 0.86, 0.64], chunk: K.CLOD, nchunk: 6, ccol: [0.9, 0.78, 0.55], sparks: 0, bits: S.DROP, bitcol: [0.92, 0.8, 0.58] },
   grass: { decal: D.DIVOT, dsize: 0.3, dust: [0.62, 0.56, 0.4], chunk: K.CLOD, nchunk: 8, ccol: [0.42, 0.3, 0.18], sparks: 0, bits: S.LEAF, bitcol: [0.35, 0.6, 0.2] },
   water: { decal: -1, dsize: 0, dust: null, chunk: -1, nchunk: 0, ccol: [0, 0, 0], sparks: 0, bits: S.DROP, bitcol: [0.85, 0.95, 1.0] },
   foliage: { decal: -1, dsize: 0, dust: null, chunk: -1, nchunk: 0, ccol: [0, 0, 0], sparks: 0, bits: S.LEAF, bitcol: [0.3, 0.58, 0.18] },
   glass: { decal: D.GLASS, dsize: 0.28, dust: null, chunk: K.SHARD, nchunk: 12, ccol: [0.8, 0.92, 1.0], sparks: 0, bits: -1, bitcol: [0, 0, 0] },
   fabric: { decal: D.FABRIC, dsize: 0.22, dust: [0.8, 0.76, 0.66], chunk: -1, nchunk: 0, ccol: [0, 0, 0], sparks: 0, bits: S.FLUFF, bitcol: [0.85, 0.8, 0.7] },
-  flesh: { decal: -1, dsize: 0, dust: null, chunk: K.PEEL, nchunk: 2, ccol: [1, 1, 1], sparks: 0, bits: S.FLUFF, bitcol: [0.36, 0.22, 0.12] },
+  flesh: { decal: -1, dsize: 0, dust: null, chunk: K.CHIP, nchunk: 3, ccol: [0.55, 0.12, 0.1], sparks: 0, bits: S.DROP, bitcol: [0.55, 0.1, 0.08] },
 };
 
 export interface FxSystem extends FxEx { object: THREE.Group; glow: QuadFamily; smoke: QuadFamily; decal: QuadFamily; chunks: Chunks; now(): number }
@@ -178,10 +178,10 @@ export function createFx(ctx: WorldCtx): FxSystem {
       }
       if (weapon === "rocket") return;
       G_.x = from.x; G_.y = from.y; G_.z = from.z; G_.vx = _a.x; G_.vy = _a.y; G_.vz = _a.z;
-      // readable tracers: thicker, HDR warm-yellow streaks
-      G_.life = dist / m.speed + 0.08; G_.s0 = weapon === "shotgun" ? 0.04 : 0.065; G_.s1 = G_.s0;
-      G_.r = 1.9; G_.g = 1.55; G_.b = 0.75; G_.a = 1; G_.shape = G.TRACER; G_.mode = M.TRACER;
-      G_.e0 = m.speed; G_.e1 = Math.min(dist, weapon === "shotgun" ? 2.2 : 5.5); G_.e2 = 0.22;
+      // crisp high-velocity ballistic tracers: hot copper/amber streaks
+      G_.life = dist / m.speed + 0.06; G_.s0 = weapon === "shotgun" ? 0.028 : 0.042; G_.s1 = G_.s0;
+      G_.r = 2.0; G_.g = 1.45; G_.b = 0.62; G_.a = 1; G_.shape = G.TRACER; G_.mode = M.TRACER;
+      G_.e0 = m.speed; G_.e1 = Math.min(dist, weapon === "shotgun" ? 2.4 : 6.5); G_.e2 = 0.18;
       glow.emit();
     },
     shieldBreak(pos) {
@@ -345,14 +345,14 @@ export function createFx(ctx: WorldCtx): FxSystem {
         puff(_d.copy(pos).addScaledVector(_c, R * 0.3), _c.multiplyScalar(R * 0.45), [0.36, 0.34, 0.32], 0.6, R * 0.3, R * rnd(1.7, 2.4), rnd(3.0, 4.4), 1.3, R * rnd(0.9, 1.6), 0.9, S.SOFT, rnd(0.35, 0.8));
       }
       spark(pos, _a.set(0, 1, 0), 34, [7, 24], 1.4, [0.35, 1.1], 0.022, 2.0);
-      // debris: brown clods + banana-peel confetti (no grey rubble inside the fire)
+      // debris: dirt clods + metallic shrapnel chips
       for (let i = 0; i < 12; i++) {
         randomSphere(_c); _c.y = Math.abs(_c.y) * 1.2 + 0.3; _c.normalize();
         const s = rnd(9, 16);
-        const peel = i < 8;
-        C_.shape = peel ? K.PEEL : K.CLOD; C_.x = pos.x + _c.x * R * 0.3; C_.y = pos.y + 0.3; C_.z = pos.z + _c.z * R * 0.3;
-        C_.vx = _c.x * s; C_.vy = _c.y * s; C_.vz = _c.z * s; C_.life = rnd(1.8, 3.2); C_.scale = peel ? rnd(0.9, 1.4) : rnd(0.6, 1.0); C_.len = 1;
-        C_.r = peel ? 1 : 0.34; C_.g = peel ? 1 : 0.22; C_.b = peel ? 1 : 0.12; C_.floor = fy; C_.rest = 0.25; C_.spin = 14; C_.grav = 1; C_.flutter = peel ? 2.5 : 0;
+        const shrap = i < 6;
+        C_.shape = shrap ? K.CHIP : K.CLOD; C_.x = pos.x + _c.x * R * 0.3; C_.y = pos.y + 0.3; C_.z = pos.z + _c.z * R * 0.3;
+        C_.vx = _c.x * s; C_.vy = _c.y * s; C_.vz = _c.z * s; C_.life = rnd(1.8, 3.2); C_.scale = shrap ? rnd(0.8, 1.2) : rnd(0.6, 1.0); C_.len = 1;
+        C_.r = shrap ? 0.28 : 0.34; C_.g = shrap ? 0.3 : 0.24; C_.b = shrap ? 0.34 : 0.14; C_.floor = fy; C_.rest = 0.25; C_.spin = 16; C_.grav = 1; C_.flutter = 0;
         chunks.emit();
       }
     },
@@ -423,12 +423,12 @@ export function createRocketView(ctx: WorldCtx, fx: FxEx): { object: THREE.Objec
     war.position.sub(new THREE.Vector3((bb.min.x + bb.max.x) / 2, (bb.min.y + bb.max.y) / 2, bb.max.z));
     body.add(war);
   }
-  // fins: three small brown blades at the tail
-  const finMat = new THREE.MeshStandardMaterial({ color: "#6b3e22", roughness: 0.6 });
-  for (let i = 0; i < 3; i++) {
-    const f = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.09, 0.12), finMat);
-    const a = (i / 3) * TAU;
-    f.position.set(Math.cos(a) * 0.06, Math.sin(a) * 0.06, 0.05); f.rotation.z = a - Math.PI / 2;
+  // stabilizer fins: four steel blades at the tail
+  const finMat = new THREE.MeshStandardMaterial({ color: "#2b3036", roughness: 0.45, metalness: 0.4 });
+  for (let i = 0; i < 4; i++) {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.08, 0.11), finMat);
+    const a = (i / 4) * TAU;
+    f.position.set(Math.cos(a) * 0.052, Math.sin(a) * 0.052, 0.05); f.rotation.z = a - Math.PI / 2;
     body.add(f);
   }
   object.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.receiveShadow = false; } });
