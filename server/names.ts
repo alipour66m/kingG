@@ -7,7 +7,7 @@
 //   letter). The long staff words are refused ANYWHERE in the name (THEADMIN, ADMIN BOB); the short ones (and the env
 //   list) only as a whole word or as the whole name, so DEVIN, MODEL, HOSTILE, BOBBY stay legal. A reserved name a
 //   player picks becomes FALLBACK_NAME; the admin's own renames are never refused.
-export const FALLBACK_NAME = "KONG";
+export const FALLBACK_NAME = "OPERATOR";
 export const cleanName = (v: unknown) => String(v ?? "").normalize("NFKC").toUpperCase().replace(/[^A-Z0-9 _.!?'-]/g, "").replace(/\s+/g, " ").trim().slice(0, 14) || FALLBACK_NAME;
 
 /** refused anywhere in the name */

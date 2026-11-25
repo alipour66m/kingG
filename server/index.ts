@@ -416,7 +416,7 @@ wss.on("connection", (ws, req) => {
 
   const aux: Sock[] = [];
   const wsT = new WsTransport(s, aux, strike);
-  const c: Client = { uid: uidSeq++, token: crypto.randomBytes(16).toString("hex"), name: "KONG", lobby: null, pid: -1, squad: 0, sock: s, aux, ws: wsT, wt: null, bin: wsT, lastInputAt: Date.now(), away: false, peer: null!, markAt: 0, seat: -1, camAt: 0, program: false, ev: null, arm: null };
+  const c: Client = { uid: uidSeq++, token: crypto.randomBytes(16).toString("hex"), name: "OPERATOR", lobby: null, pid: -1, squad: 0, sock: s, aux, ws: wsT, wt: null, bin: wsT, lastInputAt: Date.now(), away: false, peer: null!, markAt: 0, seat: -1, camAt: 0, program: false, ev: null, arm: null };
   wsT.onMessage = (u8, _at, from) => onBinary(c, u8, from);
   c.peer = { pid: -1, invSeq: 0, send: (u8) => sendFrame(c.bin, u8), sendResult: (state) => sendJSON(c.sock.ws, { t: "result", state }) };
   byToken.set(c.token, c);

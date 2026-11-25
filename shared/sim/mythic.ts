@@ -12,22 +12,22 @@ import { POIS, WEAPONS } from "../world/map";
 
 export interface MythicDef { poi: PoiId; weapon: WeaponId; name: string; /** the gun's signature colour (body tint + accent) */ color: string }
 export const MYTHICS: readonly MythicDef[] = [
-  { poi: "peel-harbor",    weapon: "shotgun", name: "THE HARBORMASTER", color: "#1fc7b8" },
-  { poi: "mango-market",   weapon: "smg",     name: "MANGO MAYHEM",     color: "#ff8a1c" },
-  { poi: "coconut-cove",   weapon: "ar",      name: "COCONUT CRUSHER",  color: "#b4743f" },
-  { poi: "stilt-town",     weapon: "sniper",  name: "THE STILTWALKER",  color: "#5fc8ff" },
-  { poi: "the-murk",       weapon: "smg",     name: "MURKMAW",          color: "#57b33a" },
-  { poi: "banana-temple",  weapon: "ar",      name: "THE GOLDEN IDOL",  color: "#ffd02e" },
-  { poi: "ripe-peak",      weapon: "rocket",  name: "MAGMA BUNCH",      color: "#ff4d14" },
-  { poi: "mist-falls",     weapon: "sniper",  name: "MISTCUTTER",       color: "#cfeeff" },
-  { poi: "cnvs-lab",       weapon: "ar",      name: "PROTOTYPE KX-1",   color: "#2ef0ff" },
-  { poi: "canopy-line",    weapon: "pistol",  name: "CANOPY STINGER",   color: "#b8ff2e" },
-  { poi: "peel-strip",     weapon: "smg",     name: "AFTERBURNER",      color: "#ff4f7b" },
-  { poi: "the-plantation", weapon: "shotgun", name: "THE OVERSEER",     color: "#d2452f" },
-  { poi: "lookout-point",   weapon: "sniper",  name: "THE LIGHTKEEPER",  color: "#fff0a0" },
-  { poi: "the-wreck",      weapon: "pistol",  name: "DAVY'S PEELER",    color: "#4a86ea" },
-  { poi: "coco-caves",     weapon: "shotgun", name: "STALACTITE",       color: "#a9b8cc" },
-  { poi: "wreck-bay",      weapon: "rocket",  name: "BAY BOOMER",       color: "#ff8840" },
+  { poi: "peel-harbor",    weapon: "shotgun", name: "BREACHER S12K",    color: "#1fc7b8" },
+  { poi: "mango-market",   weapon: "smg",     name: "VIPER VECTOR",     color: "#ff8a1c" },
+  { poi: "coconut-cove",   weapon: "ar",      name: "CORSAIR M416",     color: "#b4743f" },
+  { poi: "stilt-town",     weapon: "sniper",  name: "LONGBOW AWM",      color: "#5fc8ff" },
+  { poi: "the-murk",       weapon: "smg",     name: "NIGHTSTALKER UMP", color: "#57b33a" },
+  { poi: "banana-temple",  weapon: "ar",      name: "SOVEREIGN AKM",    color: "#ffd02e" },
+  { poi: "ripe-peak",      weapon: "rocket",  name: "HELLFIRE RPG-7",   color: "#ff4d14" },
+  { poi: "mist-falls",     weapon: "sniper",  name: "FROSTBITE KAR98K", color: "#cfeeff" },
+  { poi: "cnvs-lab",       weapon: "ar",      name: "PROTOTYPE XM8",    color: "#2ef0ff" },
+  { poi: "canopy-line",    weapon: "pistol",  name: "BLACKOUT DEAGLE",  color: "#b8ff2e" },
+  { poi: "peel-strip",     weapon: "smg",     name: "RUNWAY VECTOR",    color: "#ff4f7b" },
+  { poi: "the-plantation", weapon: "shotgun", name: "ENFORCER S12K",    color: "#d2452f" },
+  { poi: "lookout-point",  weapon: "sniper",  name: "OVERWATCH AWM",    color: "#fff0a0" },
+  { poi: "the-wreck",      weapon: "pistol",  name: "SPEC-OPS P92",     color: "#4a86ea" },
+  { poi: "coco-caves",     weapon: "shotgun", name: "BREACH S12K",      color: "#a9b8cc" },
+  { poi: "wreck-bay",      weapon: "rocket",  name: "HARBOR RPG-7",     color: "#ff8840" },
 ];
 /** the rarity tier index of "mythic" (RARITIES[5]); rarity bytes MYTHIC_R + k are mythic k */
 export const MYTHIC_R = 5;

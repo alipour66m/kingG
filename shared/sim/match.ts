@@ -1396,4 +1396,4 @@ function giveWarmupKit(p: Player, rng: Rng) {
   const c = p.slots[1]; c.kind = SK.Consumable; c.id = CONSUMABLES.indexOf("leaf-bundle"); c.rarity = 0; c.count = 2; p.active = 0;
 }
 
-const BOT_NAMES = ["Bongo", "Kiki", "Mango", "Peel", "Rumble", "Tusk", "Koko", "Banjo", "Dizzy", "Chunk", "Ripe", "Zuzu", "Bruiser", "Nana", "Split", "Husk", "Fuzz", "Grit", "Loco", "Pip", "Rex", "Sable", "Tango", "Umbo", "Vex", "Waffle", "Yuca", "Zed", "Ape-X", "Bam", "Cocoa", "Dune", "Ember", "Fig", "Gogo", "Hopper", "Ivo", "Jumbo", "Kong-Jr", "Lush", "Moss", "Nib", "Ozzy", "Pulp", "Quill", "Rango", "Sprout", "Tiki", "Ubu", "Volt"];
+const BOT_NAMES = ["Alpha-1", "Bravo-2", "Viper", "Ghost", "Reaper", "Nomad", "Specter", "Falcon", "Talon", "Rook", "Bishop", "Kodiak", "Ranger", "Sniper-6", "Cobra", "Jackal", "Shadow", "Warden", "Striker", "Hawk", "Raven", "Phoenix", "Apex", "Titan", "Hammer", "Anvil", "Dagger", "Saber", "Lynx", "Wolf", "Bear", "Panther", "Valkyrie", "Spartan", "Tracer", "Echo", "Delta", "Zulu", "Kilo", "Sierra", "Victor", "Maverick", "Iceman", "Sentinel", "Bulwark", "Outlaw", "Vector", "Crosshair", "Banshee", "Phantom"];

@@ -205,15 +205,15 @@ export interface WeaponDef {
 // steeply (full to 4 m, ×0.25 at 16 m: 2 body blasts inside ~5 m, 3 by 8 m) and only a LEGENDARY+ pump with all 9
 // pellets on the head inside ~4 m one-shots a full 200 (common → epic peak 169–194).
 export const WEAPON_DEFS: Record<WeaponId, WeaponDef> = {
-  pistol:  { id: "pistol",  name: "NUB",        ammo: "light",   auto: false, dmg: 26, pellets: 1, rpm: 330, mag: 12, reloadS: 1.3,  headMul: 1.8,  spread: [0.45, 0.5, 1.8],  ads: 0.9,  bloom: [0.3, 1.6, 4],    fsa: 0.25, recoil: [1.3, 0.3, 9],   falloff: [30, 110, 0.7],  tracer: 400 },
-  smg:     { id: "smg",     name: "PEELER",     ammo: "light",   auto: true,  dmg: 17, pellets: 1, rpm: 650, mag: 40, reloadS: 1.8,  headMul: 1.5,  spread: [0.9, 1.6, 3.2],   ads: 0.65, bloom: [0.12, 1.6, 4],  fsa: 0,    recoil: [0.5, 0.42, 12], falloff: [12, 45, 0.45],  tracer: 420 },
-  ar:      { id: "ar",      name: "BUNCHGUN",   ammo: "light",   auto: true,  dmg: 24, pellets: 1, rpm: 400, mag: 30, reloadS: 2.3,  headMul: 1.6,  spread: [0.32, 1.0, 2.8],  ads: 0.55, bloom: [0.2, 1.6, 4],    fsa: 0.28, recoil: [0.85, 0.28, 10], falloff: [50, 150, 0.8],  tracer: 480 },
-  shotgun: { id: "shotgun", name: "SPLITTER",   ammo: "shells",  auto: false, dmg: 12.5, pellets: 9, rpm: 68, mag: 5,  reloadS: 0.6,  headMul: 1.5,  spread: [2.6, 2.9, 4.6],   ads: 0.85, bloom: [0, 0, 1],        fsa: 0,    recoil: [3.2, 0.8, 8],   falloff: [4, 16, 0.25],   tracer: 380 },
+  pistol:  { id: "pistol",  name: "P92 (9mm)",       ammo: "light",   auto: false, dmg: 26, pellets: 1, rpm: 330, mag: 12, reloadS: 1.3,  headMul: 1.8,  spread: [0.45, 0.5, 1.8],  ads: 0.9,  bloom: [0.3, 1.6, 4],    fsa: 0.25, recoil: [1.3, 0.3, 9],   falloff: [30, 110, 0.7],  tracer: 400 },
+  smg:     { id: "smg",     name: "UMP45 (.45 ACP)", ammo: "light",   auto: true,  dmg: 17, pellets: 1, rpm: 650, mag: 40, reloadS: 1.8,  headMul: 1.5,  spread: [0.9, 1.6, 3.2],   ads: 0.65, bloom: [0.12, 1.6, 4],  fsa: 0,    recoil: [0.5, 0.42, 12], falloff: [12, 45, 0.45],  tracer: 420 },
+  ar:      { id: "ar",      name: "M416 (5.56mm)",   ammo: "light",   auto: true,  dmg: 24, pellets: 1, rpm: 400, mag: 30, reloadS: 2.3,  headMul: 1.6,  spread: [0.32, 1.0, 2.8],  ads: 0.55, bloom: [0.2, 1.6, 4],    fsa: 0.28, recoil: [0.85, 0.28, 10], falloff: [50, 150, 0.8],  tracer: 480 },
+  shotgun: { id: "shotgun", name: "S12K (12 Gauge)", ammo: "shells",  auto: false, dmg: 12.5, pellets: 9, rpm: 68, mag: 5,  reloadS: 0.6,  headMul: 1.5,  spread: [2.6, 2.9, 4.6],   ads: 0.85, bloom: [0, 0, 1],        fsa: 0,    recoil: [3.2, 0.8, 8],   falloff: [4, 16, 0.25],   tracer: 380 },
   // body 80 (a legendary body shot, 97, never one-shots even an
-  // unshielded 100-HP kong), head ×2.6 (208 common: a headshot still kills from full 100 + 100); no-scope spread ×3+, a
+  // unshielded 100-HP operator), head ×2.6 (208 common: a headshot still kills from full 100 + 100); no-scope spread ×3+, a
   // moving / jumping scope wider (×1.4); still the best class from 150 m
-  sniper:  { id: "sniper",  name: "LONGSTEM",   ammo: "heavy",   auto: false, dmg: 80,  pellets: 1, rpm: 30, mag: 4,  reloadS: 2.7,  headMul: 2.6,  spread: [4.0, 6.0, 9.0],   ads: 0.04, bloom: [0, 0, 1],        fsa: 0,    recoil: [4.5, 0.6, 6],   falloff: [250, 400, 0.85], scope: 6, adsSpread: [0.05, 1.4, 3.5], tracer: 900 },
-  rocket:  { id: "rocket",  name: "BUNCH LAUNCHER", ammo: "rockets", auto: false, dmg: 60, pellets: 1, rpm: 40, mag: 1, reloadS: 2.3, headMul: 1.0, spread: [0.2, 0.6, 1.5], ads: 1, bloom: [0, 0, 1], fsa: 0, recoil: [5, 1, 5], falloff: [400, 400, 1], projectile: { speed: 48, gravity: 5, splashR: 3.8, splashDmg: 70 }, tracer: 48 },
+  sniper:  { id: "sniper",  name: "Kar98k (7.62mm)", ammo: "heavy",   auto: false, dmg: 80,  pellets: 1, rpm: 30, mag: 4,  reloadS: 2.7,  headMul: 2.6,  spread: [4.0, 6.0, 9.0],   ads: 0.04, bloom: [0, 0, 1],        fsa: 0,    recoil: [4.5, 0.6, 6],   falloff: [250, 400, 0.85], scope: 6, adsSpread: [0.05, 1.4, 3.5], tracer: 900 },
+  rocket:  { id: "rocket",  name: "RPG-7 (HEAT)",    ammo: "rockets", auto: false, dmg: 60, pellets: 1, rpm: 40, mag: 1, reloadS: 2.3, headMul: 1.0, spread: [0.2, 0.6, 1.5], ads: 1, bloom: [0, 0, 1], fsa: 0, recoil: [5, 1, 5], falloff: [400, 400, 1], projectile: { speed: 48, gravity: 5, splashR: 3.8, splashDmg: 70 }, tracer: 48 },
 };
 /** scope sway (client aim wander while scoped, client/src/game/render.ts): amplitude in degrees
  * (world angle) = steady + enter × e^(−t / tau), t = time since the scope settled (scoping in, and after every bolt).
@@ -239,15 +239,14 @@ export interface ConsumableDef { id: ConsumableId; name: string; hp: number; shi
   buffS?: number; speedMul?: number; jumpMul?: number }
 export const CONSUMABLE_DEFS: Record<ConsumableId, ConsumableDef> = {
   // 25 × a full stack of 4 = one slot fills one bar; hold fire to chain the next use
-  "leaf-bundle":   { id: "leaf-bundle",   name: "LEAF BUNDLE",     hp: 25,  shield: 0,   useS: 2.0, stack: 4 },
-  "smoothie":      { id: "smoothie",      name: "BANANA SMOOTHIE", hp: 0,   shield: 25,  useS: 2.0, stack: 4 },
-  "golden-banana": { id: "golden-banana", name: "GOLDEN BANANA",   hp: 100, shield: 100, useS: 4.5, stack: 1 },
-  // eat it (1 s) → 8 s of ~1.85× run speed and a
-  // jump that goes twice as high (1.2 → 2.3 m) and much further; eating another one refreshes the timer
-  "red-banana":    { id: "red-banana",    name: "RED BANANA",      hp: 0,   shield: 0,   useS: 1.0, stack: 2, buffS: 8, speedMul: 1.85, jumpMul: 1.38 },
-  // --- throwables and placeables --- (no heal: G / fire throws the bomb, fire places the wall — player.ts stepHands)
-  "banana-bomb":   { id: "banana-bomb",   name: "BANANA BOMB",     hp: 0,   shield: 0,   useS: 0,   stack: 4 },
-  "crate-wall":    { id: "crate-wall",    name: "COCONUT CRATE WALL", hp: 0, shield: 0,  useS: 0,   stack: 1 },
+  "leaf-bundle":   { id: "leaf-bundle",   name: "BANDAGE",          hp: 25,  shield: 0,   useS: 2.0, stack: 4 },
+  "smoothie":      { id: "smoothie",      name: "FIRST AID KIT",    hp: 0,   shield: 25,  useS: 2.0, stack: 4 },
+  "golden-banana": { id: "golden-banana", name: "MED KIT",          hp: 100, shield: 100, useS: 4.5, stack: 1 },
+  // 1 s boost → 8 s of ~1.85× sprint speed and higher vault/jump; drinking another refreshes the timer
+  "red-banana":    { id: "red-banana",    name: "ENERGY DRINK",     hp: 0,   shield: 0,   useS: 1.0, stack: 2, buffS: 8, speedMul: 1.85, jumpMul: 1.38 },
+  // --- throwables and placeables --- (no heal: G / fire throws the frag, fire places the cover — player.ts stepHands)
+  "banana-bomb":   { id: "banana-bomb",   name: "FRAG GRENADE",     hp: 0,   shield: 0,   useS: 0,   stack: 4 },
+  "crate-wall":    { id: "crate-wall",    name: "DEPLOYABLE COVER", hp: 0,   shield: 0,   useS: 0,   stack: 1 },
 };
 /** the BANANA BOMB: a frag grenade with a 3 s peel fuse that starts burning when you
  * pull it (G / fire with it in hand) — hold to cook, let go to throw; it bounces and rolls; area damage with falloff and

@@ -14,16 +14,16 @@ import * as dmath from "./dmath";
 export const enum Offer { BuyBack = 0, Bounty = 1, Smoothies = 2, Leaves = 3, Bombs = 4, Wall = 5, Ammo = 6 }
 export interface OfferDef { id: Offer; name: string; price: number; desc: string; icon: string }
 export const OFFERS: readonly OfferDef[] = [
-  { id: Offer.BuyBack, name: "BUY BACK", price: 2500, desc: "An eliminated squadmate redeploys from the sky above you", icon: "buyback" },
-  { id: Offer.Bounty, name: "BOUNTY CONTRACT", price: 800, desc: "Mark an enemy squad for 90 s — kill one for $1,500 + loot", icon: "bounty" },
-  { id: Offer.Smoothies, name: "SHIELD SMOOTHIES ×2", price: 300, desc: "+25 shield each", icon: "smoothie" },
-  { id: Offer.Leaves, name: "LEAF BUNDLES ×2", price: 200, desc: "+25 health each", icon: "leaf-bundle" },
-  { id: Offer.Bombs, name: "BANANA BOMBS ×2", price: 400, desc: "Frag grenades — hold G to cook", icon: "banana-bomb" },
-  { id: Offer.Wall, name: "COCONUT CRATE WALL", price: 600, desc: "Portable cover you set down anywhere flat", icon: "crate-wall" },
-  { id: Offer.Ammo, name: "AMMO ×2", price: 150, desc: "Two stacks for the gun in your hands", icon: "ammo" },
+  { id: Offer.BuyBack, name: "REDEPLOY BEACON", price: 2500, desc: "Call an eliminated squadmate back via parachute drop", icon: "buyback" },
+  { id: Offer.Bounty, name: "HVT CONTRACT", price: 800, desc: "Track an enemy squad for 90 s — eliminate for $1,500 + gear", icon: "bounty" },
+  { id: Offer.Smoothies, name: "FIRST AID KITS ×2", price: 300, desc: "+25 Armor each", icon: "smoothie" },
+  { id: Offer.Leaves, name: "BANDAGES ×2", price: 200, desc: "+25 Health each", icon: "leaf-bundle" },
+  { id: Offer.Bombs, name: "M67 FRAGS ×2", price: 400, desc: "Frag grenades — hold G to cook", icon: "banana-bomb" },
+  { id: Offer.Wall, name: "DEPLOYABLE COVER", price: 600, desc: "Ballistic barrier you deploy on flat ground", icon: "crate-wall" },
+  { id: Offer.Ammo, name: "AMMO CRATE ×2", price: 150, desc: "Two reserve packs for your equipped weapon", icon: "ammo" },
 ];
 /** solo has no squadmates to buy back: the same slot sells one more redeploy */
-export const SOLO_LIFE = { name: "EXTRA LIFE", price: 2000, desc: "One more redeploy while resurgence is on" };
+export const SOLO_LIFE = { name: "REDEPLOY TOKEN", price: 2000, desc: "One additional redeploy while resurgence is active" };
 
 // ---------------------------------------------------------------- the stands
 /** a Banana Stand's solid counter (along, up, through, m) — the drawn kiosk's awning rises above it */
