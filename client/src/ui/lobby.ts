@@ -12,7 +12,7 @@ import { injectStyles } from "./styles";
 import { injectMenuStyles } from "./menu-styles";
 import { injectLobbyStyles } from "./lobby-styles";
 import { createControlsGuide } from "./onboarding";
-import { TOON_LOGO, keycap } from "./toon";
+import { keycap } from "./toon";
 import { ICON } from "./lobby-icons";
 import { createServerStatus, type ServerStatus } from "./lobby-status";
 import { playtestTitle } from "./title-flags";
@@ -49,8 +49,8 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   h("div", "tn-play-shade", root);
 
   // ---------------- brand + nav
-  const brand = h("img", "tn-logo tn-play-brand", root);
-  brand.src = TOON_LOGO.lockup; brand.alt = "Kong Royale"; brand.draggable = false;
+  const brand = h("div", "tn-logo tn-play-brand tn-brandmark", root);
+  brand.innerHTML = `<b>KING-G</b><small>BATTLEGROUNDS</small>`;
   const nav = h("nav", "tn-play-nav", root); nav.setAttribute("aria-label", "Lobby");
   const navBtn = (label: string) => { const b = h("button", "tn-pill", nav); b.type = "button"; b.textContent = label; return b; };
   const navPlay = navBtn("Play"), navTraining = navBtn("Training"), navSettings = navBtn("Settings");
@@ -71,7 +71,7 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   const csForm = h("form", "tn-play-panel", csPop); csForm.noValidate = true; csForm.setAttribute("aria-label", "Edit callsign");
   const csLabel = h("label", "tn-play-plabel", csForm); csLabel.textContent = "Callsign"; csLabel.htmlFor = "kr-callsign";
   const csInput = h("input", "tn-play-input", csForm);
-  csInput.id = "kr-callsign"; csInput.maxLength = NAME_MAX; csInput.spellcheck = false; csInput.autocomplete = "off"; csInput.placeholder = "KONG";
+  csInput.id = "kr-callsign"; csInput.maxLength = NAME_MAX; csInput.spellcheck = false; csInput.autocomplete = "off"; csInput.placeholder = "OPERATOR";
   csInput.setAttribute("aria-describedby", "kr-callsign-help");
   const csHelp = h("div", "tn-play-help", csForm); csHelp.id = "kr-callsign-help";
   const csRow = h("div", "tn-play-prow", csForm);
@@ -101,7 +101,7 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   // PLAY tab (home / invited / private lobby room)
   const play = h("section", "tn-play-sec-play", main);
   const eyebrow = h("div", "tn-eyebrow tn-play-eyebrow", play);
-  h("h1", "tn-lobby-display tn-play-display", play).innerHTML = "Rule the<br>island.";
+  h("h1", "tn-lobby-display tn-play-display", play).innerHTML = "Drop.<br>Survive.";
   const codeRow = h("div", "tn-play-coderow", play);
   const codeBig = h("div", "tn-title tn-play-roomcode", codeRow);
   const btnCopy = h("button", "tn-play-link", codeRow); btnCopy.type = "button";
@@ -140,7 +140,7 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   // TRAINING tab
   const training = h("section", "tn-play-sec-training", main);
   const tEyebrow = h("div", "tn-eyebrow tn-play-eyebrow", training); tEyebrow.textContent = "Training";
-  h("h1", "tn-lobby-display tn-play-display", training).innerHTML = "Sharpen<br>up.";
+  h("h1", "tn-lobby-display tn-play-display", training).innerHTML = "Combat<br>drills.";
   const tiles = h("div", "tn-play-tiles", training);
   const tile = (title: string, sub: string) => { const b = h("button", "tn-play-tile", tiles); b.type = "button"; h("b", "", b).textContent = title; const s = h("span", "", b); s.textContent = sub; b.insertAdjacentHTML("beforeend", ICON.chevron); return b; };
   const tileRange = tile("Firing range", "Every weapon, infinite ammo, targets at 10–205 m.");
@@ -167,7 +167,7 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   let last: LobbyState | null = null, ui: Ui = "home", inviteDeclined: string | null = null, status: ServerStatus = { state: "checking" };
   actions.setMode(mode);
 
-  const callsign = () => (store.get(NAME_KEY) || "").toUpperCase().slice(0, NAME_MAX) || "KONG";
+  const callsign = () => (store.get(NAME_KEY) || "").toUpperCase().slice(0, NAME_MAX) || "OPERATOR";
   function commitName() { actions.setName(callsign()); }
   const paintName = () => { csName.textContent = callsign(); };
   paintName();
@@ -215,7 +215,7 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   for (const p of pops) p.addEventListener("toggle", () => {
     if (p.open) {
       for (const q of pops) if (q !== p && q.open) q.open = false;
-      if (p === csPop) { csInput.value = callsign() === "KONG" && !store.get(NAME_KEY) ? "" : callsign(); setCsError(null); requestAnimationFrame(() => { csInput.focus(); csInput.select(); }); }
+      if (p === csPop) { csInput.value = callsign() === "OPERATOR" && !store.get(NAME_KEY) ? "" : callsign(); setCsError(null); requestAnimationFrame(() => { csInput.focus(); csInput.select(); }); }
       else { frErr.textContent = ""; }
     } else if (p.contains(document.activeElement) && document.activeElement !== p.querySelector("summary")) p.querySelector<HTMLElement>("summary")?.focus();
   });
@@ -417,7 +417,7 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
     roster.replaceChildren();
     roster.classList.toggle("solo", s.mode === "solo");
     const chip = (parent: HTMLElement, p: LobbyPlayer | null) => {
-      const name = p ? (p.name || "KONG") : "Bot", me = !!p && p.id === s.meId;
+      const name = p ? (p.name || "OPERATOR") : "Bot", me = !!p && p.id === s.meId;
       const d = h("div", "tn-play-chip" + (p ? (me ? " is-me" : "") : " is-bot") + (name.length > (p?.host ? 7 : 9) ? " is-long" : ""), parent);
       if (p?.host) d.insertAdjacentHTML("beforeend", ICON.crown);
       h("span", "nm", d).textContent = name;

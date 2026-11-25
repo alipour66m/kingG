@@ -9,35 +9,35 @@
 // (no import from styles.ts: it imports this module, and the logo table below is built at load time)
 const uiAsset = (p: string) => `${(import.meta.env.BASE_URL || "/").replace(/\/$/, "")}/assets/ui/${p}`;
 
-/** the Toon palette for code that paints (canvas) or computes colours; CSS uses the custom properties */
+/** Tactical military palette for canvas painters & tokens; CSS uses custom properties */
 export const TOON = {
-  bg: "#071422",
-  surface: "#0E2A3D",
-  surface2: "#12344B",
-  surfaceRaised: "#17405A",
-  rule: "#1D4763",
-  ruleStrong: "#2A5C7C",
-  outline: "#04101A",
-  text: "#FFF8E7",
-  textMuted: "#A9C6DA",
-  textFaint: "#7FA3BC",
-  accent: "#FFD21A",
-  accentLight: "#FFE45C",
-  accentShade: "#F2B800",
-  onAccent: "#04101A",
-  sky: "#4FB6EA",
-  shield: "#3EC4FF",
-  success: "#5BE37D",
-  warning: "#FF9F1C",
-  danger: "#FF4D5E",
-  rarityCommon: "#4CC35A",
-  rarityRare: "#2F8BFF",
-  disabled: "#2A4152",
-  disabledText: "#8FA8B8",
-  focus: "#FFFFFF",
-  display: "'Lilita One', 'Arial Black', Impact, sans-serif",
-  ui: "'Nunito', 'Segoe UI', system-ui, sans-serif",
-  spring: "cubic-bezier(.34, 1.56, .64, 1)",
+  bg: "#0b0e12",
+  surface: "#12171e",
+  surface2: "#181f28",
+  surfaceRaised: "#202a36",
+  rule: "#2b3644",
+  ruleStrong: "#3d4c5e",
+  outline: "#07090c",
+  text: "#edf2f5",
+  textMuted: "#98a6b5",
+  textFaint: "#677584",
+  accent: "#f0a500",
+  accentLight: "#ffc13b",
+  accentShade: "#cf8600",
+  onAccent: "#080b0e",
+  sky: "#5fa8d3",
+  shield: "#3aa0ff",
+  success: "#47c46b",
+  warning: "#ff8c1a",
+  danger: "#e63946",
+  rarityCommon: "#58b968",
+  rarityRare: "#3888e8",
+  disabled: "#1f262e",
+  disabledText: "#6f7b87",
+  focus: "#f0a500",
+  display: "'Barlow Condensed', 'KR Sans', Arial, sans-serif",
+  ui: "'KR Sans', 'Segoe UI', system-ui, sans-serif",
+  spring: "cubic-bezier(.22, 1, .36, 1)",
 } as const;
 
 /** n design px (1920×1080 canvas) → a CSS length on the current Toon canvas */
@@ -69,16 +69,16 @@ const SIZE_TOKENS = `
   --kong-space-1: ${T(4)}; --kong-space-2: ${T(8)}; --kong-space-3: ${T(12)}; --kong-space-4: ${T(16)};
   --kong-space-6: ${T(24)}; --kong-space-8: ${T(32)}; --kong-space-12: ${T(48)}; --kong-space-16: ${T(64)};
   --kong-safe: ${T(48)};
-  --kong-outline-xs: ${T(2)}; --kong-outline-sm: ${T(3)}; --kong-outline-md: ${T(4)};
-  --kong-drop-pill: 0 ${T(4)} 0 var(--kong-outline);
-  --kong-drop-tile: 0 ${T(5)} 0 var(--kong-outline);
-  --kong-drop-button: 0 ${T(6)} 0 var(--kong-outline);
-  --kong-drop-card: 0 ${T(7)} 0 var(--kong-outline);
-  --kong-drop-dialog: 0 ${T(10)} 0 var(--kong-outline);
-  --kong-drop-hover: 0 ${T(9)} 0 var(--kong-outline);
-  --kong-drop-pressed: 0 ${T(1)} 0 var(--kong-outline);
-  --kong-radius-key: ${T(9)}; --kong-radius-button: ${T(16)}; --kong-radius-tile: ${T(18)};
-  --kong-radius-card: ${T(22)}; --kong-radius-panel: ${T(24)}; --kong-radius-dialog: ${T(26)};
+  --kong-outline-xs: ${T(1.5)}; --kong-outline-sm: ${T(1.5)}; --kong-outline-md: ${T(2)};
+  --kong-drop-pill: 0 ${T(4)} ${T(12)} rgba(0, 0, 0, .48);
+  --kong-drop-tile: 0 ${T(6)} ${T(16)} rgba(0, 0, 0, .52);
+  --kong-drop-button: 0 ${T(6)} ${T(18)} rgba(0, 0, 0, .55);
+  --kong-drop-card: 0 ${T(10)} ${T(26)} rgba(0, 0, 0, .60);
+  --kong-drop-dialog: 0 ${T(16)} ${T(40)} rgba(0, 0, 0, .72);
+  --kong-drop-hover: 0 ${T(8)} ${T(22)} rgba(0, 0, 0, .62);
+  --kong-drop-pressed: 0 ${T(2)} ${T(6)} rgba(0, 0, 0, .5);
+  --kong-radius-key: ${T(4)}; --kong-radius-button: ${T(6)}; --kong-radius-tile: ${T(6)};
+  --kong-radius-card: ${T(8)}; --kong-radius-panel: ${T(8)}; --kong-radius-dialog: ${T(10)};
   --kong-control-height: ${T(52)}; --kong-primary-height: ${T(64)};
   --kong-focus-width: ${T(4)}; --kong-focus-offset: ${T(3)};
   --kong-fs-lobby: ${T(110)}; --kong-lh-lobby: ${T(100)};
@@ -108,17 +108,17 @@ const TOON_CSS = `
   --kong-rarity-common: ${TOON.rarityCommon}; --kong-rarity-rare: ${TOON.rarityRare};
   --kong-disabled: ${TOON.disabled}; --kong-disabled-text: ${TOON.disabledText}; --kong-focus: ${TOON.focus};
   --kong-font-display: ${TOON.display}; --kong-font-ui: ${TOON.ui};
-  --kong-gradient-primary: linear-gradient(180deg, #FFE45C 0%, #FFD21A 55%, #F2B800 100%);
-  --kong-gradient-primary-hover: linear-gradient(180deg, #FFEA7A 0%, #FFD83A 55%, #F5C000 100%);
-  --kong-gradient-secondary: linear-gradient(180deg, #24597B, #17405A);
-  --kong-gradient-danger: linear-gradient(180deg, #FF7A86, #FF4D5E);
-  --kong-gradient-health: linear-gradient(180deg, #FFE45C, #FFD21A 55%, #F2B800);
-  --kong-gradient-shield: linear-gradient(180deg, #8FE0FF, #3EC4FF 55%, #1E9BE0);
-  --kong-gradient-panel: linear-gradient(180deg, #12344B, #0E2A3D);
-  --kong-gradient-common: radial-gradient(circle at 50% 45%, #8EEA7E 0%, #4CC35A 55%, #2C8A3A 100%);
-  --kong-gradient-rare: radial-gradient(circle at 50% 45%, #7FC4FF 0%, #2F8BFF 55%, #1A5BC4 100%);
-  --kong-scrim: rgba(4, 16, 26, 0.72);
-  --kong-motion-fast: 120ms; --kong-motion-standard: 180ms; --kong-motion-slow: 240ms;
+  --kong-gradient-primary: linear-gradient(180deg, #ffb829 0%, #f0a500 55%, #cf8600 100%);
+  --kong-gradient-primary-hover: linear-gradient(180deg, #ffc84d 0%, #f7b216 55%, #dc9200 100%);
+  --kong-gradient-secondary: linear-gradient(180deg, rgba(32, 42, 54, .94), rgba(20, 26, 34, .94));
+  --kong-gradient-danger: linear-gradient(180deg, #ef4754, #c92a37);
+  --kong-gradient-health: linear-gradient(180deg, #e8eef4, #c6d1dc 60%, #a8b6c4);
+  --kong-gradient-shield: linear-gradient(180deg, #6dc1ff, #3aa0ff 55%, #1d7ed9);
+  --kong-gradient-panel: linear-gradient(180deg, rgba(20, 26, 34, .95), rgba(13, 17, 22, .96));
+  --kong-gradient-common: radial-gradient(circle at 50% 45%, #73d684 0%, #48a85a 55%, #2c783b 100%);
+  --kong-gradient-rare: radial-gradient(circle at 50% 45%, #70b7ff 0%, #3480e0 55%, #1d55a8 100%);
+  --kong-scrim: rgba(6, 8, 12, 0.78);
+  --kong-motion-fast: 110ms; --kong-motion-standard: 160ms; --kong-motion-slow: 220ms;
   --kong-ease-spring: ${TOON.spring}; --kong-ease-out: cubic-bezier(.2, .8, .2, 1);
 }
 :root, .kr-root, .kr-tu { ${SIZE_TOKENS} }
@@ -130,12 +130,15 @@ html.kr-calm { --kong-motion-fast: 0ms; --kong-motion-standard: 0ms; --kong-moti
 
 /* ---------- type roles ---------- */
 .tn-display, .tn-title, .tn-lobby-display, .tn-heading, .tn-hud-num {
-  font-family: var(--kong-font-display); font-weight: 400; letter-spacing: .01em; color: var(--kong-text);
-  -webkit-text-stroke: var(--kong-text-outline-sm) var(--kong-outline); paint-order: stroke fill; }
-.tn-lobby-display { font-size: var(--kong-fs-lobby); line-height: var(--kong-lh-lobby); -webkit-text-stroke-width: var(--kong-text-outline-lg); text-shadow: 0 ${T(7)} 0 var(--kong-outline); }
-.tn-title { font-size: var(--kong-fs-title); line-height: var(--kong-lh-title); -webkit-text-stroke-width: var(--kong-text-outline-md); text-shadow: 0 ${T(7)} 0 var(--kong-outline); }
-.tn-heading { font-size: var(--kong-fs-heading); line-height: var(--kong-lh-heading); -webkit-text-stroke-width: var(--kong-text-outline-xs); }
+  font-family: var(--kong-font-display); font-weight: 800; letter-spacing: .04em; color: var(--kong-text);
+  text-shadow: 0 ${T(2)} ${T(8)} rgba(0, 0, 0, .75); }
+.tn-lobby-display { font-size: var(--kong-fs-lobby); line-height: var(--kong-lh-lobby); text-shadow: 0 ${T(4)} ${T(16)} rgba(0, 0, 0, .7); }
+.tn-title { font-size: var(--kong-fs-title); line-height: var(--kong-lh-title); text-shadow: 0 ${T(4)} ${T(14)} rgba(0, 0, 0, .7); }
+.tn-heading { font-size: var(--kong-fs-heading); line-height: var(--kong-lh-heading); }
 .tn-hud-num { font-size: var(--kong-fs-hud); line-height: var(--kong-lh-hud); font-variant-numeric: tabular-nums; }
+.tn-brandmark { display: inline-flex; flex-direction: column; gap: ${T(2)}; user-select: none; pointer-events: none; text-transform: uppercase; }
+.tn-brandmark b { font-family: var(--kong-font-display); font-weight: 800; font-size: ${T(52)}; line-height: .9; letter-spacing: .08em; color: var(--kong-text); }
+.tn-brandmark small { font-family: var(--kong-font-ui); font-weight: 800; font-size: ${T(13)}; letter-spacing: .38em; color: var(--kong-accent); }
 .tn-label { font-family: var(--kong-font-ui); font-weight: 800; font-size: var(--kong-fs-label); line-height: var(--kong-lh-label); color: var(--kong-text); }
 .tn-body { font-family: var(--kong-font-ui); font-weight: 600; font-size: var(--kong-fs-body); line-height: var(--kong-lh-body); color: var(--kong-text-muted); }
 .tn-support { font-family: var(--kong-font-ui); font-weight: 700; font-size: var(--kong-fs-support); line-height: var(--kong-lh-support); color: var(--kong-text-muted); }

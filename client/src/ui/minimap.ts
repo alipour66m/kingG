@@ -71,18 +71,18 @@ export class Minimap {
       return [dx * cr - dy * sr0 + VIEW / 2, dx * sr0 + dy * cr + VIEW / 2];
     };
 
-    // storm: tint outside the current wall, glowing violet edge
+    // Blue Zone: cobalt tint outside current perimeter, glowing cyan-blue ring
     const [scx, scy] = P(s.safe.cx, s.safe.cz), sr = s.safe.r * k;
     const stormVisible = s.stormPhase > 0 || !!s.next;
     if (stormVisible && sr < VIEW * 2.2) {
       g.save();
       g.beginPath(); g.rect(-2, -2, VIEW + 4, VIEW + 4); g.arc(scx, scy, sr, 0, Math.PI * 2, true);
-      g.fillStyle = "rgba(78,28,150,0.3)";
+      g.fillStyle = "rgba(18, 86, 200, 0.32)";
       g.fill();
       g.restore();
-      g.strokeStyle = "rgba(196,150,255,0.95)";
+      g.strokeStyle = "rgba(90, 185, 255, 0.95)";
       g.lineWidth = 2.2;
-      g.shadowColor = "rgba(170,110,255,0.9)"; g.shadowBlur = 6;
+      g.shadowColor = "rgba(45, 145, 255, 0.9)"; g.shadowBlur = 6;
       g.beginPath(); g.arc(scx, scy, sr, 0, Math.PI * 2); g.stroke();
       g.shadowBlur = 0;
     }

@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>KONG ROYALE</title>
-<meta name="description" content="KONG ROYALE — a 50-player banana battle royale in the browser. Solo and trios, resurgence, one gorgeous island." />
-<meta name="theme-color" content="#0e2a3e" />
+<title>KING-G: BATTLEGROUNDS</title>
+<meta name="description" content="KING-G: BATTLEGROUNDS — 50-player tactical military battle royale in the browser. Solo and squads, realistic arsenal, shrinking Blue Zone." />
+<meta name="theme-color" content="#0b0e12" />
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="KONG ROYALE" />
-<meta property="og:title" content="KONG ROYALE" />
-<meta property="og:description" content="A 50-player banana battle royale in the browser. Solo and trios, resurgence, one gorgeous island." />
+<meta property="og:site_name" content="KING-G: BATTLEGROUNDS" />
+<meta property="og:title" content="KING-G: BATTLEGROUNDS" />
+<meta property="og:description" content="50-player tactical military battle royale in the browser. Solo and squads, realistic arsenal, shrinking Blue Zone." />
 <meta name="twitter:card" content="summary" />
-<meta name="twitter:title" content="KONG ROYALE" />
-<meta name="twitter:description" content="A 50-player banana battle royale in the browser. Solo and trios, resurgence, one gorgeous island." />
+<meta name="twitter:title" content="KING-G: BATTLEGROUNDS" />
+<meta name="twitter:description" content="50-player tactical military battle royale in the browser. Solo and squads, realistic arsenal, shrinking Blue Zone." />
 <link rel="icon" href="data:," />
 <!-- the loading screen's first frame: its art (the 4K copy only where the CSS below swaps to it) and the Toon type -->
 <link rel="preload" href="/assets/ui/loading.webp" as="image" media="(max-width: 2599.98px) and (max-resolution: 1.49dppx), (max-width: 1699.98px)" />
@@ -20,7 +20,7 @@
 <link rel="preload" href="/assets/ui/toon/lilita-one-latin.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="/assets/ui/toon/nunito-var-latin.woff2" as="font" type="font/woff2" crossorigin />
 <style>
-  html, body { margin: 0; height: 100%; background: #0e6fa8; overflow: hidden; overscroll-behavior: none; }
+  html, body { margin: 0; height: 100%; background: #0b0e12; overflow: hidden; overscroll-behavior: none; }
   #c { display: block; width: 100vw; height: 100vh; touch-action: none; outline: none; }
   #ui { position: fixed; inset: 0; pointer-events: none; }
   /* the game's canvas lettering (blimp, lobby, helipad, tuk-tuk, map): the inline script below loads both while the
@@ -36,37 +36,32 @@
      (window.__kr.ready). It paints before any module loads, so client/src/ui/toon.ts is not injected yet: the tokens it
      needs are declared here, scoped to #kr-loading. This block is the one place on the screen with raw values. */
   #kr-loading {
-    /* the Toon design tokens, verbatim */
-    --kong-bg: #071422; --kong-surface-raised: #17405A; --kong-outline: #04101A;
-    --kong-text: #FFF8E7; --kong-text-muted: #A9C6DA; --kong-accent: #FFD21A; --kong-accent-light: #FFE45C;
-    --kong-accent-shade: #F2B800; --kong-on-accent: #04101A; --kong-danger: #FF4D5E; --kong-focus: #FFFFFF;
-    --kong-font-display: "Lilita One", "Arial Black", sans-serif; --kong-font-ui: "Nunito", "Segoe UI", sans-serif;
-    --kong-gradient-primary: linear-gradient(180deg, #FFE45C 0%, #FFD21A 55%, #F2B800 100%);
-    --kong-motion-fast: 120ms; --kong-motion-standard: 180ms; --kong-motion-slow: 240ms;
-    --kong-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
-    /* toon.ts additions to the tokens (TOON.rule / disabled / disabledText, the panel gradient, the hover gradient, the scrim) */
-    --kong-rule: #1D4763; --kong-disabled: #2A4152; --kong-disabled-text: #8FA8B8;
-    --kong-gradient-primary-hover: linear-gradient(180deg, #FFEA7A 0%, #FFD83A 55%, #F5C000 100%);
-    --kong-gradient-panel: linear-gradient(180deg, #12344B, #0E2A3D);
-    --kong-scrim: rgba(4, 16, 26, 0.72);
-    /* the Toon design's loading screen */
-    --kong-ld-shade: linear-gradient(180deg, transparent 50%, rgba(7, 20, 34, .8) 78%, rgba(7, 20, 34, .97));
-    --kong-ld-glass: rgba(14, 42, 61, .92);
-    --kong-ld-underline: rgba(238, 234, 223, .4);
-    --kong-ld-dash: rgba(238, 234, 223, .25);
-    /* sizes: token px on the 1920×1080 canvas, scaled through --tu like toon.ts T(n) (a 0.5 floor keeps a short
-       landscape phone legible) */
+    --kong-bg: #0b0e12; --kong-surface-raised: #202a36; --kong-outline: #07090c;
+    --kong-text: #edf2f5; --kong-text-muted: #98a6b5; --kong-accent: #f0a500; --kong-accent-light: #ffc13b;
+    --kong-accent-shade: #cf8600; --kong-on-accent: #080b0e; --kong-danger: #e63946; --kong-focus: #f0a500;
+    --kong-font-display: "Barlow Condensed", "Arial Black", sans-serif; --kong-font-ui: "Segoe UI", system-ui, sans-serif;
+    --kong-gradient-primary: linear-gradient(180deg, #ffb829 0%, #f0a500 55%, #cf8600 100%);
+    --kong-motion-fast: 110ms; --kong-motion-standard: 160ms; --kong-motion-slow: 220ms;
+    --kong-ease-spring: cubic-bezier(.22, 1, .36, 1);
+    --kong-rule: #2b3644; --kong-disabled: #1f262e; --kong-disabled-text: #6f7b87;
+    --kong-gradient-primary-hover: linear-gradient(180deg, #ffc84d 0%, #f7b216 55%, #dc9200 100%);
+    --kong-gradient-panel: linear-gradient(180deg, rgba(20, 26, 34, .95), rgba(13, 17, 22, .96));
+    --kong-scrim: rgba(6, 8, 12, 0.78);
+    --kong-ld-shade: linear-gradient(180deg, rgba(11, 14, 18, .35) 0%, rgba(11, 14, 18, .78) 72%, rgba(11, 14, 18, .97));
+    --kong-ld-glass: rgba(18, 23, 30, .92);
+    --kong-ld-underline: rgba(237, 242, 245, .35);
+    --kong-ld-dash: rgba(237, 242, 245, .25);
     --tu: max(0.5px, min(calc(100vh / 1080), calc(100vw / 1920)));
-    --kong-outline-sm: calc(3 * var(--tu)); --kong-outline-md: calc(4 * var(--tu));
-    --kong-drop-pill: 0 calc(4 * var(--tu)) 0 var(--kong-outline);
-    --kong-drop-button: 0 calc(6 * var(--tu)) 0 var(--kong-outline);
-    --kong-drop-card: 0 calc(7 * var(--tu)) 0 var(--kong-outline);
-    --kong-drop-dialog: 0 calc(10 * var(--tu)) 0 var(--kong-outline);
-    --kong-drop-hover: 0 calc(9 * var(--tu)) 0 var(--kong-outline);
-    --kong-drop-pressed: 0 calc(1 * var(--tu)) 0 var(--kong-outline);
-    --kong-radius-pill: 999px; --kong-radius-key: calc(9 * var(--tu)); --kong-radius-button: calc(16 * var(--tu));
-    --kong-radius-card: calc(22 * var(--tu)); --kong-radius-dialog: calc(26 * var(--tu));
-    --kong-focus-width: calc(4 * var(--tu)); --kong-focus-offset: calc(3 * var(--tu));
+    --kong-outline-sm: calc(1.5 * var(--tu)); --kong-outline-md: calc(2 * var(--tu));
+    --kong-drop-pill: 0 calc(4 * var(--tu)) calc(12 * var(--tu)) rgba(0, 0, 0, .5);
+    --kong-drop-button: 0 calc(6 * var(--tu)) calc(18 * var(--tu)) rgba(0, 0, 0, .55);
+    --kong-drop-card: 0 calc(10 * var(--tu)) calc(26 * var(--tu)) rgba(0, 0, 0, .6);
+    --kong-drop-dialog: 0 calc(16 * var(--tu)) calc(40 * var(--tu)) rgba(0, 0, 0, .72);
+    --kong-drop-hover: 0 calc(8 * var(--tu)) calc(22 * var(--tu)) rgba(0, 0, 0, .62);
+    --kong-drop-pressed: 0 calc(2 * var(--tu)) calc(6 * var(--tu)) rgba(0, 0, 0, .5);
+    --kong-radius-pill: 999px; --kong-radius-key: calc(4 * var(--tu)); --kong-radius-button: calc(6 * var(--tu));
+    --kong-radius-card: calc(8 * var(--tu)); --kong-radius-dialog: calc(10 * var(--tu));
+    --kong-focus-width: calc(3 * var(--tu)); --kong-focus-offset: calc(3 * var(--tu));
 
     position: fixed; inset: 0; z-index: 100; overflow: hidden; background: var(--kong-bg); color: var(--kong-text);
     font-family: var(--kong-font-ui); font-variant-numeric: tabular-nums; transition: opacity .7s ease;
@@ -236,12 +231,12 @@
 <div id="ui"></div>
 <div id="kr-loading">
   <div class="bg"></div><div class="shade"></div>
-  <img class="logo" src="/assets/ui/toon/kong-royale-lockup.svg" alt="Kong Royale" width="320" height="119" draggable="false" />
+  <div class="logo" style="display:flex;flex-direction:column;font-family:var(--kong-font-display);text-transform:uppercase;"><b style="font-size:calc(52 * var(--tu));line-height:.9;letter-spacing:.08em;color:var(--kong-text);">KING-G</b><span style="font-family:var(--kong-font-ui);font-weight:800;font-size:calc(13 * var(--tu));letter-spacing:.38em;color:var(--kong-accent);">BATTLEGROUNDS</span></div>
   <div class="dock">
     <div class="copy">
-      <p class="eyebrow mode">Battle royale · 50 players</p>
-      <h1 class="headline">The island awaits.</h1>
-      <div class="phase stage">Loading the island</div>
+      <p class="eyebrow mode">Tactical Battle Royale · 50 Operators</p>
+      <h1 class="headline">Deploy to the Zone.</h1>
+      <div class="phase stage">Initializing sector</div>
     </div>
     <div class="meter">
       <div class="pct" aria-hidden="true">0%</div>
@@ -262,14 +257,13 @@
     </div>
   </div>
   <div class="failure scrim" hidden role="alertdialog" aria-modal="true" aria-labelledby="kr-load-failure-title" aria-describedby="kr-load-failure-description">
-    <div class="card"><h2 id="kr-load-failure-title">The island couldn't load</h2><p class="body" id="kr-load-failure-description">The game couldn't finish loading. Reload this page to try again.</p><div class="acts"><button type="button" class="btn">Reload game</button></div></div>
+    <div class="card"><h2 id="kr-load-failure-title">Sector failed to initialize</h2><p class="body" id="kr-load-failure-description">Deployment failed to complete. Reload this page to retry.</p><div class="acts"><button type="button" class="btn">Reload game</button></div></div>
   </div>
 </div>
 <div id="kr-desktop-only" hidden>
-  <img src="/assets/ui/toon/kong-royale-lockup.svg" alt="Kong Royale" width="320" height="119" draggable="false" />
-  <p class="eyebrow">Battle royale · 50 players</p>
+  <p class="eyebrow">KING-G: BATTLEGROUNDS · 50 Operators</p>
   <h1>Desktop only, for now</h1>
-  <p class="body">Kong Royale needs a mouse and keyboard and doesn't run on phones or tablets yet. Open this link on a computer to play.</p>
+  <p class="body">KING-G: BATTLEGROUNDS requires a mouse and keyboard. Open this link on a computer to deploy.</p>
   <button type="button">Copy link</button>
   <p class="fine" role="status" aria-live="polite"></p>
 </div>
@@ -388,20 +382,20 @@
 
     // ---- mode line: only what is actually known now (an invite link names its lobby; otherwise the game, not a mode)
     var join = (q.get("join") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
-    $(".mode").textContent = join ? "Private lobby · Invite " + join : "Battle royale · 50 players";
+    $(".mode").textContent = join ? "Private lobby · Invite " + join : "Tactical Battle Royale · 50 Operators";
 
     // ---- tips: one at a time, every 3.2 s (paused while hovered or focused); click / Enter / Space shows the next
     var TIPS = [
-      { eb: "Drop tip", keys: [["sprint", "Dive"], ["glider", "Glider"]], text: "In freefall, dive to land sooner, then open your glider." },
-      { eb: "Movement tip", keys: [["sprint", "Sprint"], ["crouch", "Slide"]], text: "Crouch while sprinting to slide. Jump out to keep the speed." },
-      { eb: "Movement tip", keys: [["jump", "Mantle"]], text: "Jump at a ledge to climb up. Anything up to 2 metres." },
-      { eb: "Loot tip", keys: [["use", "Open"]], text: "Chests glow by rarity. Open them fast and keep moving." },
-      { eb: "Combat tip", keys: [["aim", "Scope"]], text: "Only the Longstem sniper zooms when you aim." },
-      { eb: "Combat tip", keys: [["fire", "Fire"]], text: "Heads take the most damage. Aim for the fuzz." },
-      { eb: "Squad tip", keys: [["ping", "Mark"]], text: "Mark the spot you look at. Your squad sees it in Trios." },
-      { eb: "Squad tip", title: "Resurgence", text: "While a squadmate lives, you drop back in from the sky." },
-      { eb: "Squad tip", title: "Resurgence off", text: "Once it shows, every kill is final." },
-      { eb: "Storm tip", title: "The storm", text: "It never kills you instantly, but it will if you stay in it." }];
+      { eb: "Drop tip", keys: [["sprint", "Dive"], ["glider", "Parachute"]], text: "In freefall, dive to land sooner, then deploy your parachute." },
+      { eb: "Movement tip", keys: [["sprint", "Sprint"], ["crouch", "Slide"]], text: "Crouch while sprinting to slide. Jump out to keep momentum." },
+      { eb: "Movement tip", keys: [["jump", "Mantle"]], text: "Jump at a ledge to vault up. Clears walls up to 2 metres." },
+      { eb: "Loot tip", keys: [["use", "Loot"]], text: "Supply crates glow by rarity tier. Gear up fast and keep moving." },
+      { eb: "Combat tip", keys: [["aim", "Scope"]], text: "Kar98k and AWM sniper rifles equip high-magnification optics on ADS." },
+      { eb: "Combat tip", keys: [["fire", "Fire"]], text: "Headshots deal critical damage. Aim for enemy helmets." },
+      { eb: "Squad tip", keys: [["ping", "Mark"]], text: "Ping hostiles or targets on the terrain for your squad." },
+      { eb: "Squad tip", title: "Redeploy", text: "While a squadmate survives, eliminated operators redeploy by air." },
+      { eb: "Squad tip", title: "Redeploy disabled", text: "In late phases, every elimination is permanent." },
+      { eb: "Zone tip", title: "The Blue Zone", text: "Stay inside the safe perimeter to avoid ticking Blue Zone damage." }];
     var ti = demo ? 0 : Math.floor(Math.random() * TIPS.length), tipTimer = 0, tipHold = false;
     TIPS.forEach(function () { dashes.appendChild(h("i")); });
     function renderTip(swap) {
@@ -425,8 +419,8 @@
     // ---- Learn controls: a quick card with the real bindings (the full guide lives in the game once it is ready). Loading
     // carries on underneath; if the island is ready while the card is open, the screen waits until it is closed.
     var GUIDE = [["Move", ["fwd", "left", "back", "right"]], ["Sprint · dive", "sprint"], ["Crouch · slide", "crouch"], ["Jump · mantle", "jump"],
-      ["Open · take", "use"], ["Reload", "reload"], ["Aim", "aim"], ["Fire · use item", "fire"], ["Item slots", "slots"], ["Throw banana bomb", "throw"],
-      ["Map · place a pin", "map"], ["Inventory", "inventory"], ["Mark the spot", "ping"], ["Deploy glider", "glider"]];
+      ["Open · take", "use"], ["Reload", "reload"], ["Aim", "aim"], ["Fire · use item", "fire"], ["Item slots", "slots"], ["Throw frag grenade", "throw"],
+      ["Map · place a pin", "map"], ["Inventory", "inventory"], ["Mark the spot", "ping"], ["Deploy chute", "glider"]];
     function renderGuide() {
       rows.replaceChildren();
       GUIDE.forEach(function (g) {
@@ -538,17 +532,17 @@
     // graph failed to evaluate). From then on main.ts decides what is fatal (__kr.bootError): one POI throwing is not.
     addEventListener("error", function (e) { if (!done && ((e.target && e.target.tagName === "SCRIPT") || (!window.__kr && e.error))) fail(); }, true);
     addEventListener("unhandledrejection", function () { if (!done && !window.__kr) fail(); });
-    var names = { boot: "Loading the island", terrain: "Raising the island", atmos: "Painting the sky", water: "Filling the lagoon", veg: "Growing the jungle",
-      "lobby-islet": "Building the lobby island", afterBuild: "Settling the sand", showcase: "Waking the Kongs", "weapons-showcase": "Peeling the bananas",
-      "gameplay-stage": "Loading the island", game: "Waking the Kongs", settle: "Almost there", ready: "Ready" };
+    var names = { boot: "Initializing sector", terrain: "Generating terrain", atmos: "Calibrating atmosphere", water: "Rendering coastline", veg: "Populating terrain cover",
+      "lobby-islet": "Staging forward base", afterBuild: "Leveling ground", showcase: "Briefing operators", "weapons-showcase": "Inspecting arsenal",
+      "gameplay-stage": "Initializing sector", game: "Deploying operators", settle: "Almost ready", ready: "Ready" };
     // the game's own boot steps (client/src/game/index.ts gameStage)
-    var gameNames = { world: "Building the collision world", kits: "Unpacking the crates", "prewarm:assets": "Stocking the chests",
-      "prewarm:compile": "Warming up the shaders", "prewarm:compile-wait": "Warming up the shaders", "prewarm:frames": "Waking the Kongs",
-      "prewarm:kongs": "Waking the Kongs", "prewarm:stage": "Stocking the chests", "prewarm:look-around": "Waking the Kongs",
-      "prewarm:first-use": "Almost there", title: "Lighting the title", done: "Almost there" };
+    var gameNames = { world: "Building collision geometry", kits: "Staging field crates", "prewarm:assets": "Stocking supply drops",
+      "prewarm:compile": "Compiling tactical shaders", "prewarm:compile-wait": "Compiling tactical shaders", "prewarm:frames": "Deploying operators",
+      "prewarm:kongs": "Deploying operators", "prewarm:stage": "Stocking supply drops", "prewarm:look-around": "Deploying operators",
+      "prewarm:first-use": "Almost ready", title: "Lighting forward base", done: "Almost ready" };
     function label(kr) {
       var st = String(kr.stage || "boot");
-      if (st === "game" && kr.gameStage) { var g = String(kr.gameStage), k = g.split(":")[0] === "kits" ? "kits" : g.replace(/:\d+$/, ""); return gameNames[g] || gameNames[k] || (g.indexOf("prewarm") === 0 ? "Warming up the shaders" : "Waking the Kongs"); }
+      if (st === "game" && kr.gameStage) { var g = String(kr.gameStage), k = g.split(":")[0] === "kits" ? "kits" : g.replace(/:\d+$/, ""); return gameNames[g] || gameNames[k] || (g.indexOf("prewarm") === 0 ? "Compiling tactical shaders" : "Deploying operators"); }
       var id = st.replace(/^(after)?[Bb]uild:/, "").replace(/^poi:/, "");
       if (st.indexOf("afterBuild") === 0) return names.afterBuild;
       if (names[id]) return names[id];

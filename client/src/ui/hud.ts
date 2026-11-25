@@ -486,8 +486,8 @@ export function createHud(terrain: Terrain, pois: typeof POIS): Hud {
     }
     const urgent = !s.stormShrinking && s.stormPhase > 0 && s.stormTimer < 10 && s.phase === "play";
     if (urgent !== last.urgent) { last.urgent = urgent; tog(pill, "urgent", urgent); }
-    txt(clockLabel, s.clockLabel ?? (s.phase === "warmup" ? "PLANE DEPARTS" : s.stormShrinking ? "STORM SHRINKING" : "STORM CLOSES"));
-    // the status line under the compass (and the storm clock); in the storm: which way and how far the safe edge is
+    txt(clockLabel, s.clockLabel ?? (s.phase === "warmup" ? "FLIGHT DEPARTS" : s.stormShrinking ? "BLUE ZONE SHRINKING" : "ZONE CLOSES"));
+    // the status line under the compass (and the zone clock); in the Blue Zone: which way and how far the safe edge is
     pill.classList.toggle("kr-hide", !!s.range);
     const guide = safeEdgeGuide(s.me, s.safe, s.yaw);
     const toward = Math.abs(guide.bearing) < Math.PI / 4 ? "↑ AHEAD" : Math.abs(guide.bearing) > Math.PI * 3 / 4 ? "↓ TURN BACK" : guide.bearing > 0 ? "← LEFT" : "→ RIGHT";
@@ -495,11 +495,11 @@ export function createHud(terrain: Terrain, pois: typeof POIS): Hud {
     // the plain status stays under the compass (it fades 5 s after it last changed); the storm and
     // resurgence warnings sit under the storm clock in the left column and stay
     const sub = s.range ? "FIRING RANGE · INFINITE AMMO"
-      : s.phase === "warmup" ? (s.islandLoad !== undefined ? `WARM-UP · LOADING ISLAND ${Math.floor(s.islandLoad * 20) * 5} %` : "WARM-UP · NOTHING COUNTS YET") : "";
+      : s.phase === "warmup" ? (s.islandLoad !== undefined ? `STAGING · LOADING SECTOR ${Math.floor(s.islandLoad * 20) * 5} %` : "WARM-UP · COMBAT SYSTEMS TEST") : "";
     const warn = s.range || s.phase === "warmup" ? ""
-      : s.inStorm && alive ? `storm:${toward} · ${Math.ceil(guide.distance)} M TO SAFE EDGE`
-      : s.resurgence.final && s.phase === "play" ? "final:RESURGENCE OFF · KILLS ARE FINAL"
-      : s.stormShrinking && s.phase === "play" ? "storm:STORM CLOSING" : "";
+      : s.inStorm && alive ? `storm:${toward} · ${Math.ceil(guide.distance)} M TO SAFE ZONE`
+      : s.resurgence.final && s.phase === "play" ? "final:REDEPLOY DISABLED · KILLS FINAL"
+      : s.stormShrinking && s.phase === "play" ? "storm:BLUE ZONE RESTRICTING" : "";
     if (sub !== last.sub) { last.sub = sub; tog(substat, "kr-hide", !sub); if (sub) substat.textContent = sub; }
     if (warn !== last.warn) {
       last.warn = warn;
@@ -839,7 +839,7 @@ export function createHud(terrain: Terrain, pois: typeof POIS): Hud {
       else if (hintKey === "free") { add(keyName("jump"), "PULL CHUTE"); add(lookText(), "STEER"); add(keyName("fwd"), "FLY FORWARD"); add(`HOLD ${keyName("sprint")}`, "DIVE"); if (pk) add(pk, "PING"); }
       else if (hintKey === "glide") { add(`HOLD ${keyName("jump")}`, "CUT CHUTE"); add(lookText(), "STEER"); add(keyName("fwd"), "GLIDE FORWARD"); if (pk) add(pk, "PING"); }
       else if (bombH === 1) { add(`HOLD ${s.lethal!.key}`, "OR FIRE · COOK"); add("RELEASE", "THROW"); add("3 S", "FUSE — DON'T HOLD IT TOO LONG"); }
-      else if (bombH === 2) { add(`HOLD ${s.lethal!.key}`, "COOK A BANANA BOMB"); add("RELEASE", "THROW"); }
+      else if (bombH === 2) { add(`HOLD ${s.lethal!.key}`, "COOK FRAG GRENADE"); add("RELEASE", "THROW"); }
       else if (hintKey === "swim-surface") { add(keyName("crouch"), "DIVE"); add(keyName("sprint"), "SWIM FASTER"); add(keyName("jump"), "AT AN EDGE · CLIMB OUT"); }
       else if (hintKey === "swim-under") { add(keyName("fwd"), "SWIM WHERE YOU LOOK"); add(keyName("jump"), "UP"); add(keyName("crouch"), "DOWN"); }
     }

@@ -99,7 +99,7 @@ export function videoCategory(engine: Engine, display: Display): Category {
   const diagnostics: Section = { id: "diagnostics", name: "Diagnostics", rows: () => [
     { kind: "switch", id: "autoStats", label: "Send anonymous performance stats automatically", get: autoOn, set: setAuto,
       disabled: () => (privacySignal() ? "Off: your browser's privacy signal is on" : null),
-      help: () => ({ eb: "Diagnostics", body: ["When the game stutters, crashes, or a match ends, Kong Royale sends a small summary of how it ran: frame rate, stall times, memory use, your graphics setup, and the game version. It never includes your callsign, chat, screenshots, or anything you type. Turn this off any time."] }) },
+      help: () => ({ eb: "Diagnostics", body: ["When the game stutters, crashes, or a match ends, KING-G: BATTLEGROUNDS sends a small summary of how it ran: frame rate, stall times, memory use, your graphics setup, and the game version. It never includes your callsign, chat, screenshots, or anything you type. Turn this off any time."] }) },
   ] };
   return {
     id: "video", name: "Video", sections: diagOn() || summariesDefault() ? [display_, graphics, diagnostics] : [display_, graphics],

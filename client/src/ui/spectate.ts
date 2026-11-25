@@ -44,7 +44,7 @@ const CSS = `
 .kr-spec .hb span { position: absolute; right: ${u(6)}; top: 50%; transform: translateY(-50%); font-size: ${u(14)}; font-weight: 800; color: #fff; text-shadow: 0 1px 2px #000; }
 .kr-spec .held { min-width: ${u(170)}; max-width: ${u(230)}; padding: ${u(6)} ${u(12)}; border-radius: ${u(6)}; background: rgba(0,0,0,0.42); border-left: ${u(5)} solid #b8bec6;
   font-family: ${UI.cond}; font-size: ${u(24)}; font-weight: 800; letter-spacing: ${u(1.5)}; color: ${UI.creamText}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kr-spec .storm { padding: ${u(6)} ${u(12)}; border-radius: ${u(6)}; background: rgba(150,40,200,0.85); color: #fff; font-family: ${UI.cond}; font-size: ${u(21)}; font-weight: 800; letter-spacing: ${u(2)}; white-space: nowrap; }
+.kr-spec .storm { padding: ${u(6)} ${u(12)}; border-radius: ${u(4)}; background: rgba(24, 108, 220, 0.88); color: #fff; font-family: ${UI.cond}; font-size: ${u(21)}; font-weight: 800; letter-spacing: ${u(2)}; white-space: nowrap; }
 .kr-spec .down { margin-top: ${u(8)}; font-family: ${UI.cond}; font-size: ${u(24)}; font-weight: 800; letter-spacing: ${u(2.5)}; color: #ff8a80; }
 .kr-spec.isdown .name b { color: rgba(246,239,198,0.5); text-decoration: line-through; text-decoration-thickness: ${u(4)}; }
 .kr-spec .hint { font-family: ${UI.cond}; font-size: ${u(21)}; font-weight: 800; letter-spacing: ${u(2.5)}; color: ${UI.creamText}; text-shadow: 0 1px 3px rgba(0,0,0,0.85); white-space: nowrap; }
@@ -122,7 +122,7 @@ export class SpectateUi {
     const sh = el("div", "hb sh", bars); this.shI = el("i", "", sh); this.shN = el("span", "", sh);
     const hp = el("div", "hb hp", bars); this.hpI = el("i", "", hp); this.hpN = el("span", "", hp);
     this.held = el("div", "held", stats);
-    this.storm = el("div", "storm", stats); this.storm.textContent = "IN THE STORM"; this.storm.style.display = "none";
+    this.storm = el("div", "storm", stats); this.storm.textContent = "IN BLUE ZONE"; this.storm.style.display = "none";
     this.down = el("div", "down", card); this.down.style.display = "none";
     this.hint = el("div", "hint", bar);
     const list = this.list = el("div", "kr-plist kr-hide", root);

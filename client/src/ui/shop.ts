@@ -23,46 +23,33 @@ export interface ShopScreen {
   key(n: number): void;
 }
 
-/** the stand's shopkeeper (front view, banana-yellow vendor cap) — the 3D monkey behind the counter wears the same */
+/** Tactical Field Armory supply insignia */
 export const MONKEY_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true">
-<circle cx="17" cy="55" r="13" fill="#6a3a1a"/><circle cx="17" cy="55" r="7.5" fill="#e3a979"/>
-<circle cx="83" cy="55" r="13" fill="#6a3a1a"/><circle cx="83" cy="55" r="7.5" fill="#e3a979"/>
-<circle cx="50" cy="54" r="33" fill="#7b4520"/>
-<path d="M37 47c-9 0-14 8-12 17 2 12 13 20 25 20s23-8 25-20c2-9-3-17-12-17-5 0-9 3-13 3s-8-3-13-3z" fill="#f2c99a"/>
-<ellipse cx="50" cy="45.5" rx="24" ry="4" fill="#5a2f12" opacity=".28"/>
-<g class="eyes"><ellipse cx="40" cy="54" rx="5.2" ry="6.6" fill="#2a1607"/><ellipse cx="60" cy="54" rx="5.2" ry="6.6" fill="#2a1607"/>
-<circle cx="41.8" cy="51.6" r="1.9" fill="#fff"/><circle cx="61.8" cy="51.6" r="1.9" fill="#fff"/></g>
-<ellipse cx="46.5" cy="65" rx="1.8" ry="1.3" fill="#6a3a1a"/><ellipse cx="53.5" cy="65" rx="1.8" ry="1.3" fill="#6a3a1a"/>
-<path d="M40 71q10 8 20 0" stroke="#5a2f12" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-<path d="M22 39c1-15 13-25 28-25s27 10 28 25z" fill="#ffd400"/><path d="M50 14v25" stroke="#e0a800" stroke-width="1.6"/>
-<path d="M20 40q30-9 60 0q-2 6-30 6t-30-6z" fill="#e0a800"/>
-<path d="M57.5 23.5c1.7 5-1.9 10.2-8.1 9.6-.9-.1-1.5-.8-1-1.3 4.3-.6 7.3-4 7.4-8z" fill="#6b3d06"/>
-<path d="M30 27q3-7 10-10" stroke="#fff3a8" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+<circle cx="50" cy="50" r="44" fill="#182028" stroke="#f0a500" stroke-width="4"/>
+<path d="M50 18L76 30V54C76 70 64 81 50 86C36 81 24 70 24 54V30Z" fill="#24303c" stroke="#f0a500" stroke-width="2.5"/>
+<path d="M50 32L55 44H68L57 52L61 64L50 56L39 64L43 52L32 44H45Z" fill="#f0a500"/>
+</svg>`;
 
 const u = (n: number) => `calc(${n} * var(--u))`;
-// awning: 56 u stripes (yellow / cream) and a scallop under each, in its own colour
 const AW = 56;
 const CSS = `
 .kr-shop { position: absolute; inset: 0; --u: min(calc(100vh / 1080 * var(--hud-scale, 1)), calc(100vw / 1200)); pointer-events: auto; user-select: none; -webkit-user-select: none;
-  background: radial-gradient(ellipse at center, rgba(40,26,4,0.35), rgba(6,10,16,0.8)); font-family: ${UI.sans}; color: ${UI.creamText}; display: none; place-items: center; z-index: 15; }
+  background: radial-gradient(ellipse at center, rgba(12,18,24,0.55), rgba(6,8,12,0.88)); font-family: ${UI.sans}; color: ${UI.creamText}; display: none; place-items: center; z-index: 15; }
 .kr-shop.on { display: grid; }
 .kr-shop * { box-sizing: border-box; }
-.kr-shop .panel { position: relative; width: ${u(1120)}; padding-top: ${u(30)}; filter: drop-shadow(0 ${u(26)} ${u(40)} rgba(0,0,0,0.55)); animation: krShopIn .18s cubic-bezier(.2,.8,.2,1); }
+.kr-shop .panel { position: relative; width: ${u(1120)}; padding-top: ${u(12)}; filter: drop-shadow(0 ${u(26)} ${u(40)} rgba(0,0,0,0.65)); animation: krShopIn .18s cubic-bezier(.2,.8,.2,1); }
 @keyframes krShopIn { from { transform: translateY(${u(14)}) scale(.985); opacity: 0; } to { transform: none; opacity: 1; } }
-/* the awning: stripes + scallops, over the board */
-.kr-shop .awning { position: absolute; left: ${u(-18)}; right: ${u(-18)}; top: 0; height: ${u(58)}; z-index: 2; border-radius: ${u(10)} ${u(10)} 0 0;
-  background: repeating-linear-gradient(90deg, #ffd21f 0 ${u(AW)}, #fff3cc ${u(AW)} ${u(AW * 2)}); box-shadow: inset 0 ${u(-4)} 0 rgba(150,90,0,0.25), inset 0 ${u(3)} 0 rgba(255,255,255,0.5); }
-.kr-shop .awning::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: ${u(AW / 2)};
-  background: radial-gradient(circle at ${u(AW / 2)} 0, #ffd21f ${u(AW / 2 - 1)}, transparent ${u(AW / 2)}) 0 0 / ${u(AW * 2)} ${u(AW / 2)} repeat-x,
-              radial-gradient(circle at ${u(AW * 1.5)} 0, #fff3cc ${u(AW / 2 - 1)}, transparent ${u(AW / 2)}) 0 0 / ${u(AW * 2)} ${u(AW / 2)} repeat-x;
-  filter: drop-shadow(0 ${u(4)} ${u(3)} rgba(40,20,0,0.35)); }
-/* the board: coconut-wood planks, a gold rim */
-.kr-shop .board { position: relative; border-radius: ${u(12)}; overflow: hidden; border: ${u(3)} solid ${UI.yellow};
-  background: repeating-linear-gradient(90deg, rgba(0,0,0,0.22) 0 ${u(2)}, transparent ${u(2)} ${u(140)}), linear-gradient(180deg, #4b2c15, #331d0d 60%, #2a170a); }
-.kr-shop .head { display: flex; align-items: center; gap: ${u(20)}; padding: ${u(48)} ${u(34)} ${u(18)}; }
-.kr-shop .badge { width: ${u(104)}; height: ${u(104)}; flex: none; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #fff1c9, #f2c879);
-  box-shadow: 0 0 0 ${u(4)} ${UI.yellow}, 0 0 0 ${u(8)} rgba(20,10,0,0.55), 0 ${u(8)} ${u(16)} rgba(0,0,0,0.45); display: grid; place-items: center; overflow: hidden; }
-.kr-shop .badge svg { width: 92%; height: 92%; transform: translateY(6%); }
+/* tactical hazard stripe top header */
+.kr-shop .awning { position: absolute; left: ${u(2)}; right: ${u(2)}; top: ${u(12)}; height: ${u(10)}; z-index: 2; border-radius: ${u(6)} ${u(6)} 0 0;
+  background: repeating-linear-gradient(-45deg, #f0a500 0 ${u(AW * 0.4)}, #141920 ${u(AW * 0.4)} ${u(AW * 0.8)}); }
+.kr-shop .awning::after { display: none; }
+/* dark matte steel armory panel */
+.kr-shop .board { position: relative; border-radius: ${u(8)}; overflow: hidden; border: ${u(2)} solid #384452;
+  background: linear-gradient(180deg, rgba(22,28,36,0.97), rgba(13,17,22,0.98)); }
+.kr-shop .head { display: flex; align-items: center; gap: ${u(20)}; padding: ${u(34)} ${u(34)} ${u(18)}; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.kr-shop .badge { width: ${u(84)}; height: ${u(84)}; flex: none; border-radius: 50%; background: #141a21;
+  box-shadow: 0 0 0 ${u(2)} #f0a500, 0 ${u(8)} ${u(16)} rgba(0,0,0,0.45); display: grid; place-items: center; overflow: hidden; }
+.kr-shop .badge svg { width: 92%; height: 92%; }
 .kr-shop .ttl { font: 900 ${u(64)} ${UI.cond}; letter-spacing: .04em; line-height: .95; color: ${UI.yellow};
   text-shadow: 0 ${u(3)} 0 #8a4f00, 0 ${u(6)} ${u(10)} rgba(0,0,0,0.5); }
 .kr-shop .sub { font: 700 ${u(19)} ${UI.cond}; letter-spacing: .14em; color: rgba(251,243,201,0.78); margin-top: ${u(6)}; }
@@ -122,16 +109,16 @@ const CSS = `
 let styled = false;
 const GLYPH: Record<string, "person" | "skull" | "bullet"> = { buyback: "person", bounty: "skull", ammo: "bullet" };
 /** what the shopkeeper says: welcome / short of Bucks / thanks (after a purchase) */
-const LINES = { hi: "WHAT'LL IT BE, KONG?", broke: "NO BUCKS, NO BANANAS! LOOT SOME CASH.", thanks: "PLEASURE DOING BUSINESS!" };
+const LINES = { hi: "REQ READY, OPERATOR.", broke: "INSUFFICIENT CREDITS. LOOT SUPPLIES.", thanks: "SUPPLY ISSUED. STAY SHARP." };
 
 export function createShop(): ShopScreen {
   if (!styled) { injectStyles(); injectBucksCss(); const st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st); styled = true; }
-  const el = document.createElement("div"); el.className = "kr-shop"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Banana Stand");
+  const el = document.createElement("div"); el.className = "kr-shop"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Field Armory");
   el.innerHTML = `<div class="panel"><div class="awning"></div><div class="board">
-    <div class="head"><div class="badge">${MONKEY_SVG}</div><div><div class="ttl">BANANA STAND</div><div class="sub"></div></div>
-      <div class="wallet"><small>BANANA BUCKS</small><span class="cash">${bucksHtml(0)}</span></div></div>
+    <div class="head"><div class="badge">${MONKEY_SVG}</div><div><div class="ttl">FIELD ARMORY</div><div class="sub"></div></div>
+      <div class="wallet"><small>CREDITS</small><span class="cash">${bucksHtml(0)}</span></div></div>
     <div class="grid"></div>
-    <div class="foot"><span><kbd>1</kbd>–<kbd>7</kbd> OR CLICK TO BUY</span><span class="sp"></span><span class="warn">TAKING DAMAGE CLOSES THE STAND</span><span class="leave"></span></div></div></div>`;
+    <div class="foot"><span><kbd>1</kbd>–<kbd>7</kbd> OR CLICK TO ACQUIRE</span><span class="sp"></span><span class="warn">INCOMING FIRE CLOSES ARMORY</span><span class="leave"></span></div></div></div>`;
   const grid = el.querySelector<HTMLElement>(".grid")!, cashEl = el.querySelector<HTMLElement>(".cash")!, subEl = el.querySelector<HTMLElement>(".sub")!, leaveEl = el.querySelector<HTMLElement>(".leave")!;
   let cards: Array<{ el: HTMLElement; nm: HTMLElement; ds: HTMLElement; tag: HTMLElement; id: number; ok: boolean; icon: string }> = [];
   let talk: { bubble: HTMLElement; face: HTMLElement } | null = null;

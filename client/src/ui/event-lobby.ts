@@ -17,7 +17,7 @@ import { injectMenuStyles } from "./menu-styles";
 import { injectLobbyStyles } from "./lobby-styles";
 import { injectEventLobbyStyles } from "./event-lobby-styles";
 import { checkCallsign } from "./lobby";
-import { TOON_LOGO, keycap } from "./toon";
+import { keycap } from "./toon";
 import { ICON } from "./lobby-icons";
 import { glyphFamily, onLabelsChange, pauseText } from "../settings/labels";
 import { glyph, PB } from "../settings/pad";
@@ -92,8 +92,8 @@ export function createEventLobby(actions: LobbyActions, code: string): LobbyScre
   injectStyles(); injectMenuStyles(); injectLobbyStyles(); injectEventLobbyStyles();
   const root = h("div", "kr-lobby tn-play tn-ev", null);
   h("div", "tn-play-shade tn-ev-shade", root);
-  const brand = h("img", "tn-logo tn-play-brand", root);
-  brand.src = TOON_LOGO.lockup; brand.alt = "Kong Royale"; brand.draggable = false;
+  const brand = h("div", "tn-logo tn-play-brand tn-brandmark", root);
+  brand.innerHTML = `<b>KING-G</b><small>BATTLEGROUNDS</small>`;
 
   // ---------------- top right: who I am (in the room) + Settings
   const id = h("div", "tn-play-id tn-ev-id", root);

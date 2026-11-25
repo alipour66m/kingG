@@ -6,31 +6,28 @@ import { T, TOON_LOGO } from "./toon";
 import { addCss } from "./styles";
 
 /** a Lilita number / title with the Toon outline behind the fill */
-const lilita = (size: number, outline = 4) => `font-family: var(--kong-font-display); font-weight: 400; font-size: ${T(size)}; line-height: 1;
-  -webkit-text-stroke: ${T(outline)} var(--kong-outline); paint-order: stroke fill; letter-spacing: .01em;`;
-/** a Nunito label */
-const nunito = (size: number, weight = 900, track = ".1em") => `font-family: var(--kong-font-ui); font-weight: ${weight}; font-size: ${T(size)}; letter-spacing: ${track};`;
-/** the see-through pill every HUD chip uses: a flat dark tint, no
- *  outline, no drop, no blur; the numbers and labels on it carry their own dark outline */
-const chip = `background: var(--tn-hud-chip); border-radius: 999px;`;
+const lilita = (size: number, _outline = 4) => `font-family: var(--kong-font-display); font-weight: 800; font-size: ${T(size)}; line-height: 1;
+  text-shadow: 0 ${T(2)} ${T(6)} rgba(0, 0, 0, .85); letter-spacing: .03em;`;
+/** a crisp UI label */
+const nunito = (size: number, weight = 800, track = ".1em") => `font-family: var(--kong-font-ui); font-weight: ${weight}; font-size: ${T(size)}; letter-spacing: ${track};`;
+/** dark translucent tactical HUD pill */
+const chip = `background: var(--tn-hud-chip); border: 1px solid rgba(255, 255, 255, .08); border-radius: ${T(6)}; backdrop-filter: blur(4px);`;
 
 export const HUD_TOON_CSS = `
-/* ---------- local tokens (hoist candidates: colours the Toon token set does not carry yet) ---------- */
+/* ---------- local tokens ---------- */
 .kr-root, .tn-hud-practice {
-  --tn-hud-chip: color-mix(in srgb, var(--kong-outline) 46%, transparent);
-  --tn-hud-chip-squad: linear-gradient(180deg, #1C4B6A, #12344B);
+  --tn-hud-chip: rgba(12, 16, 22, 0.72);
+  --tn-hud-chip-squad: linear-gradient(180deg, rgba(24, 32, 42, .92), rgba(14, 19, 25, .92));
   --tn-hud-ivory-85: color-mix(in srgb, var(--kong-text) 85%, transparent);
-  /* labels drawn straight over the world (the Toon design: a soft shadow) get a tight dark halo too, for sand and cloud */
-  --tn-hud-soft: 0 0 ${T(2)} rgba(4, 16, 26, .9), 0 ${T(1)} ${T(6)} rgba(4, 16, 26, .85);
-  /* the storm is the game's violet (map, minimap and the storm wall use it) */
-  --tn-hud-storm: #B98CFF; --tn-hud-storm-text: #E9D6FF;
-  /* feedback: damage is always red, blue only means healing */
-  --tn-hud-dmg-glow: rgba(255, 50, 40, .75);
-  --tn-hud-hurt: rgba(255, 90, 80, .55);
-  --tn-hud-low: rgba(255, 60, 50, .6);
-  --tn-hud-heal-glow: rgba(88, 188, 235, .7);
-  --tn-hud-num-shadow: 0 ${T(2)} ${T(6)} rgba(0, 0, 0, .8);
-  --tn-hud-storm-vig: radial-gradient(ellipse 80% 78% at 50% 50%, rgba(90, 40, 160, .1) 30%, rgba(96, 40, 170, .42) 78%, rgba(50, 14, 100, .8) 100%);
+  --tn-hud-soft: 0 0 ${T(2)} rgba(4, 8, 12, .9), 0 ${T(1)} ${T(6)} rgba(4, 8, 12, .85);
+  /* electric Blue Zone accent (map, minimap, and perimeter wall) */
+  --tn-hud-storm: #3399ff; --tn-hud-storm-text: #a8dcff;
+  --tn-hud-dmg-glow: rgba(230, 57, 70, .75);
+  --tn-hud-hurt: rgba(230, 57, 70, .55);
+  --tn-hud-low: rgba(230, 57, 70, .62);
+  --tn-hud-heal-glow: rgba(70, 196, 108, .65);
+  --tn-hud-num-shadow: 0 ${T(2)} ${T(6)} rgba(0, 0, 0, .85);
+  --tn-hud-storm-vig: radial-gradient(ellipse 80% 78% at 50% 50%, rgba(20, 95, 220, .10) 30%, rgba(24, 110, 240, .42) 78%, rgba(8, 42, 120, .82) 100%);
 }
 @keyframes kr-eq { from { transform: scaleY(.25); } to { transform: scaleY(1); } }
 @keyframes kr-tune { 50% { opacity: .35; } }
@@ -57,9 +54,9 @@ export const HUD_TOON_CSS = `
 html.kr-calm .kr-vig.low.on, html.kr-calm .kr-vig.heal.on { animation: none; opacity: .6; }
 @media (prefers-reduced-motion: reduce) { .kr-vig.low.on, .kr-vig.heal.on { animation: none; opacity: .6; } }
 
-/* ---------- minimap: rounded, outlined, hard drop ---------- */
+/* ---------- minimap: sharp tactical radar frame ---------- */
 .kr-minimap { position: absolute; left: ${T(40)}; top: ${T(36)}; width: ${T(262)}; height: ${T(214)}; overflow: hidden;
-  border-radius: ${T(26)}; border: var(--kong-outline-md) solid var(--kong-outline); box-shadow: 0 ${T(6)} 0 var(--kong-outline);
+  border-radius: ${T(6)}; border: 1.5px solid rgba(255, 255, 255, .18); box-shadow: 0 ${T(8)} ${T(22)} rgba(0, 0, 0, .6);
   background: var(--kong-surface); }
 /* the minimap is painted square around the player: the frame shows its middle band */
 .kr-minimap canvas { position: absolute; left: 0; top: 50%; width: 100%; height: auto; aspect-ratio: 1; transform: translateY(-50%); }

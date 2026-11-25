@@ -36,7 +36,7 @@ addCss("kr-ui-map", `
 .kr-mapv .legend .r { display: flex; align-items: center; gap: ${U(14)}; font-size: ${U(19)}; font-weight: 700; letter-spacing: ${U(1.4)}; color: ${UI.creamText}; }
 .kr-mapv .legend .sw { width: ${U(40)}; height: ${U(22)}; flex: none; position: relative; }
 .kr-mapv .legend .sw.ring { border: ${U(3)} solid #fff; border-radius: 50%; width: ${U(22)}; height: ${U(22)}; margin: 0 ${U(9)}; }
-.kr-mapv .legend .sw.storm { background: linear-gradient(135deg, #2a1150, #6d3ad0 50%, #2a1150); border-radius: ${U(4)}; box-shadow: inset 0 0 0 ${U(1.5)} #c9a4ff; }
+.kr-mapv .legend .sw.storm { background: linear-gradient(135deg, #0b3366, #288cff 50%, #0b3366); border-radius: ${U(4)}; box-shadow: inset 0 0 0 ${U(1.5)} #8fd4ff; }
 .kr-mapv .legend .sw.path { background: radial-gradient(circle, #ffd21f 45%, transparent 50%) 0 50% / ${U(13)} ${U(13)} repeat-x; }
 .kr-mapv .legend .sw svg { width: 100%; height: 100%; }
 .kr-mapv .alive { position: absolute; left: 50%; top: ${U(34)}; transform: translateX(-50%); display: flex; align-items: center; gap: ${U(14)};
@@ -121,16 +121,15 @@ export class BigMap {
     const row = (sw: HTMLElement, label: string) => { const r = document.createElement("div"); r.className = "r"; r.append(sw, label); rows.appendChild(r); };
     const sw = (cls: string) => { const d = document.createElement("div"); d.className = `sw ${cls}`; return d; };
     row(sw("ring"), "NEXT SAFE ZONE");
-    row(sw("storm"), "STORM");
+    row(sw("storm"), "BLUE ZONE");
     row(sw("path"), "FLIGHT PATH");
     const pinSw = sw(""); const pc = document.createElement("canvas"); pc.width = 80; pc.height = 44; pc.style.cssText = "width:100%;height:100%";
     pinSw.appendChild(pc); row(pinSw, "YOUR DROP MARKER");
     const pg = pc.getContext("2d")!; drawPin(pg, 40, 42, 15);
     const gunSw = sw(""); const gc = document.createElement("canvas"); gc.width = 80; gc.height = 44; gc.style.cssText = "width:100%;height:100%";
     gunSw.appendChild(gc); row(gunSw, "GUNFIRE"); shotDot(gc.getContext("2d")!, 40, 22, 0.7, 14);
-    // (economy) the Banana Stands and a bounty's circle
     const stSw = sw(""); const sc = document.createElement("canvas"); sc.width = 80; sc.height = 44; sc.style.cssText = "width:100%;height:100%";
-    stSw.appendChild(sc); row(stSw, "BANANA STAND (BUY)"); standDot(sc.getContext("2d")!, 40, 22, 14);
+    stSw.appendChild(sc); row(stSw, "FIELD ARMORY (BUY)"); standDot(sc.getContext("2d")!, 40, 22, 14);
     const bSw = sw(""); const bc = document.createElement("canvas"); bc.width = 80; bc.height = 44; bc.style.cssText = "width:100%;height:100%";
     bSw.appendChild(bc); row(bSw, "BOUNTY TARGET AREA"); bountyRing(bc.getContext("2d")!, 40, 22, 17, 0.4);
     lg.append(this.phEl, tm, rows);
@@ -338,14 +337,12 @@ export class BigMap {
     if (stormOn) {
       g.save();
       g.beginPath(); g.rect(0, 0, W, H); g.arc(sx, sy, sr, 0, Math.PI * 2, true); g.clip("evenodd");
-      // a translucent violet veil (≤ 35 %) — the island stays readable under the storm; energy concentrates at the edge
-      g.fillStyle = "rgba(52,20,110,0.32)";
+      // Translucent electric Blue Zone veil outside the safe perimeter
+      g.fillStyle = "rgba(12, 62, 160, 0.34)";
       g.fillRect(0, 0, W, H);
       const deep = g.createRadialGradient(sx, sy, sr, sx, sy, sr + 260 * u);
-      deep.addColorStop(0, "rgba(150,90,255,0.34)"); deep.addColorStop(0.3, "rgba(96,46,190,0.14)"); deep.addColorStop(1, "rgba(18,8,40,0)");
+      deep.addColorStop(0, "rgba(40, 145, 255, 0.36)"); deep.addColorStop(0.3, "rgba(20, 95, 210, 0.16)"); deep.addColorStop(1, "rgba(6, 22, 55, 0)");
       g.fillStyle = deep; g.fillRect(0, 0, W, H);
-      // energy veins: drawn on their own layer, then masked so they crowd the wall and fade out over the storm
-      // (the whole storm under loud veins hid the island)
       const S0 = 620 * u, S1 = 900 * u;
       const t0 = (now * 14 * u) % S0, t1 = (now * -9 * u) % S1;
       const vl = this.veinLayer(W, H, d), vg = vl.getContext("2d")!;
@@ -363,9 +360,8 @@ export class BigMap {
       g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(vl, 0, 0); g.setTransform(d, 0, 0, d, 0, 0);
       g.globalCompositeOperation = "source-over";
       g.restore();
-      // bright energy edge
-      g.shadowColor = "rgba(190,140,255,0.95)"; g.shadowBlur = 16 * u;
-      g.strokeStyle = "rgba(236,222,255,0.95)"; g.lineWidth = 3 * u;
+      g.shadowColor = "rgba(60, 170, 255, 0.95)"; g.shadowBlur = 16 * u;
+      g.strokeStyle = "rgba(155, 222, 255, 0.95)"; g.lineWidth = 3 * u;
       g.beginPath(); g.arc(sx, sy, sr, 0, Math.PI * 2); g.stroke();
       g.shadowBlur = 0;
     }
@@ -494,7 +490,7 @@ export class BigMap {
       if (myTuk) tukMe(g, x, y, 15 * u, myTuk.yaw ?? s.yaw, myTuk.kind); else playerArrow(g, x, y, s.yaw, 1.45 * u);
     }
     // ---- legend text
-    const phase = s.phase === "warmup" ? "WARM-UP" : s.phase === "plane" ? "FLIGHT" : s.stormPhase > 0 ? `STORM PHASE ${s.stormPhase}` : "STORM FORMING";
+    const phase = s.phase === "warmup" ? "STAGING" : s.phase === "plane" ? "FLIGHT" : s.stormPhase > 0 ? `ZONE PHASE ${s.stormPhase}` : "BLUE ZONE FORMING";
     const tsub = s.stormShrinking ? "CLOSING" : s.phase === "plane" || s.phase === "warmup" ? "" : "UNTIL IT MOVES";
     const alive = `${s.alive}`, squads = s.mode === "trios" ? `${s.squadsAlive} SQUADS` : "ALIVE";
     const txt = `${phase}|${fmt(s.stormTimer)}|${tsub}|${alive}|${squads}`;

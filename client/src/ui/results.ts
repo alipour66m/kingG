@@ -62,9 +62,9 @@ export function createResults(): ResultsScreen {
       again.style.display = actions.playAgain ? "" : "none"; spectate.style.display = actions.spectate ? "" : "none";
       hint.textContent = actions.playAgain ? "YOUR PRACTICE MODE AND DIFFICULTY ARE KEPT FOR PLAY AGAIN" : actions.spectate ? "SPECTATE THE MATCH OR RETURN TO THE LOBBY" : "RETURN TO THE LOBBY FOR YOUR NEXT MATCH";
       root.classList.toggle("win", s.winner);
-      kick.textContent = s.winner ? "VICTORY" : s.mode === "solo" ? "YOU PLACED" : "YOUR SQUAD PLACED";
+      kick.textContent = s.winner ? "WINNER WINNER · KING-G: BATTLEGROUNDS" : s.mode === "solo" ? "YOU PLACED" : "YOUR SQUAD PLACED";
       place.innerHTML = "";
-      if (s.winner) place.textContent = "KONG ROYALE";
+      if (s.winner) place.textContent = "VICTORY";
       else { const sm = document.createElement("small"); sm.textContent = "#"; place.append(sm, String(s.placement)); }
       of.textContent = s.winner ? "#1 OF " + s.totalSquads + (s.mode === "solo" ? " PLAYERS" : " SQUADS") : `OF ${s.totalSquads} ${s.mode === "solo" ? "PLAYERS" : "SQUADS"}`;
       kb.textContent = "";

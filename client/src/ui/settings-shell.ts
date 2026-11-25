@@ -20,7 +20,6 @@ import { accessibilityCategory, audioCategory, controlsCategory, kbmBind, kbmCle
 import { cancelPadCapture, clearPadCapture, controllerCategory, curveSvg, padCapturing, padDiagram, padLegend, padLive, padSlot, padStatus, startPadCapture } from "../settings/controller-panel";
 import { videoCategory, type BindRow, type Category, type ChoiceRow, type Row, type SliderRow } from "./settings-model";
 import { bindViz, esc, fitHudPreview, fovViz, gfxViz, hudPreview, hwRows, mouseViz, speakerViz } from "./settings-viz";
-import { TOON_LOGO } from "./toon";
 import type { PadOwner } from "./padnav";
 
 export interface SettingsShell {
@@ -41,7 +40,7 @@ export function createSettingsShell(engine: Engine, display: Display): SettingsS
   root.setAttribute("role", "dialog"); root.setAttribute("aria-modal", "true"); root.setAttribute("aria-label", "Settings");
   root.innerHTML = `<div class="tn-set-scrim"></div>
     <div class="tn-set-in">
-      <div class="tn-set-top"><img class="tn-logo tn-set-logo" src="${TOON_LOGO.wordmark}" alt="Kong Royale"><button type="button" class="close tn-set-back" data-a="close" tabindex="-1"></button></div>
+      <div class="tn-set-top"><div class="tn-logo tn-set-logo tn-brandmark"><b>KING-G</b><small>BATTLEGROUNDS</small></div><button type="button" class="close tn-set-back" data-a="close" tabindex="-1"></button></div>
       <h1 class="tn-title tn-set-title">Settings</h1>
       <nav class="tn-set-cats" role="tablist" aria-label="Settings categories"></nav>
       <div class="tn-set-sub" role="tablist" aria-label="Sections"></div>
