@@ -13,23 +13,23 @@ import { ZIP_HANG } from "../../../shared/pois/canopy-line";
 export type BoneName = "hips" | "spine" | "chest" | "head" | "shoulderR" | "elbowR" | "wristR" | "shoulderL" | "elbowL" | "wristL" | "hipR" | "kneeR" | "ankleR" | "hipL" | "kneeL" | "ankleL";
 
 export const BONES: Record<BoneName, { parent: BoneName | null; offset: [number, number, number] }> = {
-  // proportions from the target art: ~2.0 m, hips 0.86, short legs, massive shoulders (1.1 m), head low in the shoulders
-  hips: { parent: null, offset: [0, 0.86, 0] },
+  // ~1.80 m Human Tactical Operator proportions aligned with server hitbox capsule
+  hips: { parent: null, offset: [0, 0.94, 0] },
   spine: { parent: "hips", offset: [0, 0.14, 0] },
   chest: { parent: "spine", offset: [0, 0.20, 0] },
-  head: { parent: "chest", offset: [0, 0.32, -0.14] },   // raised + forward out of the shoulder mane (profile reads from behind)
-  shoulderR: { parent: "chest", offset: [0.36, 0.24, 0.02] },
-  elbowR: { parent: "shoulderR", offset: [0.13, -0.38, 0.03] },
-  wristR: { parent: "elbowR", offset: [0.03, -0.35, -0.03] },
-  shoulderL: { parent: "chest", offset: [-0.36, 0.24, 0.02] },
-  elbowL: { parent: "shoulderL", offset: [-0.13, -0.38, 0.03] },
-  wristL: { parent: "elbowL", offset: [-0.03, -0.35, -0.03] },
-  hipR: { parent: "hips", offset: [0.185, -0.07, 0] },
-  kneeR: { parent: "hipR", offset: [0.02, -0.35, -0.02] },
-  ankleR: { parent: "kneeR", offset: [0, -0.29, 0.02] },
-  hipL: { parent: "hips", offset: [-0.185, -0.07, 0] },
-  kneeL: { parent: "hipL", offset: [-0.02, -0.35, -0.02] },
-  ankleL: { parent: "kneeL", offset: [0, -0.29, 0.02] },
+  head: { parent: "chest", offset: [0, 0.25, 0.0] },
+  shoulderR: { parent: "chest", offset: [0.22, 0.16, 0.0] },
+  elbowR: { parent: "shoulderR", offset: [0.04, -0.30, 0.02] },
+  wristR: { parent: "elbowR", offset: [0.01, -0.28, -0.02] },
+  shoulderL: { parent: "chest", offset: [-0.22, 0.16, 0.0] },
+  elbowL: { parent: "shoulderL", offset: [-0.04, -0.30, 0.02] },
+  wristL: { parent: "elbowL", offset: [-0.01, -0.28, -0.02] },
+  hipR: { parent: "hips", offset: [0.105, -0.04, 0] },
+  kneeR: { parent: "hipR", offset: [0.0, -0.40, 0.0] },
+  ankleR: { parent: "kneeR", offset: [0.0, -0.38, 0.0] },
+  hipL: { parent: "hips", offset: [-0.105, -0.04, 0] },
+  kneeL: { parent: "hipL", offset: [0.0, -0.40, 0.0] },
+  ankleL: { parent: "kneeL", offset: [0.0, -0.38, 0.0] },
 };
 export const BONE_LIST = Object.keys(BONES) as BoneName[];
 export const NB = BONE_LIST.length;
@@ -55,37 +55,37 @@ const PI = Math.PI;
 // ------------------------------------------------------------------------------------------- pose generators
 // Each writes ADDITIVELY into `p` scaled by `w` (so blending = calling several with weights).
 function stance(p: Pose, w: number) {
-  // hunched gorilla stance: knees soft, spine forward, arms hang slightly forward, elbows out
-  R(p, "spine", 0.12 * w); R(p, "chest", 0.08 * w); R(p, "head", -0.18 * w);
-  RS(p, "shoulder", 0.26 * w, 0.1 * w, -0.2 * w); RS(p, "elbow", 0.55 * w, 0, 0.1 * w); RS(p, "wrist", -0.15 * w);
-  RS(p, "hip", -0.08 * w, 0, -0.06 * w); RS(p, "knee", -0.18 * w); RS(p, "ankle", 0.10 * w);
+  // upright tactical combat stance: soft athletic knees, chest ready, head level
+  R(p, "spine", 0.04 * w); R(p, "chest", 0.03 * w); R(p, "head", -0.04 * w);
+  RS(p, "shoulder", 0.16 * w, 0.06 * w, -0.12 * w); RS(p, "elbow", 0.42 * w, 0, 0.06 * w); RS(p, "wrist", -0.08 * w);
+  RS(p, "hip", -0.04 * w, 0, -0.04 * w); RS(p, "knee", -0.10 * w); RS(p, "ankle", 0.05 * w);
 }
 function idle(p: Pose, w: number, t: number) {
   stance(p, w);
   const br = Math.sin(t * 1.6);
-  R(p, "chest", 0.03 * br * w); R(p, "head", 0.02 * Math.sin(t * 0.7) * w, 0.06 * Math.sin(t * 0.45) * w);
-  RS(p, "shoulder", 0.02 * br * w, 0, -0.03 * br * w);
-  H(p, 0, 0.008 * br * w, 0);
+  R(p, "chest", 0.02 * br * w); R(p, "head", 0.015 * Math.sin(t * 0.7) * w, 0.05 * Math.sin(t * 0.45) * w);
+  RS(p, "shoulder", 0.015 * br * w, 0, -0.02 * br * w);
+  H(p, 0, 0.006 * br * w, 0);
 }
 /** leg + arm cycle, ph in rad; amp scales the gait */
 function gait(p: Pose, w: number, ph: number, kind: "walk" | "run") {
   const run = kind === "run";
   const s = Math.sin(ph), c = Math.cos(ph);
-  const hipA = run ? 0.95 : 0.62, kneeA = run ? 1.45 : 0.95, armA = run ? 0.9 : 0.5, bob = run ? 0.06 : 0.028;
+  const hipA = run ? 0.78 : 0.48, kneeA = run ? 1.25 : 0.75, armA = run ? 0.85 : 0.45, bob = run ? 0.045 : 0.02;
   // right leg: swing forward at s>0; knee bends during the swing (lift) and slightly on contact
   const swingR = s, swingL = -s;
-  const kneeR = Math.max(0, Math.sin(ph + 0.9)) * kneeA + 0.12, kneeL = Math.max(0, Math.sin(ph + PI + 0.9)) * kneeA + 0.12;
-  R(p, "hipR", swingR * hipA * w, 0, -0.05 * w); R(p, "hipL", swingL * hipA * w, 0, 0.05 * w);
+  const kneeR = Math.max(0, Math.sin(ph + 0.9)) * kneeA + 0.08, kneeL = Math.max(0, Math.sin(ph + PI + 0.9)) * kneeA + 0.08;
+  R(p, "hipR", swingR * hipA * w, 0, -0.03 * w); R(p, "hipL", swingL * hipA * w, 0, 0.03 * w);
   R(p, "kneeR", -kneeR * w); R(p, "kneeL", -kneeL * w);
-  R(p, "ankleR", (0.35 * kneeR - 0.25 * Math.max(0, -swingR)) * w); R(p, "ankleL", (0.35 * kneeL - 0.25 * Math.max(0, -swingL)) * w);
+  R(p, "ankleR", (0.3 * kneeR - 0.2 * Math.max(0, -swingR)) * w); R(p, "ankleL", (0.3 * kneeL - 0.2 * Math.max(0, -swingL)) * w);
   // arms opposite, elbows pumped when running
-  R(p, "shoulderR", (-swingR * armA + (run ? 0.35 : 0.15)) * w, 0, (run ? -0.25 : -0.12) * w); R(p, "shoulderL", (-swingL * armA + (run ? 0.35 : 0.15)) * w, 0, (run ? 0.25 : 0.12) * w);
-  R(p, "elbowR", (run ? 1.3 : 0.45 + 0.2 * Math.max(0, -swingR)) * w); R(p, "elbowL", (run ? 1.3 : 0.45 + 0.2 * Math.max(0, -swingL)) * w);
-  // torso: lean, counter-rotation, bob (2 per cycle)
-  R(p, "spine", (run ? 0.42 : 0.16) * w, -0.10 * s * w, 0.04 * c * w); R(p, "chest", (run ? 0.08 : 0.04) * w, -0.06 * s * w);
-  R(p, "head", (run ? -0.45 : -0.20) * w, 0.05 * s * w);
-  R(p, "hips", 0, 0.10 * s * w, -0.05 * c * w);
-  H(p, 0, (-bob * 0.5 + bob * 0.5 * Math.cos(2 * ph) + (run ? 0.03 : 0)) * w, 0);
+  R(p, "shoulderR", (-swingR * armA + (run ? 0.28 : 0.10)) * w, 0, (run ? -0.14 : -0.08) * w); R(p, "shoulderL", (-swingL * armA + (run ? 0.28 : 0.10)) * w, 0, (run ? 0.14 : 0.08) * w);
+  R(p, "elbowR", (run ? 1.15 : 0.42 + 0.18 * Math.max(0, -swingR)) * w); R(p, "elbowL", (run ? 1.15 : 0.42 + 0.18 * Math.max(0, -swingL)) * w);
+  // torso: athletic forward lean during sprint, subtle counter-rotation, bob (2 per cycle)
+  R(p, "spine", (run ? 0.22 : 0.07) * w, -0.09 * s * w, 0.03 * c * w); R(p, "chest", (run ? 0.06 : 0.02) * w, -0.05 * s * w);
+  R(p, "head", (run ? -0.24 : -0.08) * w, 0.04 * s * w);
+  R(p, "hips", 0, 0.08 * s * w, -0.035 * c * w);
+  H(p, 0, (-bob * 0.45 + bob * 0.5 * Math.cos(2 * ph) + (run ? 0.018 : 0)) * w, 0);
 }
 function crouch(p: Pose, w: number, t: number) {
   R(p, "spine", 0.22 * w); R(p, "chest", 0.06 * w); R(p, "head", -0.34 * w);
@@ -139,14 +139,12 @@ function glidePose(p: Pose, w: number, t: number) {
   R(p, "spine", -0.15 * w); R(p, "chest", -0.12 * w); R(p, "head", -0.30 * w, 0.06 * Math.sin(t * 0.8) * w);
 }
 function deadPose(p: Pose, w: number) {
-  // flat on the back, limbs splayed
+  // flat ground collapse on elimination
   ROOT(p, -PI / 2 * w);
-  // (the back rests ON the sand and the arms lie on it, elbows nearly straight — with the joints at −0.15 m the body
-  //  sinks 0.4 m into the sand and the bent elbows push the fists up through it)
-  H(p, 0, -0.55 * w, -0.2 * w);
-  RS(p, "shoulder", -0.4 * w, 0, -1.1 * w); RS(p, "elbow", 0.22 * w, 0, 0.35 * w);
-  RS(p, "hip", 0.1 * w, 0, -0.3 * w); RS(p, "knee", -0.4 * w);
-  R(p, "head", 0.3 * w, 0.6 * w); R(p, "spine", 0.05 * w);
+  H(p, 0, -0.74 * w, -0.12 * w);
+  RS(p, "shoulder", -0.32 * w, 0, -0.85 * w); RS(p, "elbow", 0.25 * w, 0, 0.25 * w);
+  RS(p, "hip", 0.08 * w, 0, -0.22 * w); RS(p, "knee", -0.28 * w);
+  R(p, "head", 0.18 * w, 0.45 * w); R(p, "spine", 0.04 * w);
 }
 function emoteDance(p: Pose, w: number, t: number) {
   const b = t * 4.2, s = Math.sin(b), c = Math.cos(b);
@@ -635,9 +633,7 @@ export class KongAnimator {
     // staged poses (lobby crowd) + staging overlay
     if (this.showPose) { const s2 = this.showPose; if (s2 === "sit") sitPose(P, 1, t); else if (s2 === "lounge") loungePose(P, 1, t); else if (s2 === "bar") barPose(P, 1, t); }
     if (this.overlay) this.overlay({ R: (b, x, y = 0, z = 0) => R(P, b, x, y, z), H: (x, y, z) => H(P, x, y, z), ROOT: (pi, ro = 0) => ROOT(P, pi, ro), clear: (b) => { const i = BI[b] * 3; P[i] = P[i + 1] = P[i + 2] = 0; } }, t);
-    // a slight constant nod — the sculpted face plane tips up (muzzle forward), so at rest the kong looked
-    // down its nose at you (smug / menacing); 0.1 rad brings the eyes level with the viewer
-    if (!dead) R(P, "head", 0.1);
+    // human operator keeps upright head orientation (no gorilla snout pitch needed)
     // hurt flinch
     const h = this.hurt.x; if (h) { R(P, "spine", -h * 0.08); R(P, "chest", -h * 0.06, h * 0.05); R(P, "head", h * 0.12, -h * 0.08); RS(P, "shoulder", -h * 0.06, 0, -h * 0.04); }
 
@@ -749,7 +745,7 @@ export class KongAnimator {
   private ground(x: number, z: number, y: number) { return this.groundAt ? this.groundAt(x, z, y) : y; }
   /** where foot i rests under the hips (world, ankle joint) */
   private restFoot(i: number, p: KongPose, out: THREE.Vector3) {
-    const hd = p.yaw + this.legYaw, w = lerp(0.2, 0.27, this.crouch) * (i === 0 ? 1 : -1);
+    const hd = p.yaw + this.legYaw, w = lerp(0.135, 0.185, this.crouch) * (i === 0 ? 1 : -1);
     const x = p.x + Math.cos(hd) * w - Math.sin(hd) * 0.02, z = p.z - Math.sin(hd) * w - Math.cos(hd) * 0.02;
     return out.set(x, this.ground(x, z, p.y) + ANKLE_H, z);
   }
@@ -851,8 +847,8 @@ export class KongAnimator {
     // pistol: arm out along the aim at shoulder height; long guns: fist at the right pec, the gun forward of it
     // (the kong's head sits IN the shoulders: the fists ride 0.2–0.3 m below the shoulder joint so the gun is at chest
     // height, under the chin, like the target art)
-    if (two) tR.copy(S).addScaledVector(d, 0.42).addScaledVector(r, -0.12).add(tmp.set(0, -0.3, 0));
-    else tR.copy(S).addScaledVector(d, 0.6).addScaledVector(r, -0.1).add(tmp.set(0, -0.22, 0));
+    if (two) tR.copy(S).addScaledVector(d, 0.34).addScaledVector(r, -0.09).add(tmp.set(0, -0.17, 0));
+    else tR.copy(S).addScaledVector(d, 0.46).addScaledVector(r, -0.07).add(tmp.set(0, -0.10, 0));
     tR.addScaledVector(d, -0.05 * rc).add(tmp.set(0, 0.02 * rc - 0.09 * rl, 0)).addScaledVector(f, -0.05 * rl);
     const IK = this._hIK;
     IK.R.target.copy(tR); IK.R.pole.copy(r).add(tmp.set(0, -0.8, 0)).addScaledVector(f, -0.3);

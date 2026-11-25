@@ -23,6 +23,7 @@ import * as THREE from "three";
 import { rbox } from "./lib/geo";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { flag } from "../flags";
+import { resources } from "../engine/res/scope";
 import { releaseGeometryAfterUpload } from "../engine/geometry-release";
 
 // ------------------------------------------------------------------------------------------------ dimensions (m)
@@ -93,37 +94,25 @@ function rng(seed: number) { let s = seed >>> 0; return () => { s = (s * 1664525
 function skinTex(): THREE.Texture {
   const c = canvas(256, 256), g = c.getContext("2d")!, r = rng(7);
   g.fillStyle = "#808080"; g.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 1800; i++) { const x = r() * 256, y = r() * 256, s = 0.8 + r() * 1.6, v = 96 + r() * 30 | 0; g.fillStyle = `rgba(${v},${v},${v},0.7)`; g.beginPath(); g.arc(x, y, s, 0, Math.PI * 2); g.fill(); }
-  g.strokeStyle = "rgba(70,70,70,0.35)"; g.lineWidth = 1;
-  for (let i = 0; i < 70; i++) { const x = r() * 256, y = r() * 256; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (r() - 0.5) * 30, y + (r() - 0.5) * 6, x + (r() - 0.5) * 50, y + (r() - 0.5) * 10); g.stroke(); }
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+  for (let i = 0; i < 1800; i++) { const x = r() * 256, y = r() * 256, s = 0.8 + r() * 1.4, v = 100 + r() * 35 | 0; g.fillStyle = `rgba(${v},${v},${v},0.6)`; g.beginPath(); g.arc(x, y, s, 0, Math.PI * 2); g.fill(); }
+  const t = resources.root.texture("tex.actor", new THREE.CanvasTexture(c)); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
   return t;
 }
 
 /** banana peel: ripe yellow, faint fibres, brown sugar spots + specks (map, sRGB) and their relief (bump) — tileable */
 function peelTex(): { map: THREE.Texture; bump: THREE.Texture } {
   const S = 256, c = canvas(S, S), g = c.getContext("2d")!, b = canvas(S, S), gb = b.getContext("2d")!, r = rng(23);
-  g.fillStyle = "#f4c11b"; g.fillRect(0, 0, S, S);
+  g.fillStyle = "#2f332c"; g.fillRect(0, 0, S, S);
   gb.fillStyle = "#808080"; gb.fillRect(0, 0, S, S);
-  const wrap = (f: (ox: number, oy: number) => void) => { for (const ox of [0, -S, S]) for (const oy of [0, -S, S]) f(ox, oy); };
-  // fibres: long faint streaks (lighter + deeper yellow)
-  for (let i = 0; i < 160; i++) {
-    const x = r() * S, y = r() * S, len = 30 + r() * 90, w = 0.6 + r() * 1.4, light = r() < 0.5;
-    wrap((ox, oy) => { g.strokeStyle = light ? "rgba(255,226,92,0.35)" : "rgba(214,150,10,0.28)"; g.lineWidth = w; g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + (r() - 0.5) * 4, y + oy + len); g.stroke(); });
+  for (let y = 0; y < S; y += 6) {
+    g.fillStyle = y % 12 === 0 ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.06)";
+    g.fillRect(0, y, S, 2);
+    gb.fillStyle = y % 12 === 0 ? "rgba(60,60,60,0.55)" : "rgba(180,180,180,0.45)";
+    gb.fillRect(0, y, S, 2);
   }
-  // sugar spots: soft brown blobs with a darker heart, a few clusters
-  for (let i = 0; i < 16; i++) {
-    const x = r() * S, y = r() * S, rr = 2 + r() * 5, e = 0.6 + r() * 0.8, a = r() * Math.PI;
-    wrap((ox, oy) => {
-      g.save(); g.translate(x + ox, y + oy); g.rotate(a); g.scale(1, e);
-      const gr = g.createRadialGradient(0, 0, 0, 0, 0, rr * 1.6); gr.addColorStop(0, "rgba(92,52,16,0.95)"); gr.addColorStop(0.45, "rgba(120,72,22,0.8)"); gr.addColorStop(1, "rgba(150,96,24,0)");
-      g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rr * 1.6, 0, Math.PI * 2); g.fill(); g.restore();
-      gb.save(); gb.translate(x + ox, y + oy); gb.rotate(a); gb.scale(1, e); gb.fillStyle = "rgba(90,90,90,0.8)"; gb.beginPath(); gb.arc(0, 0, rr, 0, Math.PI * 2); gb.fill(); gb.restore();
-    });
-  }
-  for (let i = 0; i < 40; i++) { const x = r() * S, y = r() * S, rr = 0.5 + r() * 1.0; wrap((ox, oy) => { g.fillStyle = "rgba(80,46,14,0.75)"; g.beginPath(); g.arc(x + ox, y + oy, rr, 0, Math.PI * 2); g.fill(); }); }
-  const map = new THREE.CanvasTexture(c); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;
-  const bump = new THREE.CanvasTexture(b); bump.wrapS = bump.wrapT = THREE.RepeatWrapping; bump.anisotropy = 4;
+  for (let i = 0; i < 600; i++) { g.fillStyle = `rgba(20,22,18,${0.08 + r() * 0.12})`; g.fillRect(r() * S, r() * S, 2, 2); }
+  const map = resources.root.texture("tex.actor", new THREE.CanvasTexture(c)); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;
+  const bump = resources.root.texture("tex.actor", new THREE.CanvasTexture(b)); bump.wrapS = bump.wrapT = THREE.RepeatWrapping; bump.anisotropy = 4;
   return { map, bump };
 }
 
@@ -131,29 +120,28 @@ function peelTex(): { map: THREE.Texture; bump: THREE.Texture } {
 function furTex(): { map: THREE.Texture; bump: THREE.Texture } {
   const W = 256, H = 256;
   const c = canvas(W, H), g = c.getContext("2d")!, b = canvas(W, H), gb = b.getContext("2d")!, r = rng(11);
-  g.fillStyle = "#d8d8d8"; g.fillRect(0, 0, W, H);
-  gb.fillStyle = "#7a7a7a"; gb.fillRect(0, 0, W, H);
-  for (let i = 0; i < 2600; i++) {
-    const x = r() * W, y = r() * H, len = 14 + r() * 40, bend = (r() - 0.5) * 5, w = 0.6 + r() * 1.2, tone = r();
-    const v = tone < 0.55 ? 150 + r() * 40 : tone < 0.85 ? 235 + r() * 20 : 95 + r() * 30, lum = tone < 0.55 ? 110 : tone < 0.85 ? 190 : 60;
-    for (const ox of [0, -W, W]) for (const oy of [0, -H, H]) {
-      if (x + ox < -20 || x + ox > W + 20 || y + oy < -60 || y + oy > H + 60) continue;
-      g.strokeStyle = `rgba(${v | 0},${v | 0},${v | 0},0.55)`; g.lineWidth = w; g.beginPath(); g.moveTo(x + ox, y + oy); g.quadraticCurveTo(x + ox + bend, y + oy + len / 2, x + ox + bend * 0.3, y + oy + len); g.stroke();
-      gb.strokeStyle = `rgba(${lum},${lum},${lum},0.6)`; gb.lineWidth = w; gb.beginPath(); gb.moveTo(x + ox, y + oy); gb.quadraticCurveTo(x + ox + bend, y + oy + len / 2, x + ox + bend * 0.3, y + oy + len); gb.stroke();
-    }
+  g.fillStyle = "#525b44"; g.fillRect(0, 0, W, H);
+  gb.fillStyle = "#808080"; gb.fillRect(0, 0, W, H);
+  const tones = ["rgba(56,64,46,0.5)", "rgba(96,94,70,0.4)", "rgba(38,42,32,0.45)"];
+  for (let i = 0; i < 36; i++) {
+    g.fillStyle = tones[Math.floor(r() * tones.length)];
+    g.beginPath(); g.ellipse(r() * W, r() * H, 16 + r() * 34, 10 + r() * 20, r() * Math.PI, 0, Math.PI * 2); g.fill();
   }
-  const map = new THREE.CanvasTexture(c); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;
-  const bump = new THREE.CanvasTexture(b); bump.wrapS = bump.wrapT = THREE.RepeatWrapping; bump.anisotropy = 8;
+  for (let i = 0; i < W; i += 8) {
+    g.fillStyle = "rgba(0,0,0,0.08)"; g.fillRect(i, 0, 1, H); g.fillRect(0, i, W, 1);
+    gb.fillStyle = "rgba(255,255,255,0.22)"; gb.fillRect(i, 0, 1, H); gb.fillRect(0, i, W, 1);
+  }
+  const map = resources.root.texture("tex.actor", new THREE.CanvasTexture(c)); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;
+  const bump = resources.root.texture("tex.actor", new THREE.CanvasTexture(b)); bump.wrapS = bump.wrapT = THREE.RepeatWrapping; bump.anisotropy = 8;
   return { map, bump };
 }
 
 // ------------------------------------------------------------------------------------------------ geometry
 // palette — the third-person kong's (the sculpt: deep chocolate fur ~#431c0c, cream fists and
 // fingers ~#dc9659), peel #f4c218
-const SKIN = new THREE.Color("#dc9659"), SKIN_SH = new THREE.Color("#b37440"), CREASE = new THREE.Color("#84482a"), NAIL = new THREE.Color("#f2c99a");
-const PALM = new THREE.Color("#cf8a52"), PEEL_IN = new THREE.Color("#f0deaf"), PEEL_EDGE = new THREE.Color("#b98a3c"), WHITE = new THREE.Color(1, 1, 1);
-// (the fur map multiplies by ~0.85: the clump mid lands on the sculpt's #431c0c)
-const FUR_ROOT = new THREE.Color("#2e1209"), FUR_MID = new THREE.Color("#4f2210"), FUR_TIP = new THREE.Color("#7a3a1c"), FUR_CORE = new THREE.Color("#2a1108");
+const SKIN = new THREE.Color("#292b2e"), SKIN_SH = new THREE.Color("#1b1d1f"), CREASE = new THREE.Color("#141517"), NAIL = new THREE.Color("#3c4046");
+const PALM = new THREE.Color("#202225"), PEEL_IN = new THREE.Color("#242722"), PEEL_EDGE = new THREE.Color("#1a1c18"), WHITE = new THREE.Color(1, 1, 1);
+const FUR_ROOT = new THREE.Color("#454d38"), FUR_MID = new THREE.Color("#586248"), FUR_TIP = new THREE.Color("#6b7458"), FUR_CORE = new THREE.Color("#4e5640");
 
 function colorize(g: THREE.BufferGeometry, c: THREE.Color) {
   const n = g.attributes.position.count, a = new Float32Array(n * 3);
@@ -517,79 +505,17 @@ function buildHandGeo(mirror: boolean, v2 = false): HandGeo {
     for (let i = 0; i < N; i++) for (let j = 0; j < AN; j++) { const a = i * (AN + 1) + j, b = a + AN + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
     const cg = new THREE.BufferGeometry(); cg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); cg.setIndex(idx); cg.computeVertexNormals();
     cg.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+    // Tactical Velcro glove cuff + combat shirt sleeve (smooth cylinder, no spiky fur clumps or banana peel flaps)
     peelParts.push(skin(cg, B_PALM, B_WRIST, blend));
-    // the petals: four short pointed peel strips from the cuff's elbow edge, folded back flat over the fur
-    const r2 = rng(mirror ? 41 : 29);
-    for (let k = 0; k < 4; k++) {
-      const a0 = (k / 4) * Math.PI * 2 + 0.55 + (r2() - 0.5) * 0.3, L = 0.036 + r2() * 0.018, W = 0.03 + r2() * 0.006, lift = 0.007 + r2() * 0.006;
-      const R0 = rAt(Z1 - 0.012) * 0.99, NU = 6, NV = 10;
-      for (const side of [1, -1]) {   // 1 = outer (peel), −1 = inner face (cream)
-        const pp: number[] = [], ii: number[] = [], cc: number[] = [];
-        for (let v = 0; v <= NV; v++) {
-          const tv = v / NV, hw = (W / 2) * Math.pow(Math.max(0, 1 - tv * tv), 0.75) + 0.0015;
-          for (let u = 0; u <= NU; u++) {
-            const tu = (u / NU) * 2 - 1, ang = a0 + (tu * hw) / R0;
-            // lies on the cuff at the root, then folds back along the arm and lifts / curls outward
-            const rr = R0 + lift * tv * tv + 0.004 * (1 - tu * tu) * Math.sin(Math.PI * tv) + side * 0.0012 + 0.002;
-            pp.push(wc.x + Math.cos(ang) * rr, wc.y + Math.sin(ang) * rr * 1.08, wc.z + Z1 - 0.014 + L * tv);
-            const cl = side > 0 ? WHITE.clone().lerp(PEEL_EDGE, Math.max(0, Math.abs(tu) - 0.75) * 2.4 + Math.max(0, tv - 0.85) * 2) : PEEL_IN.clone();
-            cc.push(cl.r, cl.g, cl.b);
-          }
-        }
-        // (the shapes are built round the already-mirrored wrist, so the winding is the same for both hands: outward)
-        for (let v = 0; v < NV; v++) for (let u = 0; u < NU; u++) { const a = v * (NU + 1) + u, b = a + NU + 1; if (side > 0) ii.push(a, a + 1, b, a + 1, b + 1, b); else ii.push(a, b, a + 1, a + 1, b, b + 1); }
-        const pg = new THREE.BufferGeometry(); pg.setAttribute("position", new THREE.Float32BufferAttribute(pp, 3)); pg.setIndex(ii); pg.computeVertexNormals();
-        pg.setAttribute("color", new THREE.Float32BufferAttribute(cc, 3));
-        (side > 0 ? peelParts : skinParts).push(skin(pg, B_PALM, B_WRIST, blend));
-      }
-    }
   }
-  // ---- forearm: a dark core (lathe: slim wrist → swelling muscle → elbow) under rings of big sculpted fur CLUMPS —
-  // pointed, slightly cupped petals of fur shingled along the arm, every tip toward the hand and lifted off the one
-  // below it (the target art's clumped silhouette); dark roots → lit tips, darker clump edges, one strand texture
   if (!v2) {
-    const rAt = (z: number) => { const t = z / FORE_LEN; return (0.04 + 0.03 * Math.sin(Math.min(1, t / 0.4) * Math.PI / 2) - 0.012 * Math.max(0, (t - 0.5) / 0.5)) * 0.92 * ARM_K; };
+    const rAt = (z: number) => { const t = z / FORE_LEN; return (0.042 + 0.022 * Math.sin(Math.min(1, t / 0.4) * Math.PI / 2) - 0.008 * Math.max(0, (t - 0.5) / 0.5)) * 0.92 * ARM_K; };
     const prof: Array<[number, number]> = [];
-    for (let i = 0; i <= 16; i++) { const z = (i / 16) * FORE_LEN; prof.push([rAt(z) * 0.93, z]); }
+    for (let i = 0; i <= 16; i++) { const z = (i / 16) * FORE_LEN; prof.push([rAt(z), z]); }
     const fa = new THREE.LatheGeometry(prof.map(([r, z]) => new THREE.Vector2(r, z)), 24);
-    fa.rotateX(Math.PI / 2);   // lathe +Y → +Z (toward the elbow)
-    fa.translate(wc.x, wc.y, wc.z + 0.07);
-    furParts.push(skin(colorize(fa, FUR_CORE), B_PALM, B_WRIST, (p) => (p.z - wc.z) / 0.05));
-    const r3 = rng(mirror ? 53 : 37), c = new THREE.Color();
-    // rings: dense near the hand (what the view sees), sparse further up the arm (off screen)
-    const rings: number[] = [];
-    for (let z = 0.085; z < 0.62; z += 0.04) rings.push(z);
-    for (let z = 0.7; z < 1.35; z += 0.09) rings.push(z);
-    rings.forEach((z0r, ri) => {
-      const N = 8, rr0 = rAt(z0r - 0.07);
-      for (let k = 0; k < N; k++) {
-        // irregular: each clump its own size, lean, lift and a sideways sweep of its tip (no pine-cone pattern)
-        const a0 = ((k + (ri % 2) * 0.5) / N) * Math.PI * 2 + (r3() - 0.5) * 0.55, z0 = z0r + (r3() - 0.5) * 0.024;
-        const L = 0.1 + r3() * 0.05, W = ((2 * Math.PI * rr0) / N) * (1.45 + r3() * 0.4), lift = 0.004 + r3() * 0.01, cup = 0.005 + r3() * 0.004, sweep = (r3() - 0.5) * 0.45;
-        const tone = 0.84 + r3() * 0.32, NU = 5, NV = 8;
-        const pp: number[] = [], uv: number[] = [], cc: number[] = [], ii: number[] = [];
-        const uo = r3(), vo = r3();
-        for (let v = 0; v <= NV; v++) {
-          const tv = v / NV, z = z0 - L * tv, rz = rAt(Math.max(0, z - 0.07));
-          // a broad leaf of fur: full width most of its length, a rounded (not needle) tip
-          const hw = (W / 2) * Math.sqrt(Math.max(0, 1 - Math.pow(tv, 2.6))) + 0.0015;
-          for (let u = 0; u <= NU; u++) {
-            const tu = (u / NU) * 2 - 1, ang = a0 + (tu * hw) / rz + sweep * tv * tv;
-            const rr = rz * 0.97 + 0.003 + cup * (1 - tu * tu) * Math.sin(Math.PI * Math.min(1, tv * 1.15)) + lift * tv * tv;
-            pp.push(wc.x + Math.cos(ang) * rr, wc.y + Math.sin(ang) * rr * 0.92, wc.z + z);
-            uv.push(uo + (tu + 1) * 0.18, vo + tv * 0.45);
-            // dark root → mid → lit tip, darker toward the clump's edges (the gaps between clumps read as depth)
-            c.copy(FUR_ROOT).lerp(FUR_MID, Math.min(1, tv * 2)).lerp(FUR_TIP, Math.max(0, tv * 1.6 - 0.6) * 0.8);
-            c.multiplyScalar(tone * (1 - 0.3 * Math.pow(Math.abs(tu), 2.4)));
-            cc.push(c.r, c.g, c.b);
-          }
-        }
-        for (let v = 0; v < NV; v++) for (let u = 0; u < NU; u++) { const a = v * (NU + 1) + u, b = a + NU + 1; ii.push(a, b, a + 1, a + 1, b, b + 1); }
-        const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pp, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(ii); g.computeVertexNormals();
-        g.setAttribute("color", new THREE.Float32BufferAttribute(cc, 3));
-        furParts.push(skin(g, B_PALM, B_WRIST, (p) => (p.z - wc.z) / 0.05));
-      }
-    });
+    fa.rotateX(Math.PI / 2);
+    fa.translate(wc.x, wc.y, wc.z + 0.068);
+    furParts.push(skin(colorize(fa, FUR_TIP), B_PALM, B_WRIST, (p) => (p.z - wc.z) / 0.05));
   }
   if (v2) buildArm2(wc, mirror, peelParts, skinParts, furParts);
   // ---- merge: group 0 = skin, group 1 = peel, group 2 = fur

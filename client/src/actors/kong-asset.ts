@@ -23,8 +23,8 @@ export interface KongAsset {
   materials(tier: 0 | 1 | 2): Record<AssetMat, THREE.Material>;
 }
 
-/** ?kongv=1 → the procedural kong (A/B) */
-export const USE_ASSET = !flag("kongv");
+/** Tactical soldier uses the procedural rigged operator mesh by default */
+export const USE_ASSET = false;
 /** which kong asset draws: ?kong=v1 (the Blender sculpt) / ?kong=v2 (the Tripo kong), else KONG_DEFAULT */
 export const KONG_DEFAULT: "v1" | "v2" = "v2";
 /** ?kong=alt — an IP-distance variant of v2, away from a famous ape mascot's look (heart-shaped

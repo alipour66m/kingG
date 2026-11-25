@@ -251,13 +251,6 @@
       "strawT = new THREE.CanvasTexture(c); strawT.colorSpace = THREE.SRGBColorSpace; strawT.wrapS = strawT.wrapT = THREE.RepeatWrapping; strawT.repeat.set(3, 3);",
       "ammoT = new THREE.CanvasTexture(c); ammoT.colorSpace = THREE.SRGBColorSpace; ammoT.anisotropy = 8;"
     ],
-    "client/src/weapons/hands.ts": [
-      "const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;",
-      "const map = new THREE.CanvasTexture(c); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;",
-      "const bump = new THREE.CanvasTexture(b); bump.wrapS = bump.wrapT = THREE.RepeatWrapping; bump.anisotropy = 4;",
-      "const map = new THREE.CanvasTexture(c); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;",
-      "const bump = new THREE.CanvasTexture(b); bump.wrapS = bump.wrapT = THREE.RepeatWrapping; bump.anisotropy = 8;"
-    ],
     "client/src/weapons/hut-tex.ts": [
       "const t = new THREE.CanvasTexture(c);",
       "const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;"

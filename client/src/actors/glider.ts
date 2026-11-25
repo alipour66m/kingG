@@ -45,18 +45,18 @@ const V3 = THREE.Vector3;
 type Vec = THREE.Vector3;
 
 // ============================================================================ tunables (metres, glider-local)
-const HALF = 2.05;          // half span (x)
-const CH = 2.2;             // max chord (z) — a shorter chord keeps the pilot readable from the chase camera
-const VR = 0.27;            // ridge position across the chord (0 = leading lip, 1 = trailing lip)
-const TH = 0.055;           // peel thickness
-const RIDGE_Y = 1.8;       // ridge height above the fists at mid-span (1.8, not 2.0, so the whole crescent fits the drop-05 frame)
-const RIDGE_Z = 1.05;       // ridge z at mid-span: the pilot hangs AHEAD of the canopy, the peel above-behind him (target art)
-const SWEEP = 1.45;         // tips swept back (a banana CRESCENT in plan, not an egg / mango)
-const DROOP_B = 0.8;       // blossom (+X) end droop
-const DROOP_S = 1.1;       // stem (-X) end droop (the banana hooks down toward the stem, level with the fists)
-const FRAME_PITCH = 0.07;   // static nose-up of the whole frame
-const HAND_X = 0.62;        // fists ±x
-const R_LEAD = 0.076, R_BAR = 0.056, R_TRAIL = 0.046, R_RIB = 0.038, R_STRUT = 0.046, R_ROPE = 0.019;
+const HALF = 2.15;          // half span (x)
+const CH = 1.65;            // chord (z) — compact tactical ram-air wing
+const VR = 0.25;
+const TH = 0.065;           // airfoil cell thickness
+const RIDGE_Y = 1.85;       // canopy height above the operator fists
+const RIDGE_Z = 0.18;       // centered right above operator
+const SWEEP = 0.34;         // gentle ram-air wing sweep
+const DROOP_B = 0.48;       // symmetric parafoil anhedral
+const DROOP_S = 0.48;
+const FRAME_PITCH = 0.05;
+const HAND_X = 0.44;
+const R_LEAD = 0.016, R_BAR = 0.012, R_TRAIL = 0.012, R_RIB = 0.012, R_STRUT = 0.012, R_ROPE = 0.008;
 
 // ============================================================================ small helpers
 function mulberry(a: number) {
@@ -147,236 +147,91 @@ let TEX: Tex | null = null;
 const V_RIDGE = (VR * CH) / (CH * 1.05);
 
 function paintPeel(aniso: number) {
-  const W = 2048, H = 1024, w2 = 1024, h2 = 512;
+  // Military Ram-Air Parafoil top skin: olive drab & tactical slate 7-cell ripstop nylon with cell seam ribs
+  const W = 1024, H = 512, w2 = 512, h2 = 256;
   const col = makeCanvas(W, H), cg = col.getContext("2d")!;
   const R = mulberry(7);
-  const nA = lattice(21, 256, 256), nB = lattice(22, 256, 512);
   const img = cg.createImageData(W, H), d = img.data;
+  const cells = 7;
   for (let y = 0; y < H; y++) {
     const V = y / H;
-    // soft facet ridges running along the banana (parallel to the ridge line)
-    const fr = Math.exp(-(((V - V_RIDGE) / 0.018) ** 2)) * 0.07 + Math.exp(-(((V - V_RIDGE - 0.27) / 0.02) ** 2)) * 0.045
-      + Math.exp(-(((V - V_RIDGE - 0.55) / 0.02) ** 2)) * 0.04 - Math.exp(-(((V - V_RIDGE - 0.035) / 0.02) ** 2)) * 0.03;
     for (let x = 0; x < W; x++) {
       const U = x / W, i = (y * W + x) * 4;
-      const lo = nA(U * 9, V * 5) * 0.6 + nA(U * 23 + 50, V * 13 + 30) * 0.4;
-      const st = nB(U * 6, V * 120) * 0.65 + nB(U * 25 + 9, V * 300) * 0.35;
-      const k = lo - 0.5;
-      let r = 246 + k * 10, g = 208 + k * 26, b = 18 + k * 20;
-      const s = 1 + (st - 0.5) * 0.05 + fr;
-      r *= s; g *= s; b *= s;
-      // greening toward the stem end, olive-brown right at the neck
-      const gr = smooth(0.78, 0.99, U);
-      r = mix(r, 176, gr * 0.62); g = mix(g, 184, gr * 0.42); b = mix(b, 46, gr * 0.9);
-      const tip = smooth(0.972, 0.998, U);
-      r = mix(r, 118, tip); g = mix(g, 110, tip); b = mix(b, 40, tip);
-      const gn = (R() - 0.5) * 6;
-      d[i] = r + gn; d[i + 1] = g + gn; d[i + 2] = b + gn * 0.5; d[i + 3] = 255;
+      const cell = Math.floor(U * cells);
+      const cellPos = (U * cells) % 1;
+      const seam = Math.exp(-(((Math.min(cellPos, 1 - cellPos)) / 0.025) ** 2));
+      const puff = Math.sin(Math.PI * cellPos) * 10;
+      const alt = cell === 3 ? -12 : cell % 2 === 1 ? -6 : 6;
+      const rip = ((x & 7) === 0 || (y & 7) === 0) ? -5 : 0;
+      const n = (R() - 0.5) * 6;
+      let r = 68 + alt + puff + rip + n, g = 78 + alt + puff + rip + n, b = 58 + alt * 0.6 + puff + rip + n;
+      r = mix(r, 34, seam * 0.75); g = mix(g, 38, seam * 0.75); b = mix(b, 32, seam * 0.75);
+      // Dark reinforced leading/trailing edge trim
+      if (V < 0.08 || V > 0.92) { r *= 0.65; g *= 0.65; b *= 0.65; }
+      d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
     }
   }
   cg.putImageData(img, 0, 0);
-
-  const hgt = makeCanvas(w2, h2), hg = hgt.getContext("2d")!;
-  hg.fillStyle = "rgb(128,128,128)"; hg.fillRect(0, 0, w2, h2);
-  const rgh = makeCanvas(w2, h2), rg = rgh.getContext("2d")!;
-  rg.fillStyle = "rgb(112,112,112)"; rg.fillRect(0, 0, w2, h2);
-
-  // bruise patches (soft ochre-brown, slightly rougher / sunken)
-  for (let k = 0; k < 9; k++) {
-    const x = (0.05 + R() * 0.88) * W, y = (0.1 + R() * 0.75) * H, rr = 40 + R() * 90, sy = 0.45 + R() * 0.4;
-    cg.save(); cg.translate(x, y); cg.scale(1, sy);
-    const gr = cg.createRadialGradient(0, 0, 0, 0, 0, rr);
-    gr.addColorStop(0, "rgba(186,122,34,0.34)"); gr.addColorStop(0.6, "rgba(196,138,40,0.16)"); gr.addColorStop(1, "rgba(200,140,40,0)");
-    cg.fillStyle = gr; cg.beginPath(); cg.arc(0, 0, rr, 0, Math.PI * 2); cg.fill(); cg.restore();
-    for (let m = 0; m < 10; m++) {
-      cg.fillStyle = `rgba(${130 + R() * 30},${80 + R() * 20},${24},${0.2 + R() * 0.25})`;
-      blob(cg, x + (R() - 0.5) * rr * 1.2, y + (R() - 0.5) * rr * sy * 1.2, 2 + R() * 5, R);
-    }
-    for (const [g2, v] of [[hg, 112], [rg, 150]] as const) {
-      g2.save(); g2.translate(x / 2, y / 2); g2.scale(1, sy);
-      const gg = g2.createRadialGradient(0, 0, 0, 0, 0, rr / 2);
-      gg.addColorStop(0, `rgba(${v},${v},${v},0.5)`); gg.addColorStop(1, `rgba(${v},${v},${v},0)`);
-      g2.fillStyle = gg; g2.beginPath(); g2.arc(0, 0, rr / 2, 0, Math.PI * 2); g2.fill(); g2.restore();
-    }
-  }
-  // speckles: clusters + loners, darker core, orange-brown soaked halo
-  const specks: Array<[number, number, number]> = [];
-  for (let c = 0; c < 46; c++) {
-    const cx = (0.03 + R() * 0.94) * W, cy = (0.05 + R() * 0.9) * H, n = 1 + Math.floor(R() * 5);
-    for (let m = 0; m < n; m++) specks.push([cx + (R() - 0.5) * 80, cy + (R() - 0.5) * 60, 4.5 + R() ** 2 * 15]);
-  }
-  for (let m = 0; m < 110; m++) specks.push([R() * W, R() * H, 3.5 + R() ** 3 * 16]);
-  specks.push([0.004 * W, V_RIDGE * H, 12]); // the dark blossom nub at the very tip
-  for (const [x, y, r] of specks) {
-    const halo = cg.createRadialGradient(x, y, r * 0.3, x, y, r * 2.3);
-    halo.addColorStop(0, "rgba(186,116,34,0.34)"); halo.addColorStop(1, "rgba(186,116,34,0)");
-    cg.fillStyle = halo; cg.beginPath(); cg.arc(x, y, r * 2.3, 0, Math.PI * 2); cg.fill();
-    const lobes = 1 + Math.floor(R() * 3);
-    for (let l = 0; l < lobes; l++) {
-      const ox = (R() - 0.5) * r * 0.9, oy = (R() - 0.5) * r * 0.9, lr = r * (0.55 + R() * 0.45);
-      cg.fillStyle = `rgba(${140 + R() * 26},${80 + R() * 18},${28 + R() * 10},0.85)`; blob(cg, x + ox, y + oy, lr, R);
-      hg.fillStyle = "rgb(118,118,118)"; blob(hg, (x + ox) / 2, (y + oy) / 2, lr / 2, R);
-      rg.fillStyle = "rgb(165,165,165)"; blob(rg, (x + ox) / 2, (y + oy) / 2, lr / 2 + 0.5, R);
-    }
-    cg.fillStyle = "rgba(96,52,18,0.45)"; blob(cg, x, y, r * 0.4, R, 7);
-  }
-  // freckle dust
-  for (let m = 0; m < 2600; m++) {
-    const x = R() * W, y = R() * H, r = 0.6 + R() * 1.4;
-    cg.fillStyle = `rgba(${120 + R() * 30},${72 + R() * 20},22,${0.18 + R() * 0.3})`;
-    cg.beginPath(); cg.arc(x, y, r, 0, Math.PI * 2); cg.fill();
-  }
-  // height: + fine grain + fibre streaks → normal map
-  const h = readGray(hgt), nC = lattice(23, 128, 512);
+  const hf = new Float32Array(w2 * h2), rv = new Float32Array(w2 * h2);
   for (let y = 0; y < h2; y++) for (let x = 0; x < w2; x++) {
-    const U = x / w2, V = y / h2;
-    h[y * w2 + x] += (nC(U * 12, V * 260) - 0.5) * 0.014 + (R() - 0.5) * 0.008
-      + Math.exp(-(((V - V_RIDGE) / 0.02) ** 2)) * 0.05;
+    const cp = ((x / w2) * cells) % 1;
+    hf[y * w2 + x] = 0.5 + 0.14 * Math.sin(Math.PI * cp);
+    rv[y * w2 + x] = 0.76 + (R() - 0.5) * 0.06;
   }
-  const rv = readGray(rgh), nD = lattice(24, 64, 64);
-  for (let i = 0; i < rv.length; i++) rv[i] += (nD((i % w2) / 24, Math.floor(i / w2) / 24) - 0.5) * 0.1;
   return {
     map: colorTex(col, false, aniso), canvas: col,
-    normal: dataTex(normalFromHeight(h, w2, h2, 9, false), w2, h2, false, aniso),
+    normal: dataTex(normalFromHeight(hf, w2, h2, 4, false), w2, h2, false, aniso),
     rough: dataTex(grayData(rv), w2, h2, false, aniso),
   };
 }
 
 function paintInner(aniso: number) {
-  const W = 1024, H = 512;
+  // Underside of parafoil cells: matte tactical slate / charcoal ripstop
+  const W = 512, H = 256;
   const col = makeCanvas(W, H), cg = col.getContext("2d")!;
-  const R = mulberry(31), nA = lattice(41, 128, 128), nB = lattice(42, 128, 512);
-  const img = cg.createImageData(W, H), d = img.data, hf = new Float32Array(W * H);
-  for (let y = 0; y < H; y++) {
-    const V = y / H;
-    for (let x = 0; x < W; x++) {
-      const U = x / W, i = y * W + x;
-      const lo = nA(U * 7, V * 4) - 0.5;
-      const fib = (nB(U * 4, V * 70) - 0.5) * 0.7 + (nB(U * 12 + 40, V * 190) - 0.5) * 0.3;
-      const s = 1 + fib * 0.06 + lo * 0.07;
-      let r = 244 * s, g = 212 * s, b = 40 * s + lo * 16;   // golden underside (target art: the peel is yellow both sides)
-      const gr = smooth(0.82, 1.0, U);
-      r = mix(r, 205, gr * 0.5); g = mix(g, 200, gr * 0.3); b = mix(b, 96, gr * 0.5);
-      const n = (R() - 0.5) * 5;
-      d[i * 4] = r + n; d[i * 4 + 1] = g + n; d[i * 4 + 2] = b + n; d[i * 4 + 3] = 255;
-      hf[i] = 0.5 + fib * 0.25;
-    }
+  const R = mulberry(31), img = cg.createImageData(W, H), d = img.data, hf = new Float32Array(W * H);
+  const cells = 7;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const U = x / W, V = y / H, i = y * W + x;
+    const cp = (U * cells) % 1, seam = Math.exp(-(((Math.min(cp, 1 - cp)) / 0.03) ** 2));
+    const dark = V < 0.14 ? 0.45 : 1.0; // dark open ram-air cell intakes along leading edge
+    const n = (R() - 0.5) * 5;
+    const baseR = mix(54, 28, seam * 0.8) * dark + n;
+    const baseG = mix(58, 30, seam * 0.8) * dark + n;
+    const baseB = mix(50, 28, seam * 0.8) * dark + n;
+    d[i * 4] = baseR; d[i * 4 + 1] = baseG; d[i * 4 + 2] = baseB; d[i * 4 + 3] = 255;
+    hf[i] = 0.5 + 0.08 * Math.sin(Math.PI * cp);
   }
   cg.putImageData(img, 0, 0);
-  // stringy fibres (long wavy strands along the banana)
-  for (let k = 0; k < 260; k++) {
-    const y0 = R() * H, x0 = R() * W, len = 60 + R() * 260, amp = 1 + R() * 3, light = R() < 0.55;
-    cg.strokeStyle = light ? `rgba(255,246,206,${0.05 + R() * 0.08})` : `rgba(196,160,70,${0.04 + R() * 0.07})`;
-    cg.lineWidth = 0.8 + R() * 1.6; cg.beginPath();
-    for (let s = 0; s <= len; s += 8) { const yy = y0 + Math.sin((s + x0) * 0.03) * amp; s === 0 ? cg.moveTo(x0 + s, yy) : cg.lineTo(x0 + s, yy); }
-    cg.stroke();
-  }
-  // faint speckles showing through the skin
-  for (let k = 0; k < 140; k++) {
-    const x = R() * W, y = R() * H, r = 3 + R() * 9;
-    const gr = cg.createRadialGradient(x, y, 0, x, y, r);
-    gr.addColorStop(0, `rgba(140,84,26,${0.3 + R() * 0.25})`); gr.addColorStop(1, "rgba(150,96,34,0)");
-    cg.fillStyle = gr; cg.beginPath(); cg.arc(x, y, r, 0, Math.PI * 2); cg.fill();
-  }
   return { map: colorTex(col, false, aniso), canvas: col, normal: dataTex(normalFromHeight(hf, W, H, 2, false), W, H, false, aniso) };
 }
 
-/** bamboo atlas: 4 internode variants stacked in v (each tile = node → node), u = around the culm (tileable) */
 function paintBamboo(aniso: number) {
-  const W = 256, H = 1024;
-  const col = makeCanvas(W, H), cg = col.getContext("2d")!;
-  const R = mulberry(51), nA = lattice(61, 24, 64), nB = lattice(62, 6, 16), nC = lattice(63, 48, 64);
-  const img = cg.createImageData(W, H), d = img.data, hf = new Float32Array(W * H), rf = new Float32Array(W * H);
-  for (let y = 0; y < H; y++) {
-    const k = Math.floor(y / 256), f = (y % 256) / 256, dn = Math.min(f, 1 - f);
-    for (let x = 0; x < W; x++) {
-      const u = x / W, i = y * W + x;
-      const st = nA(u * 24, f * 3 + k * 17) * 0.6 + nC(u * 48, f * 6 + k * 9) * 0.4;   // long fibre streaks
-      const lo = nB(u * 6, f * 2 + k * 5) - 0.5;
-      const s = 0.8 + st * 0.36 + lo * 0.16;
-      let r = 214 * s, g = 162 * s, b = 96 * s;
-      const node = Math.pow(clamp01(1 - dn / 0.085), 2);                          // darker, greener node band
-      r = mix(r, 150, node * 0.4); g = mix(g, 122, node * 0.35); b = mix(b, 58, node * 0.4);
-      const ridge = Math.exp(-((dn / 0.009) ** 2));                              // pale raised node ring
-      r = mix(r, 232, ridge * 0.7); g = mix(g, 196, ridge * 0.7); b = mix(b, 126, ridge * 0.7);
-      const scar = Math.exp(-(((f - 0.028) / 0.006) ** 2));                       // sheath scar just past the node
-      r = mix(r, 92, scar * 0.6); g = mix(g, 62, scar * 0.6); b = mix(b, 30, scar * 0.6);
-      const n = (R() - 0.5) * 8;
-      d[i * 4] = r + n; d[i * 4 + 1] = g + n; d[i * 4 + 2] = b + n; d[i * 4 + 3] = 255;
-      hf[i] = st * 0.35 + ridge * 0.9 - scar * 0.25 + Math.exp(-((dn / 0.03) ** 2)) * 0.25;
-      rf[i] = 0.46 + (1 - st) * 0.14 + node * 0.12 + (R() - 0.5) * 0.04;
-    }
-  }
-  cg.putImageData(img, 0, 0);
-  // scuffs, rope-burn and dirt flecks
-  for (let m = 0; m < 90; m++) {
-    const x = R() * W, y = R() * H, r = 1 + R() * 3;
-    cg.fillStyle = R() < 0.6 ? `rgba(110,72,34,${0.15 + R() * 0.2})` : `rgba(236,206,146,${0.2 + R() * 0.25})`;
-    cg.save(); cg.translate(x, y); cg.scale(0.6, 1.8 + R() * 2); cg.beginPath(); cg.arc(0, 0, r, 0, Math.PI * 2); cg.fill(); cg.restore();
-  }
-  // end grain disc for the cut ends
-  const eg = makeCanvas(128, 128), eG = eg.getContext("2d")!, eimg = eG.createImageData(128, 128), ed = eimg.data;
-  const nE = lattice(71, 64, 8);
-  for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) {
-    const dx = (x - 64) / 64, dy = (y - 64) / 64, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx) / (Math.PI * 2) + 0.5;
-    const fib = nE(a * 64, r * 5) - 0.5, ring = Math.sin(r * 34) * 0.5 + 0.5;
-    let s = 1 + fib * 0.35 + ring * 0.06;
-    let cr = 222 * s, cgc = 184 * s, cb = 118 * s;
-    const rim = smooth(0.78, 0.92, r);                              // bark / wall ring
-    cr = mix(cr, 132, rim); cgc = mix(cgc, 88, rim); cb = mix(cb, 42, rim);
-    const core = 1 - smooth(0.0, 0.2, r);                           // pithy darker centre
-    cr = mix(cr, 150, core * 0.5); cgc = mix(cgc, 110, core * 0.5); cb = mix(cb, 60, core * 0.5);
-    s = 1; const i = (y * 128 + x) * 4;
-    ed[i] = cr; ed[i + 1] = cgc; ed[i + 2] = cb; ed[i + 3] = 255;
-  }
-  eG.putImageData(eimg, 0, 0);
+  const W = 64, H = 64, col = makeCanvas(W, H), cg = col.getContext("2d")!;
+  cg.fillStyle = "#2b2f2d"; cg.fillRect(0, 0, W, H);
+  const hf = new Float32Array(W * H).fill(0.5), rf = new Float32Array(W * H).fill(0.6);
+  const eg = makeCanvas(32, 32), eG = eg.getContext("2d")!;
+  eG.fillStyle = "#222423"; eG.fillRect(0, 0, 32, 32);
   return {
     map: colorTex(col, true, aniso), canvas: col,
-    normal: dataTex(normalFromHeight(hf, W, H, 4, true), W, H, true, aniso),
+    normal: dataTex(normalFromHeight(hf, W, H, 1, true), W, H, true, aniso),
     rough: dataTex(grayData(rf), W, H, true, aniso),
     grain: colorTex(eg, false, aniso),
   };
 }
 
-/** 3-strand hemp rope tile: u = around (3 strands), v = along (one tile = 1/3 lay length) */
 function paintRope(aniso: number) {
-  const W = 128, H = 128;
-  const col = makeCanvas(W, H), cg = col.getContext("2d")!;
-  const R = mulberry(81), nA = lattice(91, 16, 64);
-  const img = cg.createImageData(W, H), d = img.data, hf = new Float32Array(W * H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const u = x / W, v = y / H, i = y * W + x;
-    const ph = (((3 * u + v) % 1) + 1) % 1;
-    const prof = Math.sin(Math.PI * ph);
-    const fib = nA((3 * u + v) * 16 % 16, (v - u * 0.5) * 64);                   // hairs running along each strand
-    const s = 0.52 + Math.pow(prof, 0.6) * 0.55 + (fib - 0.5) * 0.22;
-    const n = (R() - 0.5) * 10;
-    d[i * 4] = 226 * s + n; d[i * 4 + 1] = 192 * s + n; d[i * 4 + 2] = 128 * s + n * 0.6; d[i * 4 + 3] = 255;
-    hf[i] = Math.pow(prof, 0.7) + (fib - 0.5) * 0.15;
-  }
-  cg.putImageData(img, 0, 0);
-  return { map: colorTex(col, true, aniso), canvas: col, normal: dataTex(normalFromHeight(hf, W, H, 2.4, true), W, H, true, aniso) };
+  // Matte black/OD tactical nylon suspension cord
+  const W = 64, H = 64, col = makeCanvas(W, H), cg = col.getContext("2d")!;
+  cg.fillStyle = "#242723"; cg.fillRect(0, 0, W, H);
+  for (let y = 0; y < H; y += 6) { cg.fillStyle = "rgba(0,0,0,0.28)"; cg.fillRect(0, y, W, 2); }
+  const hf = new Float32Array(W * H).fill(0.5);
+  return { map: colorTex(col, true, aniso), canvas: col, normal: dataTex(normalFromHeight(hf, W, H, 1, true), W, H, true, aniso) };
 }
 
-/** stem: u around, v along the lathe profile (0 = peel neck, ~0.72 = cut rim, 1 = centre of the cut face) */
 function paintStem(aniso: number) {
-  const W = 128, H = 256;
-  const col = makeCanvas(W, H), cg = col.getContext("2d")!;
-  const R = mulberry(101), nA = lattice(111, 16, 32);
-  const img = cg.createImageData(W, H), d = img.data;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const u = x / W, v = y / H, i = (y * W + x) * 4;
-    const fib = nA(u * 16, v * 6) - 0.5, fine = (R() - 0.5) * 10;
-    let r: number, g: number, b: number;
-    if (v < 0.7) {
-      const t = smooth(0.0, 0.66, v);
-      r = mix(214, 128, t); g = mix(196, 132, t); b = mix(60, 44, t);
-      const s = 1 + fib * 0.3; r *= s; g *= s; b *= s;
-    } else if (v < 0.76) { r = 70; g = 48; b = 22; }
-    else { const s = 1 + fib * 0.6, rr = (1 - v) / 0.24; r = mix(92, 146, rr) * s; g = mix(62, 104, rr) * s; b = mix(30, 52, rr) * s; }
-    d[i] = r + fine; d[i + 1] = g + fine; d[i + 2] = b + fine; d[i + 3] = 255;
-  }
-  cg.putImageData(img, 0, 0);
+  const col = makeCanvas(32, 32), cg = col.getContext("2d")!;
+  cg.fillStyle = "#2b2f2d"; cg.fillRect(0, 0, 32, 32);
   return colorTex(col, true, aniso);
 }
 
@@ -387,9 +242,9 @@ function textures(aniso: number): Tex {
   const lod = makeCanvas(512, 512), lg = lod.getContext("2d")!;
   lg.drawImage(peel.canvas, 0, 0, 512, 256);
   lg.drawImage(inner.canvas, 0, 256, 512, 128);
-  lg.fillStyle = "#b98446"; lg.fillRect(0, 384, 171, 128);
-  lg.fillStyle = "#c7a468"; lg.fillRect(171, 384, 170, 128);
-  lg.fillStyle = "#9c9a3a"; lg.fillRect(341, 384, 171, 128);
+  lg.fillStyle = "#363a31"; lg.fillRect(0, 384, 171, 128);
+  lg.fillStyle = "#2b2f2d"; lg.fillRect(171, 384, 170, 128);
+  lg.fillStyle = "#242723"; lg.fillRect(341, 384, 171, 128);
   const glow = makeCanvas(512, 512), gg = glow.getContext("2d")!;
   gg.fillStyle = "#000"; gg.fillRect(0, 0, 512, 512); gg.drawImage(inner.canvas, 0, 256, 512, 128);
   TEX = {
@@ -777,24 +632,20 @@ function materials(aniso: number): Mats {
   if (MATS) return MATS;
   const T = textures(aniso);
   const outer = new THREE.MeshPhysicalMaterial({
-    map: T.peelMap, normalMap: T.peelNormal, normalScale: new THREE.Vector2(0.7, 0.7), roughnessMap: T.peelRough, roughness: 1.0,
-    clearcoat: 0.15, clearcoatRoughness: 0.38, metalness: 0, envMapIntensity: 0.7,
+    map: T.peelMap, normalMap: T.peelNormal, normalScale: new THREE.Vector2(0.5, 0.5), roughnessMap: T.peelRough, roughness: 1.0,
+    clearcoat: 0.05, clearcoatRoughness: 0.7, metalness: 0, envMapIntensity: 0.4,
   });
   const inner = new THREE.MeshStandardMaterial({
-    map: T.innerMap, normalMap: T.innerNormal, normalScale: new THREE.Vector2(0.5, 0.5), roughness: 0.74,
-    emissive: new THREE.Color(1.0, 0.88, 0.34), emissiveMap: T.innerMap, emissiveIntensity: 0.36, // sun glowing through the peel (golden)
+    map: T.innerMap, normalMap: T.innerNormal, normalScale: new THREE.Vector2(0.4, 0.4), roughness: 0.85,
   });
-  // the rolled lip: pale fibrous peel edge (inner map), a little self-glow so it reads as a lighter rim from any side
-  const rim = new THREE.MeshStandardMaterial({ color: 0xfff1c4, map: T.innerMap, roughness: 0.72, emissive: new THREE.Color(0.5, 0.38, 0.14), emissiveIntensity: 0.3 });
+  const rim = new THREE.MeshStandardMaterial({ color: 0x33382e, map: T.innerMap, roughness: 0.8 });
   [outer, inner, rim].forEach(addFlex);
-  // atmos's warm bounce divided back out (look.ts): with it the canopy hue measures 30.7 vs the target art's 39.6
   [outer, inner, rim].forEach((m, i) => actorLook(m, { key: `glider-${i}` }));
-  const bamboo = new THREE.MeshStandardMaterial({ map: T.bambooMap, normalMap: T.bambooNormal, roughnessMap: T.bambooRough, roughness: 1.0 });
+  const bamboo = new THREE.MeshStandardMaterial({ map: T.bambooMap, normalMap: T.bambooNormal, roughnessMap: T.bambooRough, roughness: 0.75 });
   const grain = new THREE.MeshStandardMaterial({ map: T.grainMap, roughness: 0.85 });
-  const rope = new THREE.MeshStandardMaterial({ map: T.ropeMap, normalMap: T.ropeNormal, normalScale: new THREE.Vector2(1.1, 1.1), roughness: 0.93 });
-  const stem = new THREE.MeshStandardMaterial({ map: T.stemMap, roughness: 0.6 });
-  // lo: the underside glows like the hi peel (emissive mask = the underside region of the atlas only)
-  const lod = new THREE.MeshStandardMaterial({ map: T.lodMap, roughness: 0.6, emissive: new THREE.Color(1.0, 0.72, 0.26), emissiveMap: T.lodGlow, emissiveIntensity: 0.75 });
+  const rope = new THREE.MeshStandardMaterial({ map: T.ropeMap, normalMap: T.ropeNormal, normalScale: new THREE.Vector2(0.8, 0.8), roughness: 0.88 });
+  const stem = new THREE.MeshStandardMaterial({ map: T.stemMap, roughness: 0.85 });
+  const lod = new THREE.MeshStandardMaterial({ map: T.lodMap, roughness: 0.82 });
   MATS = { outer, inner, rim, bamboo, grain, rope, stem, lod };
   return MATS;
 }
@@ -824,12 +675,6 @@ function loGeometry(): THREE.BufferGeometry {
     return tube(s, radial);
   };
   const parts: THREE.BufferGeometry[] = [can.index ? can.toNonIndexed() : can];
-  parts.push(sw(0.16)(tubeOf(L.lead, R_LEAD * 1.1, 14, 5)), sw(0.16)(tubeOf(L.bar, R_BAR * 1.1, 1, 5)), sw(0.16)(tubeOf(L.trail, R_TRAIL * 1.2, 8, 4)));
-  for (const s of L.struts) parts.push(sw(0.16)(tubeOf(s, R_STRUT, 1, 4)));
-  const stem = new THREE.CylinderGeometry(0.09, 0.14, 0.34, 6, 1).toNonIndexed();
-  stem.translate(0, 0.17, 0); stem.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new V3(0, 1, 0), L.stemDir)); stem.translate(L.stemBase.x, L.stemBase.y, L.stemBase.z);
-  stem.deleteAttribute("uv"); stem.setAttribute("uv", new THREE.Float32BufferAttribute(new Array(stem.getAttribute("position").count * 2).fill(0), 2));
-  parts.push(sw(0.83)(stem));
   const P = new THREE.Matrix4().makeRotationX(FRAME_PITCH);
   const hands = [new V3(HAND_X, 0, 0), new V3(HAND_X, 0, 0), new V3(-HAND_X, 0, 0), new V3(-HAND_X, 0, 0)];
   // ropes are built in rig space (pitch applied to the frame parts below), so un-pitch the hands into frame space
@@ -947,10 +792,10 @@ export async function createGlider(ctx: WorldCtx, opts: { lo?: boolean; hands?: 
       const mesh = new THREE.Mesh(g, m); mesh.name = name; mesh.castShadow = false; mesh.receiveShadow = true; frame.add(mesh); return mesh;
     };
     mk(H.canopy, [M.outer, M.inner, M.rim], "glider-peel");
-    mk(H.bamboo, M.bamboo, "glider-bamboo");
-    mk(H.caps, M.grain, "glider-bamboo-ends");
-    mk(H.lash, M.rope, "glider-lashings");
-    mk(H.stem, M.stem, "glider-stem");
+    mk(H.bamboo, M.bamboo, "glider-bamboo").visible = false;
+    mk(H.caps, M.grain, "glider-bamboo-ends").visible = false;
+    mk(H.lash, M.rope, "glider-lashings").visible = false;
+    mk(H.stem, M.stem, "glider-stem").visible = false;
     rig.add(hi);
     risers = buildRisers(M.rope, handL, handR);
     risers.setTails(tailsOn);

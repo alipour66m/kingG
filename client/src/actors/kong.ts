@@ -20,7 +20,7 @@ import type { WorldCtx } from "../engine/engine";
 import type { KongActor, KongPose } from "./api";
 import { buildKongMin, buildKongParts, createKongMaterials, type KongMaterials, type MatKey, type PartGeo } from "./kong-parts";
 import { KongAnimator, NB, BONES, BONE_LIST, boneIndex, type BoneName } from "./kong-rig";
-import { loadKongAsset, EYE_GLSL, KONG_HS, FACE, KONG_VER, KONG_ALT, type KongAsset, type AssetMat } from "./kong-asset";
+import { loadKongAsset, USE_ASSET, EYE_GLSL, KONG_HS, FACE, KONG_VER, KONG_ALT, type KongAsset, type AssetMat } from "./kong-asset";
 import { createWeaponsKit } from "../weapons/index";
 import type { WeaponsKit } from "../weapons/api";
 import type { Rarity, WeaponId } from "../../../shared/world/map";
@@ -51,7 +51,7 @@ const HEAD_I = boneIndex("head");
 /** eye midpoint in the head bone frame (anatomy EYE_C × HS, a touch in front of the balls) */
 const EYE_MID = new THREE.Vector3(...FACE.eyeMid);
 /** pov: eye height above the head joint (the camera sits here) */
-const HEAD_TOP = new THREE.Vector3(0, 0.2 * KONG_HS, 0);
+const HEAD_TOP = new THREE.Vector3(0, 0.14 * KONG_HS, 0);
 const UPV = new THREE.Vector3(0, 1, 0);
 /** projected-height thresholds (px of a 2 m kong) + dither band (fraction) */
 // hi (60k) only above 320 px (≈ 6.5 m at 1440p; lower, the crowd drew 1.2 M tris); lo is the 6k Blender tier
@@ -86,8 +86,8 @@ const PROXY_CM = flag("kongproxy");
 const FORCE_TIER: Tier | null = (() => { try { const v = flag("kongtier"); return v === null ? null : (Math.max(0, Math.min(2, Number(v))) as Tier); } catch { return null; } })();
 /** v2 ripe-yellow chroma / value (dev: ?kysat= / ?kyval= to tune) */
 const YSAT = flag("kysat"), YVAL = flag("kyval");
-// per-kong look variety (subtle: the brand look is chocolate fur + brick-red shorts)
-const SHORTS = ["#ffffff", "#f2e6e0", "#ffd9c8", "#e8d0d0", "#fff0e0", "#f6dcd2"].map((c) => new THREE.Color(c));
+// per-operator subtle combat fatigue dye variation (olive, coyote, slate, ranger green)
+const SHORTS = ["#ffffff", "#d8ded4", "#cfc6b4", "#bcc2be", "#e2ddd0", "#c4cbb8"].map((c) => new THREE.Color(c));
 
 interface Batch { tier: Tier | "shadow-lo" | "shadow-min" | "weapon" | "wshadow"; mat: MatKey | "proxy" | "weapon"; mesh: THREE.Mesh; geo: THREE.InstancedBufferGeometry; slotFade: THREE.InstancedBufferAttribute; n: number; list?: Array<[Slot, number]>; fade?: boolean;
   /** kong-variety: an accessory batch — 0..2 = hats (outfits.ts HAT_IDS), 3..5 = tops (TOP_IDS) */
@@ -1019,7 +1019,7 @@ export function kongManager(ctx: WorldCtx): Promise<KongManager> {
   return (manager ??= (async () => {
     const release = ctx.hold("kong-asset");
     try {
-      const [asset, acc] = await Promise.all([loadKongAsset(ctx.renderer), loadAccessories().catch((e) => { console.warn("[kong] accessories unavailable:", e); return null; })]);
+      const [asset, acc] = await Promise.all([loadKongAsset(ctx.renderer), USE_ASSET ? loadAccessories().catch((e) => { console.warn("[kong] accessories unavailable:", e); return null; }) : Promise.resolve(null)]);
       return new KongManager(ctx, asset, asset ? acc : null);
     } finally { release(); }
   })());
@@ -1077,7 +1077,7 @@ export async function createKong(ctx: WorldCtx, opts: { variant?: number; lod?: 
   // hand socket: at the fist centre (wrist + fist offset), oriented along the AIM (yaw + pitch + recoil kick) so every
   // weapon points where the kong shoots, whatever the arm pose does; reload rolls + dips it
   // fist centre below the wrist joint (the Blender kong's fists are 1.3× the procedural ones — anatomy FS)
-  const FIST = mgr.asset ? new THREE.Vector3(...FACE.fist) : new THREE.Vector3(0.0, -0.112, -0.024);
+  const FIST = mgr.asset ? new THREE.Vector3(...FACE.fist) : new THREE.Vector3(0.0, -0.125, -0.02);
   // off-hand (staging: dual pistols) — a second socket on the left fist, aimed like the main one
   const offSocket = new THREE.Object3D(); offSocket.name = "hand-socket-l"; offSocket.visible = false; g.add(offSocket);
   slot.offSocket = offSocket;
