@@ -4,7 +4,7 @@
 //  • ITEMS — glossy 3D-style item renders (public/assets/ui/icons/<id>.webp, in one shared hotbar style).
 //    Kill-feed silhouettes are derived from their alpha.
 import type { ConsumableId, WeaponId } from "../../../shared/world/map";
-import { uiAsset } from "./styles";
+import { tacticalItemUrl } from "./item-art";
 
 export type ItemId = WeaponId | ConsumableId | "banana";
 
@@ -115,14 +115,14 @@ export function drawGlyph(g: CanvasRenderingContext2D, id: GlyphId, x: number, y
 
 // ------------------------------------------------------------------------------------------------ items
 const imgCache = new Map<string, HTMLImageElement>();
-export const itemIconUrl = (id: string) => uiAsset(`icons/${id}.webp`);
+export const itemIconUrl = (id: string) => tacticalItemUrl(id) ?? "";
 /** shared, preloaded <img> for an item (decode() it before drawing to a canvas) */
 export function itemImage(id: string): HTMLImageElement {
   let im = imgCache.get(id);
   if (!im) {
     im = new Image();
     im.decoding = "async";
-    im.src = itemIconUrl(ITEM_IDS.includes(id as ItemId) ? id : "banana");
+    im.src = itemIconUrl(ITEM_IDS.includes(id as ItemId) ? id : "ar");
     imgCache.set(id, im);
   }
   return im;
@@ -132,8 +132,8 @@ export function preloadItems(): Promise<void> {
   return Promise.all(ITEM_IDS.map((id) => itemImage(id).decode().catch(() => undefined))).then(() => undefined);
 }
 
-/** icons painted facing left in the source art — mirrored in the kill feed so every weapon points at the victim */
-const FACES_LEFT = new Set(["pistol", "smg", "shotgun", "sniper"]);
+/** all tactical weapon SVGs point right cleanly — no mirroring needed in the kill feed */
+const FACES_LEFT = new Set<string>();
 const silCache = new Map<string, HTMLCanvasElement>();
 /** flat cream silhouette of a weapon (kill feed), w×h device px, drawn from the item art's alpha */
 export function weaponSilhouette(id: string, w: number, h: number, color = "#fbf3c9"): HTMLCanvasElement | null {
