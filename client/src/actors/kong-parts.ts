@@ -1,7 +1,7 @@
 // Human Tactical Operator body parts — sculpted anatomical 3D military soldier (~1.80 m tall) on kong-rig.ts rest skeleton.
-// Builds closed, watertight anatomical loft meshes across hips, spine, chest, head, arms, hands, legs, and boots,
-// with high-cut FAST helmet, reflective wrap-around ballistic visor, balaclava, Coyote-Tan SAPI plate carrier with
-// visible steel/polymer magazines, MOLLE webbing, tactical radio, 24L pack, drop-leg holster, and combat boots.
+// Builds closed, watertight anatomical loft meshes across hips, spine, chest, head, arms, 5-fingered gloved hands,
+// legs, and boots, with exposed realistic operator face (eyes, brows, nose, stubble, jawline), FAST helmet with goggles
+// strapped to the brow, Coyote-Tan SAPI plate carrier with mags, MOLLE webbing, radio, 24L pack, and combat boots.
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { base, canvas, grain, heightToNormal, rng, tex } from "./paint";
@@ -20,9 +20,9 @@ const v3 = (p: P3) => new V3(p[0], p[1], p[2]);
 const hexC = (h: string): C3 => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 
 // ------------------------------------------------------------------------------------------------ tactical palette
-// Strong tonal separation between Ranger Olive combat fatigues and Coyote Tan tactical armor/helmet/boots
 const PAL = {
-  skin: hexC("#d4a280"), skinShade: hexC("#a87556"),
+  skin: hexC("#dca988"), skinShade: hexC("#b27d5e"), white: [0.96, 0.96, 0.95] as C3,
+  iris: hexC("#3a5a68"), brow: hexC("#241b15"), lip: hexC("#a86a58"),
   olive: hexC("#4e5a3e"), oliveDark: hexC("#3a432e"), oliveCrease: hexC("#2d3423"),
   camoBase: hexC("#c2c6b0"), camoShade: hexC("#989d8a"),
   vest: hexC("#8c7c5c"), vestDark: hexC("#695c43"), vestTrim: hexC("#a1906d"),
@@ -96,7 +96,6 @@ const TRS = (p: P3, e: P3 = [0, 0, 0], s: P3 = [1, 1, 1]) =>
 /** Anatomical elliptical loft through `[y, rx, rz, ox?, oz?, col?]` rings; guarantees outward normals regardless of Y direction. */
 interface LoftRing { y: number; rx: number; rz: number; ox?: number; oz?: number; col?: C3 }
 function loftGeo(rings: LoftRing[], segs: number, capStart = true, capEnd = true): THREE.BufferGeometry {
-  // Always orient rings ascending in Y so triangle winding (a, c, b) consistently produces outward normals.
   const ordered = rings[rings.length - 1].y >= rings[0].y ? rings : rings.slice().reverse();
   const pos: number[] = [], uv: number[] = [], col: number[] = [], idx: number[] = [];
   const row = segs + 1;
@@ -211,6 +210,45 @@ function bootMaps() {
   return { map: tex(el, { repeat: [2, 2] }), normal: tex(heightToNormal(hel, 1.5), { srgb: false, repeat: [2, 2] }) };
 }
 
+/** Realistic human skin texture with warm tone, subtle pores, 5-o'clock jaw stubble, under-eye shading, and brow line.
+ *  Centered at u = 0.75 (sin(1.5π) = -1, -Z front of head loft), with neutral warm skin everywhere else. */
+function faceMaps() {
+  const S = 512, r = rng(17), [el, c] = canvas(S, S), [hel, hc] = canvas(S, S);
+  base(c, S, S, "#f5ece6", r, 0.025, 10);
+  // Subtle facial features centered at cx = 0.75 * S = 384 (v=0 is bottom neck, canvas y=0 is top v=1)
+  const cx = S * 0.75;
+  // Soft cheek/nose flush
+  const flush = c.createRadialGradient(cx, S * 0.54, 4, cx, S * 0.54, 52);
+  flush.addColorStop(0, "rgba(195, 110, 92, 0.14)");
+  flush.addColorStop(1, "rgba(195, 110, 92, 0)");
+  c.fillStyle = flush;
+  c.fillRect(cx - 80, S * 0.42, 160, 120);
+  // 5-o'clock beard/stubble jaw shading on lower face (y = 0.56..0.76 on canvas = chin & jaw)
+  const beard = c.createRadialGradient(cx, S * 0.67, 8, cx, S * 0.66, 54);
+  beard.addColorStop(0, "rgba(42, 34, 28, 0.34)");
+  beard.addColorStop(0.7, "rgba(42, 34, 28, 0.22)");
+  beard.addColorStop(1, "rgba(42, 34, 28, 0)");
+  c.fillStyle = beard;
+  c.fillRect(cx - 75, S * 0.56, 150, 110);
+  // Subtle eye socket shadow around u = 0.75 ± 0.045
+  for (const s of [-1, 1]) {
+    const es = c.createRadialGradient(cx + s * 22, S * 0.48, 2, cx + s * 22, S * 0.48, 16);
+    es.addColorStop(0, "rgba(85, 52, 40, 0.28)");
+    es.addColorStop(1, "rgba(85, 52, 40, 0)");
+    c.fillStyle = es;
+    c.fillRect(cx + s * 22 - 18, S * 0.42, 36, 36);
+  }
+  // Subtle lip shadow line
+  c.fillStyle = "rgba(135, 68, 58, 0.42)";
+  c.beginPath();
+  c.ellipse(cx, S * 0.615, 14, 4, 0, 0, Math.PI * 2);
+  c.fill();
+
+  hc.fillStyle = "#808080"; hc.fillRect(0, 0, S, S);
+  grain(c, S, S, r, 0.02, 1800);
+  return { map: tex(el), normal: tex(heightToNormal(hel, 0.5), { srgb: false }) };
+}
+
 function packMap() {
   const S = 256, r = rng(24), [el, c] = canvas(S, S);
   base(c, S, S, "#7a6d52", r, 0.07, 25);
@@ -227,12 +265,13 @@ export function createKongMaterials(): KongMaterials {
   const cm = camoMaps();
   const vm = corduraMaps();
   const bm = bootMaps();
+  const sk = faceMaps();
   const pk = packMap();
 
   const fur = new THREE.MeshStandardMaterial({ color: "#ffffff", map: fm.map, normalMap: fm.normal, normalScale: new THREE.Vector2(0.45, 0.45), roughness: 0.86, metalness: 0.02, vertexColors: true });
   const hair = fur.clone();
-  const skin = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.56, metalness: 0.0, vertexColors: true });
-  const detail = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.16, metalness: 0.52, vertexColors: true });
+  const skin = new THREE.MeshStandardMaterial({ color: "#ffffff", map: sk.map, normalMap: sk.normal, normalScale: new THREE.Vector2(0.3, 0.3), roughness: 0.56, metalness: 0.0, vertexColors: true });
+  const detail = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.16, metalness: 0.45, vertexColors: true });
   const gold = new THREE.MeshStandardMaterial({ color: "#b5a374", metalness: 0.65, roughness: 0.34, vertexColors: true });
   const shorts = new THREE.MeshStandardMaterial({ color: "#ffffff", map: cm.map, normalMap: cm.normal, normalScale: new THREE.Vector2(0.5, 0.5), roughness: 0.88, vertexColors: true });
   const peel = new THREE.MeshStandardMaterial({ color: "#ffffff", map: vm.map, normalMap: vm.normal, normalScale: new THREE.Vector2(0.6, 0.6), roughness: 0.72, metalness: 0.04, vertexColors: true });
@@ -242,7 +281,7 @@ export function createKongMaterials(): KongMaterials {
   const min = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.82, vertexColors: true });
 
   const mats: KongMaterials["mats"] = { fur, hair, skin, detail, gold, shorts, peel, sneaker, pack: packM, rubber, min };
-  const texs = [fm.map, fm.normal, cm.map, cm.normal, vm.map, vm.normal, bm.map, bm.normal, pk];
+  const texs = [fm.map, fm.normal, cm.map, cm.normal, vm.map, vm.normal, bm.map, bm.normal, sk.map, sk.normal, pk];
   return {
     mats,
     dispose() { for (const m of Object.values(mats)) m.dispose(); for (const t of texs) t.dispose(); },
@@ -264,61 +303,84 @@ function buildHead(out: Out, hi: boolean) {
   const rub = slot(out, "head", "rubber", AO_NEUTRAL);
   const met = slot(out, "head", "gold");
 
-  const seg = hi ? 18 : 10;
-  // Neck & anatomical human head (overlaps down into chest collar at y = -0.05)
+  const seg = hi ? 22 : 10;
+  // Sculpted exposed human head: neck, contoured jaw/chin, cheeks, cheekbones, forehead, cranium
   addColoredLoft(skin, [
-    { y: -0.055, rx: 0.066, rz: 0.064, oz: 0.005, col: PAL.skinShade },
-    { y: 0.035, rx: 0.058, rz: 0.058, oz: 0.004, col: PAL.skinShade },
-    { y: 0.075, rx: 0.072, rz: 0.082, oz: -0.012, col: PAL.skin },
-    { y: 0.130, rx: 0.084, rz: 0.094, oz: -0.008, col: PAL.skin },
-    { y: 0.180, rx: 0.086, rz: 0.098, oz: 0.002, col: PAL.skin },
-    { y: 0.228, rx: 0.068, rz: 0.080, oz: 0.006, col: PAL.skinShade },
+    { y: -0.055, rx: 0.062, rz: 0.062, oz: 0.005, col: PAL.skinShade },
+    { y: 0.032, rx: 0.056, rz: 0.056, oz: 0.004, col: PAL.skinShade },
+    { y: 0.065, rx: 0.066, rz: 0.080, oz: -0.015, col: PAL.skinShade }, // chin & jaw
+    { y: 0.105, rx: 0.078, rz: 0.090, oz: -0.012, col: PAL.skin },      // mouth & cheeks
+    { y: 0.142, rx: 0.083, rz: 0.095, oz: -0.008, col: PAL.skin },      // eyes & brow line
+    { y: 0.185, rx: 0.086, rz: 0.098, oz: 0.002, col: PAL.skin },       // forehead
+    { y: 0.230, rx: 0.068, rz: 0.080, oz: 0.006, col: PAL.skinShade },
   ], seg);
-  // Sculpted nose bridge & brow ridge clearly visible between mask and helmet
-  skin.geo(new RoundedBoxGeometry(0.024, 0.038, 0.022, 1, 0.008), TRS([0, 0.128, -0.098], [0.22, 0, 0]), PAL.skin);
-  skin.geo(new RoundedBoxGeometry(0.112, 0.020, 0.024, 1, 0.007), TRS([0, 0.158, -0.088]), PAL.skinShade);
 
-  // Lower-face tactical balaclava / gaiter (stops below eyes at y=0.118 so upper face & goggles read cleanly!)
+  // Sculpted 3D nose bridge + tip + flared nostrils + expressive jaw/lips + ears
+  skin.geo(new RoundedBoxGeometry(0.022, 0.044, 0.028, hi ? 2 : 1, 0.008), TRS([0, 0.122, -0.098], [0.24, 0, 0]), PAL.skin);
+  skin.geo(new RoundedBoxGeometry(0.030, 0.014, 0.018, 1, 0.005), TRS([0, 0.103, -0.100]), PAL.skinShade);
+  skin.geo(new RoundedBoxGeometry(0.040, 0.010, 0.014, 1, 0.004), TRS([0, 0.078, -0.094]), PAL.lip);
+  skin.geo(new RoundedBoxGeometry(0.118, 0.022, 0.026, 1, 0.008), TRS([0, 0.156, -0.088]), PAL.skinShade);
+
+  // Real 3D Human Eyes (white sclera + iris + pupil + white specular catchlight + upper eyelid & eyebrows!)
+  for (const s of [-1, 1]) {
+    const ex = s * 0.032, ey = 0.138, ez = -0.089;
+    // Sclera sphere
+    skin.geo(new THREE.SphereGeometry(0.0135, hi ? 12 : 8, 8), TRS([ex, ey, ez], [0, 0, 0], [1.15, 0.85, 0.8]), PAL.white);
+    // Colored iris + dark pupil + tiny specular glint
+    rub.geo(new THREE.SphereGeometry(0.0082, hi ? 10 : 6, 6), TRS([ex, ey, ez - 0.0065], [0, 0, 0], [1, 1, 0.6]), PAL.iris);
+    rub.geo(new THREE.SphereGeometry(0.0046, 8, 6), TRS([ex, ey, ez - 0.0095], [0, 0, 0], [1, 1, 0.5]), PAL.sole);
+    if (hi) skin.geo(new THREE.SphereGeometry(0.0022, 6, 4), TRS([ex + 0.003, ey + 0.003, ez - 0.0115]), PAL.white);
+    // Upper eyelid fold + dark expressive eyebrow
+    skin.geo(new RoundedBoxGeometry(0.030, 0.007, 0.018, 1, 0.003), TRS([ex, ey + 0.009, ez - 0.002], [0.15, 0, -s * 0.06]), PAL.skinShade);
+    rub.geo(new RoundedBoxGeometry(0.036, 0.009, 0.016, 1, 0.004), TRS([ex, ey + 0.019, ez - 0.005], [0, 0, -s * 0.12]), PAL.brow);
+  }
+
+  // Low tactical neck gaiter / collar rolled at base of neck (leaves jaw, mouth & full face exposed!)
   addColoredLoft(rub, [
-    { y: -0.05, rx: 0.070, rz: 0.068, oz: 0.005, col: PAL.gaiterShade },
-    { y: 0.035, rx: 0.064, rz: 0.066, oz: 0.003, col: PAL.gaiter },
-    { y: 0.082, rx: 0.082, rz: 0.092, oz: -0.010, col: PAL.gaiter },
-    { y: 0.118, rx: 0.086, rz: 0.096, oz: -0.011, col: PAL.gaiterShade },
+    { y: -0.052, rx: 0.068, rz: 0.066, oz: 0.005, col: PAL.gaiterShade },
+    { y: 0.018, rx: 0.062, rz: 0.062, oz: 0.004, col: PAL.gaiter },
+    { y: 0.036, rx: 0.060, rz: 0.060, oz: 0.004, col: PAL.gaiterShade },
   ], seg);
 
-  // Sculpted high-cut FAST Ballistic Helmet shell (Coyote Tan)
+  // Sculpted high-cut FAST Ballistic Helmet shell (Coyote Tan) sitting cleanly above the eyebrows
   addColoredLoft(helm, [
-    { y: 0.155, rx: 0.112, rz: 0.126, oz: 0.005, col: PAL.helmetTrim },
-    { y: 0.180, rx: 0.116, rz: 0.130, oz: 0.005, col: PAL.helmet },
-    { y: 0.215, rx: 0.106, rz: 0.120, oz: 0.006, col: PAL.helmet },
-    { y: 0.246, rx: 0.076, rz: 0.088, oz: 0.008, col: PAL.helmet },
-    { y: 0.264, rx: 0.028, rz: 0.034, oz: 0.008, col: PAL.helmet },
+    { y: 0.168, rx: 0.112, rz: 0.126, oz: 0.005, col: PAL.helmetTrim },
+    { y: 0.190, rx: 0.116, rz: 0.130, oz: 0.005, col: PAL.helmet },
+    { y: 0.222, rx: 0.106, rz: 0.120, oz: 0.006, col: PAL.helmet },
+    { y: 0.250, rx: 0.076, rz: 0.088, oz: 0.008, col: PAL.helmet },
+    { y: 0.266, rx: 0.028, rz: 0.034, oz: 0.008, col: PAL.helmet },
   ], hi ? 20 : 10);
-  // Helmet rear counterweight battery pouch + top low-profile IR strobe
-  helm.geo(new RoundedBoxGeometry(0.094, 0.056, 0.042, hi ? 2 : 1, 0.012), TRS([0, 0.165, 0.125], [0.14, 0, 0]), PAL.vestDark);
-  if (hi) det.geo(new RoundedBoxGeometry(0.032, 0.014, 0.044, 1, 0.004), TRS([0, 0.262, 0.020]), PAL.metalDark);
+  // Rear counterweight pouch + top IR strobe
+  helm.geo(new RoundedBoxGeometry(0.094, 0.054, 0.040, hi ? 2 : 1, 0.012), TRS([0, 0.172, 0.125], [0.14, 0, 0]), PAL.vestDark);
+  if (hi) det.geo(new RoundedBoxGeometry(0.032, 0.014, 0.044, 1, 0.004), TRS([0, 0.264, 0.020]), PAL.metalDark);
 
-  // Low-profile titanium NVG Shroud Mount on helmet front (compact, realistic — no tall frog antennae)
-  det.geo(new RoundedBoxGeometry(0.046, 0.044, 0.020, 1, 0.005), TRS([0, 0.205, -0.124], [-0.26, 0, 0]), PAL.metalDark);
-  met.geo(new THREE.CylinderGeometry(0.011, 0.011, 0.016, 8), TRS([0, 0.208, -0.132], [Math.PI / 2 - 0.26, 0, 0]), [1, 1, 1]);
+  // Low-profile titanium NVG shroud mount + Tactical Ballistic Goggles pushed up onto helmet brow (Delta Force style!)
+  det.geo(new RoundedBoxGeometry(0.042, 0.038, 0.018, 1, 0.005), TRS([0, 0.232, -0.114], [-0.38, 0, 0]), PAL.metalDark);
+  met.geo(new THREE.CylinderGeometry(0.009, 0.009, 0.014, 8), TRS([0, 0.236, -0.122], [Math.PI / 2 - 0.38, 0, 0]), [1, 1, 1]);
+  const gAngle = Math.PI * 0.58;
+  rub.geo(
+    new THREE.CylinderGeometry(0.116, 0.114, 0.038, hi ? 16 : 8, 1, false, Math.PI - gAngle / 2, gAngle),
+    TRS([0, 0.194, -0.016], [-0.18, 0, 0]),
+    PAL.goggleFrame,
+  );
+  det.geo(
+    new THREE.CylinderGeometry(0.119, 0.117, 0.028, hi ? 16 : 8, 1, false, Math.PI - gAngle * 0.44, gAngle * 0.88),
+    TRS([0, 0.194, -0.019], [-0.18, 0, 0]),
+    PAL.visor,
+  );
+  // Goggle strap wrapping cleanly around helmet shell
+  rub.geo(new THREE.CylinderGeometry(0.118, 0.118, 0.016, 16, 1, true), TRS([0, 0.192, 0.005], [-0.08, 0, 0]), PAL.gaiter);
 
   // ARC side rails, Peltor tactical comms headset earcups & boom mic
   for (const s of [-1, 1]) {
-    helm.geo(new RoundedBoxGeometry(0.016, 0.028, 0.122, 1, 0.005), TRS([s * 0.112, 0.174, -0.004], [-0.08, 0, 0]), PAL.vestDark);
-    rub.geo(new THREE.CylinderGeometry(0.034, 0.036, 0.026, 14), TRS([s * 0.098, 0.126, 0.002], [0, 0, Math.PI / 2]), PAL.metalDark);
-    det.geo(new THREE.CylinderGeometry(0.024, 0.026, 0.030, 12), TRS([s * 0.102, 0.126, 0.002], [0, 0, Math.PI / 2]), PAL.vestDark);
+    helm.geo(new RoundedBoxGeometry(0.016, 0.026, 0.118, 1, 0.005), TRS([s * 0.112, 0.178, -0.004], [-0.08, 0, 0]), PAL.vestDark);
+    rub.geo(new THREE.CylinderGeometry(0.033, 0.035, 0.026, 14), TRS([s * 0.096, 0.128, 0.004], [0, 0, Math.PI / 2]), PAL.metalDark);
+    det.geo(new THREE.CylinderGeometry(0.023, 0.025, 0.030, 12), TRS([s * 0.100, 0.128, 0.004], [0, 0, Math.PI / 2]), PAL.vestDark);
   }
   if (hi) {
-    rub.geo(new RoundedBoxGeometry(0.007, 0.007, 0.085, 1, 0.003), TRS([-0.088, 0.098, -0.048], [-0.14, -0.32, 0]), PAL.metalDark);
-    for (const s of [-1, 1]) rub.geo(new THREE.BoxGeometry(0.011, 0.095, 0.012), TRS([s * 0.072, 0.084, -0.022], [0.22, 0, -s * 0.2]), PAL.gaiter);
+    rub.geo(new RoundedBoxGeometry(0.006, 0.006, 0.082, 1, 0.003), TRS([-0.088, 0.098, -0.048], [-0.14, -0.32, 0]), PAL.metalDark);
+    for (const s of [-1, 1]) rub.geo(new THREE.BoxGeometry(0.010, 0.095, 0.011), TRS([s * 0.072, 0.082, -0.022], [0.22, 0, -s * 0.2]), PAL.gaiter);
   }
-
-  // Wrap-around Tactical Ballistic Goggles cleanly in front of upper face (blue-iridium polycarbonate visor + matte frame)
-  const gAngle = Math.PI * 0.62;
-  const gFrame = new THREE.CylinderGeometry(0.110, 0.108, 0.044, hi ? 16 : 8, 1, false, Math.PI - gAngle / 2, gAngle);
-  rub.geo(gFrame, TRS([0, 0.142, -0.005], [0.04, 0, 0]), PAL.goggleFrame);
-  const gLens = new THREE.CylinderGeometry(0.113, 0.111, 0.032, hi ? 16 : 8, 1, false, Math.PI - gAngle * 0.44, gAngle * 0.88);
-  det.geo(gLens, TRS([0, 0.142, -0.008], [0.04, 0, 0]), PAL.visor);
 }
 
 function buildTorso(out: Out, hi: boolean) {
@@ -330,7 +392,6 @@ function buildTorso(out: Out, hi: boolean) {
   const met = slot(out, "chest", "gold");
 
   const seg = hi ? 16 : 10;
-  // Spine abdomen/waist (y = -0.14..+0.24 overlaps deep into hips and up into chest -> ZERO waist gap!)
   addColoredLoft(spineShirt, [
     { y: -0.14, rx: 0.152, rz: 0.102, col: PAL.oliveDark },
     { y: -0.02, rx: 0.144, rz: 0.098, col: PAL.oliveDark },
@@ -338,7 +399,6 @@ function buildTorso(out: Out, hi: boolean) {
     { y: 0.23, rx: 0.165, rz: 0.104, col: PAL.olive },
   ], seg);
 
-  // Chest upper torso + broad deltoid shoulder sockets reaching ±0.215 + folded collar
   addColoredLoft(shirt, [
     { y: -0.06, rx: 0.156, rz: 0.100, col: PAL.oliveDark },
     { y: 0.05, rx: 0.178, rz: 0.108, col: PAL.olive },
@@ -364,7 +424,6 @@ function buildTorso(out: Out, hi: boolean) {
     vest.geo(new RoundedBoxGeometry(0.056, 0.105, 0.042, 1, 0.01), TRS([x, -0.055, -0.136]), PAL.pouch);
     if (hi) det.geo(new RoundedBoxGeometry(0.042, 0.044, 0.026, 1, 0.005), TRS([x, 0.008, -0.136], [0.08, 0, 0]), PAL.magSteel);
   }
-  // Upper chest admin pouch + unit patch + tactical PRC-152 radio & whip antenna
   vest.geo(new RoundedBoxGeometry(0.145, 0.068, 0.028, 1, 0.008), TRS([0, 0.078, -0.132], [-0.08, 0, 0]), PAL.vestDark);
   if (hi) {
     det.geo(new THREE.BoxGeometry(0.062, 0.032, 0.008), TRS([0, 0.084, -0.146], [-0.08, 0, 0]), PAL.patch);
@@ -413,7 +472,6 @@ function buildLegs(out: Out, hi: boolean) {
   const knee = v3(BONES.kneeR.offset);
 
   const lSeg = hi ? 14 : 8;
-  // Hip socket sphere cap + muscular outward-facing thigh loft down to kneeR
   thighPants.geo(new THREE.SphereGeometry(0.090, 10, 8), TRS([0, 0.01, 0]), PAL.camoShade);
   addColoredLoft(thighPants, [
     { y: 0.02, rx: 0.092, rz: 0.096, col: PAL.camoShade },
@@ -421,7 +479,6 @@ function buildLegs(out: Out, hi: boolean) {
     { y: -0.26, rx: 0.079, rz: 0.083, oz: -0.002, col: PAL.camoBase },
     { y: knee.y - 0.015, rx: 0.068, rz: 0.072, col: PAL.camoShade },
   ], lSeg);
-  // Cargo pocket + tight contoured drop-leg holster strap (hugs thigh cleanly — no floating disc!)
   thighPants.geo(new RoundedBoxGeometry(0.030, 0.145, 0.105, 1, 0.01), TRS([0.080, -0.21, 0]), [0.92, 0.92, 0.9]);
   thighBelt.geo(new RoundedBoxGeometry(0.042, 0.135, 0.082, 1, 0.012), TRS([0.094, -0.15, -0.016]), PAL.metalDark);
   addColoredLoft(thighBelt, [
@@ -435,7 +492,6 @@ function buildLegs(out: Out, hi: boolean) {
     ], lSeg);
   }
 
-  // Knee sphere cap + sculpted shin & calf muscle + contoured knee pad
   const calfPants = slot(out, "kneeR", "shorts", AO_CLOTH);
   const kneeDet = slot(out, "kneeR", "detail", AO_NEUTRAL);
   const kneeStraps = slot(out, "kneeR", "rubber", AO_NEUTRAL);
@@ -456,7 +512,6 @@ function buildLegs(out: Out, hi: boolean) {
     { y: -0.020, rx: 0.071, rz: 0.075, col: PAL.vestDark },
   ], lSeg);
 
-  // Sculpted Coyote Suede Combat Boot (sole at y = -0.12)
   const boot = slot(out, "ankleR", "sneaker", AO_NEUTRAL);
   const sole = slot(out, "ankleR", "rubber", AO_NEUTRAL);
 
@@ -483,7 +538,6 @@ function buildArms(out: Out, hi: boolean) {
   const elbow = v3(BONES.elbowR.offset);
   const aSeg = hi ? 12 : 8;
 
-  // Shoulder deltoid socket ball overlapping chest edge + smoothly interpolating upper arm loft to elbow
   upperShirt.geo(new THREE.SphereGeometry(0.070, 12, 10), TRS([-0.015, 0.0, 0.0]), PAL.oliveDark);
   addColoredLoft(upperShirt, [
     { y: 0.025, rx: 0.066, rz: 0.068, ox: -0.006, oz: 0.0, col: PAL.oliveDark },
@@ -494,7 +548,6 @@ function buildArms(out: Out, hi: boolean) {
   upperShirt.geo(new RoundedBoxGeometry(0.022, 0.092, 0.064, 1, 0.008), TRS([0.058, -0.11, 0]), PAL.oliveDark);
   if (hi) upperDet.geo(new THREE.BoxGeometry(0.008, 0.034, 0.048), TRS([0.070, -0.10, 0]), PAL.patch);
 
-  // Forearm sleeve + elbow ball cap + exposed forearm wrist + tight watch + seamless glove overlap
   const foreShirt = slot(out, "elbowR", "fur", AO_CLOTH);
   const foreSkin = slot(out, "elbowR", "skin", AO_SKIN);
   const forePad = slot(out, "elbowR", "rubber", AO_NEUTRAL);
@@ -506,26 +559,42 @@ function buildArms(out: Out, hi: boolean) {
     { y: -0.09, rx: 0.052, rz: 0.052, ox: wrist.x * 0.35, oz: wrist.z * 0.35, col: PAL.olive },
     { y: -0.185, rx: 0.047, rz: 0.047, ox: wrist.x * 0.68, oz: wrist.z * 0.68, col: PAL.oliveDark },
   ], aSeg);
-  // Exposed tanned forearm extending cleanly past wrist.y (-0.28) into the tactical glove cuff!
   addColoredLoft(foreSkin, [
     { y: -0.175, rx: 0.040, rz: 0.040, ox: wrist.x * 0.68, oz: wrist.z * 0.68, col: PAL.skinShade },
     { y: wrist.y - 0.02, rx: 0.036, rz: 0.036, ox: wrist.x, oz: wrist.z, col: PAL.skin },
   ], aSeg);
   const ep = new THREE.CylinderGeometry(0.059, 0.056, 0.075, hi ? 10 : 6, 1, false, -Math.PI * 0.25, Math.PI * 0.5);
   forePad.geo(ep, TRS([0, -0.015, 0.004]), PAL.metalDark);
-  // Tight watch strap hugging wrist cleanly
   addColoredLoft(forePad, [
     { y: wrist.y + 0.042, rx: 0.040, rz: 0.040, ox: wrist.x * 0.9, oz: wrist.z * 0.9, col: PAL.vestDark },
     { y: wrist.y + 0.022, rx: 0.040, rz: 0.040, ox: wrist.x * 0.94, oz: wrist.z * 0.94, col: PAL.vestDark },
   ], aSeg);
 
-  // Mechanix-style gloved tactical fist starting at y = +0.012 (seamless wrist cuff!) down to FIST = (0, -0.125, -0.02)
+  // Tactile Half-Finger Mechanix Glove + 5 individual articulated fingers centered on FIST = (0, -0.125, -0.02)
   const glove = slot(out, "wristR", "rubber", AO_NEUTRAL);
+  const handSkin = slot(out, "wristR", "skin", AO_SKIN);
   const knuckle = slot(out, "wristR", "detail", AO_NEUTRAL);
-  glove.geo(new RoundedBoxGeometry(0.056, 0.110, 0.068, hi ? 2 : 1, 0.018), TRS([0, -0.045, -0.006]), PAL.gaiter);
-  knuckle.geo(new RoundedBoxGeometry(0.060, 0.026, 0.030, 1, 0.01), TRS([0.004, -0.088, -0.036]), PAL.metalDark);
-  glove.geo(new RoundedBoxGeometry(0.048, 0.060, 0.048, 1, 0.018), TRS([0, -0.122, -0.034], [0.22, 0, 0]), PAL.vestDark);
-  glove.geo(new RoundedBoxGeometry(0.026, 0.046, 0.026, 1, 0.01), TRS([-0.028, -0.095, -0.040], [0.4, 0, 0.35]), PAL.gaiter);
+
+  // Contoured gloved palm + wrist cuff + carbon knuckle armor
+  glove.geo(new RoundedBoxGeometry(0.058, 0.088, 0.032, hi ? 2 : 1, 0.012), TRS([0, -0.035, 0.004]), PAL.gaiter);
+  knuckle.geo(new RoundedBoxGeometry(0.058, 0.022, 0.018, 1, 0.007), TRS([0, -0.076, -0.012]), PAL.metalDark);
+
+  // 4 separated articulated individual fingers (Index, Middle, Ring, Pinky) curling around grip pocket
+  const fOffsets = [
+    { x: -0.020, len: 0.034, r: 0.0072, curl: 0.55 }, // Index (trigger finger)
+    { x: -0.007, len: 0.037, r: 0.0074, curl: 0.72 }, // Middle
+    { x: 0.007,  len: 0.035, r: 0.0070, curl: 0.76 }, // Ring
+    { x: 0.020,  len: 0.030, r: 0.0064, curl: 0.80 }, // Pinky
+  ];
+  for (const f of fOffsets) {
+    // Proximal gloved phalanx
+    glove.geo(new THREE.CylinderGeometry(f.r, f.r * 0.92, f.len * 0.9, hi ? 8 : 5), TRS([f.x, -0.092, -0.012], [f.curl, 0, 0]), PAL.gaiter);
+    // Exposed skin / tactile grip fingertip phalanx curving inward to grip
+    handSkin.geo(new THREE.CylinderGeometry(f.r * 0.88, f.r * 0.72, f.len * 0.85, hi ? 8 : 5), TRS([f.x, -0.118, -0.026], [f.curl + 0.85, 0, 0]), PAL.skin);
+  }
+  // Articulated 2-segment opposable thumb on radial inner side (-X on R hand)
+  glove.geo(new THREE.CylinderGeometry(0.009, 0.0085, 0.032, hi ? 8 : 5), TRS([-0.030, -0.054, -0.012], [0.55, 0, 0.48]), PAL.vestDark);
+  handSkin.geo(new THREE.CylinderGeometry(0.008, 0.0065, 0.026, hi ? 8 : 5), TRS([-0.026, -0.082, -0.030], [0.95, 0, -0.35]), PAL.skin);
 }
 
 // ------------------------------------------------------------------------------------------------ assembly
@@ -559,8 +628,8 @@ export function buildKongMin(): KongParts {
   const M = (bone: BoneName, g: THREE.BufferGeometry, m: THREE.Matrix4, c: C3) => slot(out, bone, "min", AO_NEUTRAL, 0.7).geo(g, m, c);
 
   M("head", new THREE.SphereGeometry(0.092, 8, 6), TRS([0, 0.13, -0.005]), PAL.skin);
-  M("head", new THREE.SphereGeometry(0.122, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.62), TRS([0, 0.16, 0.005], [0, 0, 0], [1, 0.96, 1.1]), PAL.helmet);
-  M("head", new THREE.BoxGeometry(0.145, 0.04, 0.042), TRS([0, 0.148, -0.092]), PAL.visor);
+  M("head", new THREE.SphereGeometry(0.122, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.62), TRS([0, 0.17, 0.005], [0, 0, 0], [1, 0.96, 1.1]), PAL.helmet);
+  M("head", new THREE.BoxGeometry(0.145, 0.036, 0.042), TRS([0, 0.194, -0.092]), PAL.visor);
 
   M("chest", new THREE.CylinderGeometry(0.185, 0.155, 0.28, 8), TRS([0, 0.09, 0], [0, 0, 0], [1.1, 1, 0.68]), PAL.olive);
   M("chest", new THREE.BoxGeometry(0.28, 0.28, 0.24), TRS([0, 0.04, 0]), PAL.vest);
