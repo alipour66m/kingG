@@ -162,7 +162,7 @@ export function createTitleScene(engine: Engine, plane: PlaneProps, kits: TitleK
         // face the camera, turned a touch toward the menu (the kong's forward is −Z of its yaw)
         heroPose.yaw = Math.atan2(-(CAM.x - hx), -(CAM.z - hz)) + F.turn + Math.sin(t0 * 0.3) * 0.04;
         heroPose.pitch = F.pitch;
-        heroPose.state = (t0 % 16) > 12.6 ? "emote" : "idle";
+        heroPose.state = "idle";
         hero.apply(heroPose, dt);
       }
       plane.object.visible = false;
