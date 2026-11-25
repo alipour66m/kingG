@@ -33,6 +33,7 @@ import { setT } from "./param";
 import { flag } from "../flags";
 import { GameBridge } from "./bridge";
 import { FootDriver, type FootEvent } from "./feet";
+import { TacticalSynth } from "./synth";
 
 export interface AudioOptions {
   /** render into this context (OfflineAudioContext for the audition tool) instead of a live one */
@@ -77,6 +78,7 @@ export interface AudioStats {
 export interface KongAudio extends GameAudio {
   readonly ctx: BaseAudioContext;
   readonly lib: Library;
+  readonly synth: TacticalSynth;
   readonly mixer: Mixer;
   readonly world: AcousticWorld;
   readonly ambience: Ambience;
@@ -165,6 +167,7 @@ class Engine implements KongAudio {
   readonly ctx: BaseAudioContext;
   radio: Radio | null = null;
   readonly lib: Library;
+  readonly synth: TacticalSynth;
   readonly mixer: Mixer;
   readonly world: AcousticWorld;
   readonly ambience: Ambience;
@@ -241,6 +244,7 @@ class Engine implements KongAudio {
     this.ambSeed = (this.seed ^ 0x9e3779b9) >>> 0;
     const base = o.base ?? `${(import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/"}assets/audio/kr/`;
     this.lib = new Library(this.ctx, base);
+    this.synth = new TacticalSynth(this.ctx);
     if (this.live) { loadFloorMap(base); loadRoomsMap(base); }   // the drawn-floor + rooms maps (steps.ts), in the background
     this.mixer = new Mixer(this.ctx);
     // the tuk-tuk radio (radio.ts): streamed stations, nothing loads until a tuk-tuk tunes in
@@ -708,9 +712,11 @@ class Engine implements KongAudio {
 
   /** the library group for a layer: itself, or its stand-in while an asset is missing (null = skip the layer) */
   grp(g: string): string | null {
-    if (this.lib.groups.has(g) || !(g in ALIAS)) return g;
+    if (this.synth.has(g) || this.lib.groups.has(g) || !(g in ALIAS)) return g;
     return ALIAS[g];
   }
+  private hasClip(g: string): boolean { return this.synth.has(g) || this.lib.has(g); }
+  private pickClip(g: string, rnd: () => number) { return this.synth.pick(g, rnd) ?? this.lib.pick(g, rnd); }
 
   private lastL = new Float64Array(9).fill(NaN);
   private setListener() {
@@ -744,7 +750,7 @@ class Engine implements KongAudio {
   /** dB that makes a layer exactly as loud (manifest P) as the group it is matched to — 0 when unknown */
   private matchCache = new WeakMap<Layer, number>();
   matchDb(L: Layer): number {
-    if (!L.match) return 0;
+    if (!L.match || this.synth.has(L.g)) return 0;
     const c = this.matchCache.get(L);
     if (c !== undefined) return c;
     const g = this.grp(L.g);
@@ -846,14 +852,14 @@ class Engine implements KongAudio {
       }
       // sprint steps (gameplay sends sprint at volume ≥ 0.85, walk 0.6-0.65, crouch 0.3): the recorded running set
       // (gameplay's fallback path only: it sends sprints at 0.85-0.9; a volume of exactly 1 is a direct request for that set)
-      if (name.startsWith("step:") && (o.volume ?? 0.6) >= 0.8 && (o.volume ?? 0.6) < 0.999 && name.split(":").length === 2 && BANK[name + ":run"] && this.lib.has(`step/${name.slice(5)}-run`)) { name = name + ":run"; def = BANK[name]; }
+      if (name.startsWith("step:") && (o.volume ?? 0.6) >= 0.8 && (o.volume ?? 0.6) < 0.999 && name.split(":").length === 2 && BANK[name + ":run"] && this.hasClip(`step/${name.slice(5)}-run`)) { name = name + ":run"; def = BANK[name]; }
       // another kong's landing / jump is a foot sound too — once the nearest few kongs' feet are voiced
       // (feet.ts) only theirs are (the warm-up islet: 49 kongs hopping about)
       if ((name === "land" || name === "jump") && o.pos && !this.feet.nearFoot(o.pos[0], o.pos[2])) { this.culled++; return; }
       // jumps and landings carry the surface you push off / land on (a sand landing is not a deck landing)
       if (name === "land" || name === "jump") {
         const surf = o.pos ? this.remoteGround(o.pos[0], o.pos[1], o.pos[2]) : this.localGround();
-        const landSet = name === "land" && this.lib.has(`step/${surf}-land`);
+        const landSet = name === "land" && this.hasClip(`step/${surf}-land`);
         this.trigger(landSet ? `step:${surf}:land` : `step:${surf}`, { ...o, volume: (o.volume ?? 1) * (name === "land" ? (landSet ? 1 : 1.35) : 0.8), rate: name === "land" ? (landSet ? 1 : 0.9) : 1.05 }, true);
       }
     }
@@ -1043,7 +1049,7 @@ class Engine implements KongAudio {
     }
     for (const L of def.layers) {
       if (solo && (L.band ?? "none") !== solo) continue;
-      if (L.ifMissing && this.lib.has(L.ifMissing)) continue;
+      if (L.ifMissing && this.hasClip(L.ifMissing)) continue;
       if (mute && mute === L.band) continue;
       let w = this.layerWeight(L, local, d, sp) * (L.band ? bandNorm : 1);
       // a distant shot's rolling tail is the terrain around YOU ringing — a valley / street
@@ -1056,12 +1062,12 @@ class Engine implements KongAudio {
       if (L.chance !== undefined && this.rnd() > L.chance) continue;
       const g0 = this.grp(L.g);
       if (!g0) continue;
-      const room = L.band === "tail" && inRoom > 0.02 && this.lib.has(g0 + "-in");
+      const room = L.band === "tail" && inRoom > 0.02 && this.hasClip(g0 + "-in");
       for (let ai = 0; ai < (room ? 2 : 1); ai++) {
         const grp = ai ? g0 + "-in" : g0, k0 = room ? (ai ? inRoom : 1 - inRoom) : 1;
         const k = L.band === "tail" && !ai ? k0 * tailTrim : k0;
         if (k * w <= 0.01) continue;
-        const pk = this.lib.pick(grp, this.rnd);
+        const pk = this.pickClip(grp, this.rnd);
         if (!pk) continue;
         const s = this.source(pk.buf, pk.file, L, o, w * k * (L.match ? dbg(this.matchDb(L)) : 1) * (ai && L.inDb ? dbg(L.inDb) : 1));
         if ((o as { _dbg?: boolean })._dbg) console.log("[audio dbg]", name, L.g, pk.id, "w", w.toFixed(3), "k", k.toFixed(3), "match", this.matchDb(L).toFixed(2), "gain", s.g.gain.value.toFixed(4), "ev", gainDb.toFixed(1));
@@ -1105,7 +1111,7 @@ class Engine implements KongAudio {
         for (const L of def.layers) {
           if (L.band !== "near" && L.band !== "far" && L.band !== "dist") continue;
           const w = this.layerWeight(L, false, d, sp);
-          if (w > bw && this.grp(L.g) && this.lib.has(this.grp(L.g)!)) { bw = w; src = L; }
+          if (w > bw && this.grp(L.g) && this.hasClip(this.grp(L.g)!)) { bw = w; src = L; }
         }
       }
       src ??= (isGun ? def.layers.find((l) => l.band === "near") : undefined) ?? def.layers.find((l) => l.band === "far") ?? def.layers[0];
@@ -1249,7 +1255,7 @@ class Engine implements KongAudio {
 
   /** a plain 2D one-shot of `group` on `bus` at time `at` (sweeteners) */
   private oneShot(group: string, bus: Bus, db: number, at: number) {
-    const pk = this.lib.pick(group, this.rnd);
+    const pk = this.pickClip(group, this.rnd);
     if (!pk) return;
     const s = this.ctx.createBufferSource(); s.buffer = pk.buf;
     const g = this.ctx.createGain(); g.gain.value = dbg(db + this.lib.normDb(pk.file));
@@ -1381,7 +1387,7 @@ class Engine implements KongAudio {
     for (const v of this.voices) if (v.group === "echo") ne++;
     if (ne >= (local ? 18 : 12)) return;
     this.echoCount++;
-    const pk = this.lib.pick(g0, this.rnd);
+    const pk = this.pickClip(g0, this.rnd);
     if (!pk) return;
     const src = this.ctx.createBufferSource();
     src.buffer = pk.buf;
@@ -1482,7 +1488,7 @@ class Engine implements KongAudio {
     // a foot plant while SWIMMING (yours: the sim says so; another kong's: its feet are under the surface) is a stroke
     if (surf === "water" && BANK["water:stroke"] && (e.local ? this.localSwim() : e.y < -0.6)) return ["water:stroke", Math.max(0.55, e.volume)];
     let name = e.kind === "walk" ? `step:${surf}` : `step:${surf}:${e.kind}`, vol = e.volume;
-    if (!BANK[name] || (e.kind !== "walk" && !this.lib.has(`step/${surf}-${e.kind}`))) { name = `step:${surf}`; if (e.kind === "crouch") vol *= 0.35; }
+    if (!BANK[name] || (e.kind !== "walk" && !this.hasClip(`step/${surf}-${e.kind}`))) { name = `step:${surf}`; if (e.kind === "crouch") vol *= 0.35; }
     return BANK[name] ? [name, vol] : null;
   }
   /** the last steps played [audio start time, sample group, local] (stats().feet.played) */
@@ -1536,7 +1542,7 @@ class Engine implements KongAudio {
    */
   private useStart(name: string, o: PlayOpts): boolean {
     const kind = name === "shield:use" ? "shield" : "heal";
-    if (!this.lib.has(`loot/${kind}-loop`)) return false;
+    if (!this.hasClip(`loot/${kind}-loop`)) return false;
     const local = !o.pos;
     const id = o.loopId ?? (local ? "use" : `use@${Math.round(o.pos![0])},${Math.round(o.pos![2])}`);
     const old = this.uses.get(id);
@@ -1565,7 +1571,7 @@ class Engine implements KongAudio {
     tail.connect(this.mixer.buses[local ? "p1" : "p3"]);
     const srcs: AudioBufferSourceNode[] = [];
     const one = (g: string, at: number, db: number) => {
-      const pk = this.lib.pick(g, this.rnd);
+      const pk = this.pickClip(g, this.rnd);
       if (!pk) return;
       const s = this.ctx.createBufferSource(); s.buffer = pk.buf;
       const gg = this.ctx.createGain(); gg.gain.value = dbg(db + this.lib.normDb(pk.file));
@@ -1574,10 +1580,10 @@ class Engine implements KongAudio {
     // per-consumable start / loop / completion when the library has them (a leaf bundle is wrapped, not drunk)
     // the red banana is peeled + munched like the golden one
     if (item === "red-banana") item = "golden-banana";
-    const own = (g: string, fb: string) => (item && this.lib.has(`${g}-${item}`) ? `${g}-${item}` : fb);
+    const own = (g: string, fb: string) => (item && this.hasClip(`${g}-${item}`) ? `${g}-${item}` : fb);
     one(own("loot/start", `loot/${kind}-start`), t0, 0);
     // the loop: fades in under the start cue, holds, and ends just as the completion cue lands
-    const lp = this.lib.pick(own("loot/use", `loot/${kind}-loop`), this.rnd)!;
+    const lp = this.pickClip(own("loot/use", `loot/${kind}-loop`), this.rnd)!;
     const ls = this.ctx.createBufferSource(); ls.buffer = lp.buf; ls.loop = true;
     const lpnt = lp.file.loop ?? [0, lp.buf.duration];
     ls.loopStart = lpnt[0]; ls.loopEnd = lpnt[1];
@@ -1598,7 +1604,7 @@ class Engine implements KongAudio {
     // (the smoothie is the SHIELD item now: its drink sounds stay, but it finishes on the shield "charged" ping, not
     // the heal kalimba its own done cue was built as)
     const done = item === "smoothie" ? "loot/shield-done" : own("loot/done", `loot/${kind}-done`);
-    if (this.lib.has(done)) one(done, end - 0.03, local ? 0 : -6);
+    if (this.hasClip(done)) one(done, end - 0.03, local ? 0 : -6);
     const u: UseSession = { id, kind, t0, end, out, srcs, nodes, bridged, local };
     this.uses.set(id, u);
     this.played++;
