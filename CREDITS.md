@@ -23,6 +23,7 @@ Not covered by the MIT licence; each keeps its own.
 | Draco 3D decoder (Google) | Apache-2.0 | `public/assets/decoders/draco/` |
 | Basis Universal transcoder (Binomial) | Apache-2.0 | `public/assets/actors/basis/` |
 | MakeHuman anatomical human base mesh, targets & eyes (`makehumancommunity/makehuman`) | CC0 1.0 Universal | `public/assets/actors/operators/` |
+| Glock 17 (`g17.glb`) and M16 A2 (`m16a2.glb`) weapon models (`user77` via `LeoOpenBotDevelopment/Three.js-3D-FPS-Game`) | CC BY 4.0 | `public/assets/weapons/` |
 
 ## Free sounds and textures (CC0, credited with thanks)
 

@@ -1,0 +1,5 @@
+{
+  "note": "Glock 17 (g17.glb) and M16 A2 (m16a2.glb) PBR weapon meshes and textures extracted cleanly (FPS arms removed, textures resized, coordinate-aligned, vertex colors baked for LODs via tools/weapons/extract-gh-weapons.py).",
+  "source": "user77 (Sketchfab 7723ab14e70446ef8e06a134984f287f & bd4ff595b593447f9a7f1d95f501fb6c) redistributed in LeoOpenBotDevelopment/Three.js-3D-FPS-Game (gun.glb & biggun.glb)",
+  "licence": "CC BY 4.0"
+}

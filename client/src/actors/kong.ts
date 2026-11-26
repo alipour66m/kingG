@@ -1095,6 +1095,9 @@ export async function createKong(ctx: WorldCtx, opts: { variant?: number; lod?: 
     const release = ctx.hold(`kong-weapon-${id}`);
     pending = mgr.weapons.createHeldWeapon(id, slot.weaponRarity).then((o) => {
       if (weaponKey !== key) return;
+      heldMuzzle(id, muzzleLocal);
+      foreCache.delete(id);
+      slot.anim.foreGrip = heldFore(id);
       mgr.learnWeapon(id, o);
       weapon = o; o.traverse((c) => { c.castShadow = false; c.userData.castShadow = false; c.userData.farShadow = false; }); slot.socket.add(o);
       slot.wpn = id; slot.weaponVisible = true; slot.socket.visible = slot.wTier === 0 || slot.px === 0;

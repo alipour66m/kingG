@@ -8,14 +8,23 @@ import { buildAr } from "./ar";
 import { buildShotgun } from "./shotgun";
 import { buildSniper } from "./sniper";
 import { buildRocket } from "./rocket";
+import { buildGlbGunSpec, preloadWeaponGlbs } from "./glb";
+import type { Assets } from "../../engine/assets";
 
 const builders: Record<WeaponId, () => GunSpec> = { pistol: buildPistol, smg: buildSmg, ar: buildAr, shotgun: buildShotgun, sniper: buildSniper, rocket: buildRocket };
 const cache = new Map<WeaponId, GunSpec>();
 
+/** Preload GLB weapons through Assets and drop any prior procedural cached specs for upgraded weapons. */
+export function prepareWeaponGlbs(assets?: Assets): Promise<WeaponId[]> {
+  return preloadWeaponGlbs(assets, (upgraded) => {
+    for (const id of upgraded) cache.delete(id);
+  });
+}
+
 /** the master (do not add it to a scene twice — use gunInstance) */
 export function gunSpec(id: WeaponId): GunSpec {
   let s = cache.get(id);
-  if (!s) { s = builders[id](); cache.set(id, s); }
+  if (!s) { s = buildGlbGunSpec(id) ?? builders[id](); cache.set(id, s); }
   return s;
 }
 

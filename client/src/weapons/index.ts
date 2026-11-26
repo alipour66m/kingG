@@ -12,6 +12,7 @@ import { createHeld, setHeldCamo } from "./held";
 import { tickCamo } from "./camo";
 import { ChestSystem, createChestView } from "./chest";
 import { createLootView, LootSystem } from "./loot";
+import { prepareWeaponGlbs } from "./guns/index";
 import { CONSUMABLES, WEAPONS } from "../../../shared/world/map";
 import { flag } from "../flags";
 
@@ -97,8 +98,10 @@ export function createWeaponsKit(ctx: WorldCtx): WeaponsKitEx {
   bootT.lootMs = Math.round(performance.now() - tp);
   // the far-LOD bakes of every floor-loot item (~1-2 s of main thread) are left to the game's prefab warm-up after the title;
   // ?lootlater=0 runs them one item per macrotask right after boot (done long before the deferred prefab prewarm compiles them)
+  const glbLoad = prepareWeaponGlbs(ctx.assets);
   let lootPrep: Promise<THREE.Object3D> | null = null;
   const prepareLoot = (next: () => Promise<void> = () => new Promise<void>((r) => setTimeout(r, 0))) => (lootPrep ??= (async () => {
+    await glbLoad;
     let spent = 0;
     for (const item of [...WEAPONS, ...CONSUMABLES, "ammo"] as const) {
       await next();
@@ -118,6 +121,7 @@ export function createWeaponsKit(ctx: WorldCtx): WeaponsKitEx {
   const kit: WeaponsKitEx = {
     async createViewModel() {
       const t0 = performance.now();
+      await glbLoad;
       const vm = await createViewModel(() => real, (o) => patchTree(o));
       patchTree(vm.object);
       bootT.viewModelMs = Math.round(performance.now() - t0);
@@ -138,11 +142,13 @@ export function createWeaponsKit(ctx: WorldCtx): WeaponsKitEx {
       return view;
     },
     async createLoot(item: WeaponId | ConsumableId | "ammo" | "cash", rarity: Rarity, skin?: string | null): Promise<LootView> {
+      await glbLoad;
       const v = createLootView(ctx, 0, item, rarity, { grounded: false, skin }, lootSys);
       patchTree(v.object);
       return v;
     },
     async createHeldWeapon(id: WeaponId, rarity: Rarity) {
+      await glbLoad;
       const o = createHeld(id, rarity);
       patchTree(o);
       return o;
