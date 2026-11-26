@@ -235,7 +235,7 @@ export const EYE_GLSL = /* glsl */ `
   vec3 skin = vec3( ${FACE.lid.map((v) => v.toFixed(3)).join(", ")} );
   float lash = kU * ( 1.0 - smoothstep( topY + 0.02, topY + 0.10, ep.y ) );
   vec3 lidC = mix( skin * 0.85, vec3( 0.06, 0.04, 0.03 ), lash );
-  diffuseColor.rgb = mix( diffuseColor.rgb * 1.08, lidC, kLid );
+  diffuseColor.rgb = mix( diffuseColor.rgb, lidC, kLid );
   vec2 c = clamp( vKFace.yz, vec2( -0.18 ), vec2( 0.18 ) );
   kEyeCatch = ( 1.0 - smoothstep( 0.05, 0.09, length( ep - c - vec2( -0.10, 0.12 ) ) ) ) * 0.75 * ( 1.0 - kLid );
 }`;

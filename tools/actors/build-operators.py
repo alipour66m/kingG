@@ -604,27 +604,41 @@ def paint_skin_pbr(V, N, UV, quads, info, bi, prefix, is_female=False, variant="
     brow_mask = np.clip(1.0 - (brow_dx ** 3 + brow_dy ** 2), 0.0, 1.0) * np.clip((-pz - 0.085) * 24.0, 0.0, 1.0) * hair_grain
     alb = alb * (1.0 - brow_mask[..., None] * 0.85) + brow_col * (brow_mask[..., None] * 0.85)
 
-    # Male realistic 5-o'clock beard / jaw stubble (only on male face outer skin, never inner mouth UV!)
+    # Male realistic 5-o'clock beard / jaw stubble + dark sideburns around temples/ears
     if not is_female:
         jaw_zone = (
-            (py < eye_y - 0.038)
+            (py < eye_y - 0.036)
             & (py > head_y - 0.12)
-            & (ax < 0.068)
-            & (pz < -0.025)
+            & (ax < 0.072)
+            & (pz < -0.020)
             & (cov_buf > 0.5)
         )
-        # Exclude lower-right inner mouth UV island (py > 0.78*SZ in top-down image = low MH v)
         img_y, img_x = np.indices((SZ, SZ))
         outer_face_uv = ~((img_y > int(0.80 * SZ)) & (img_x > int(0.72 * SZ)))
-        stubble_fade = np.clip((eye_y - 0.038 - py) / 0.025, 0.0, 1.0) * np.clip((0.066 - ax) / 0.02, 0.0, 1.0) * np.clip((-pz - 0.025) / 0.04, 0.0, 1.0)
+        stubble_fade = np.clip((eye_y - 0.036 - py) / 0.025, 0.0, 1.0) * np.clip((0.068 - ax) / 0.02, 0.0, 1.0) * np.clip((-pz - 0.020) / 0.04, 0.0, 1.0)
         stubble_fade *= (1.0 - np.clip(lip_mask * 1.6, 0.0, 1.0)) * outer_face_uv
         beard_dots = np.clip(rng.uniform(0.0, 1.0, (SZ, SZ)).astype(np.float32) * 1.4 - 0.25, 0.0, 1.0)
-        stubble = stubble_fade * (0.38 + 0.62 * beard_dots) * np.where(jaw_zone, 1.0, 0.0)
-        alb = alb * (1.0 - stubble[..., None] * 0.34) + np.array([62.0, 52.0, 48.0], dtype=np.float32) * (stubble[..., None] * 0.34)
+        stubble = stubble_fade * (0.42 + 0.58 * beard_dots) * np.where(jaw_zone, 1.0, 0.0)
+        alb = alb * (1.0 - stubble[..., None] * 0.42) + np.array([56.0, 46.0, 42.0], dtype=np.float32) * (stubble[..., None] * 0.42)
 
-    # Scalp buzz fade base under hair/helmet
-    scalp = np.clip((py - (eye_y + 0.042)) / 0.025, 0.0, 1.0) * np.clip((pz + 0.03) * 10.0 + 0.4, 0.0, 1.0)
-    alb = alb * (1.0 - scalp[..., None] * 0.68) + np.array([40.0, 32.0, 26.0], dtype=np.float32) * (scalp[..., None] * 0.68)
+    # Crisp tactical fingerless shooter glove painted cleanly across hands (bare fingers & thumb tip stay warm skin!)
+    hand_zone = (ax > 0.24) & (cov_buf > 0.5)
+    if np.any(hand_zone):
+        # Use vertex wrist->knuckle projection smoothly (palm covered, finger phalanges bare skin!)
+        w_pos = KR_REST[6]  # wristR (mirror |x| since ax = abs(px))
+        dx_h = ax - abs(w_pos[0])
+        dy_h = py - w_pos[1]
+        dz_h = pz - w_pos[2]
+        along = -dy_h * 0.92 - dz_h * 0.12
+        # Glove ends cleanly at MCP knuckles (~0.078 m from wrist) — zero diagonal triangle sawtooth!
+        glove_edge = 0.078 + 0.008 * np.clip((dz_h + 0.02) * 15.0, -1.0, 1.0)
+        glove_m = np.clip((glove_edge - along) / 0.004, 0.0, 1.0) * np.clip((along + 0.015) / 0.010, 0.0, 1.0) * np.where(hand_zone, 1.0, 0.0)
+        glove_tex = np.array([34.0, 36.0, 40.0], dtype=np.float32) + fine[..., None] * 2.5
+        alb = alb * (1.0 - glove_m[..., None]) + glove_tex * glove_m[..., None]
+
+    # Scalp & temple buzz fade (covers whole upper skull & sideburns above eye_y + 0.015 cleanly so no pink bald temples!)
+    scalp = np.clip((py - (eye_y + 0.024)) / 0.018, 0.0, 1.0) * np.clip((pz + 0.065) * 18.0 + 0.4, 0.0, 1.0)
+    alb = alb * (1.0 - scalp[..., None] * 0.78) + np.array([38.0, 30.0, 26.0], dtype=np.float32) * (scalp[..., None] * 0.78)
 
     # Subtle knuckle warmth on hands
     knuckle = np.clip(pores * 0.5 + 0.5, 0.0, 1.0) * (ax > 0.22)
@@ -681,21 +695,23 @@ def paint_gear_pbr():
     gy = (np.arange(SZ) % 6 == 0).astype(np.float32)[:, None]
     ripstop = (gx + gy) * 0.5
 
-    # Q00: Crisp High-Contrast Tactical MultiCam Olive/Tan/Earth Ripstop Combat Fabric
-    n1 = gaussian_filter(rng.normal(0.0, 1.0, (H, H)).astype(np.float32), 7.5)
-    n2 = gaussian_filter(rng.normal(0.0, 1.0, (H, H)).astype(np.float32), 3.2)
+    # Q00: Crisp Sharp MultiCam Olive/Woodland Ripstop Combat Fabric (multi-scale crisp patches, zero blurry blobs)
+    n1 = gaussian_filter(rng.normal(0.0, 1.0, (H, H)).astype(np.float32), 14.0)
+    n2 = gaussian_filter(rng.normal(0.0, 1.0, (H, H)).astype(np.float32), 5.0)
+    n3 = gaussian_filter(rng.normal(0.0, 1.0, (H, H)).astype(np.float32), 2.0)
     n1 = (n1 - n1.mean()) / (n1.std() + 1e-5)
     n2 = (n2 - n2.mean()) / (n2.std() + 1e-5)
-    base_uni = np.ones((H, H, 3), dtype=np.float32) * np.array([72.0, 82.0, 56.0])
-    m_tan = np.clip((n1 - 0.35) * 8.0, 0.0, 1.0)[..., None]
-    m_dark = np.clip((-n1 - 0.40) * 8.0, 0.0, 1.0)[..., None]
-    m_sage = np.clip((n2 - 0.55) * 6.0, 0.0, 1.0)[..., None]
-    q00 = base_uni * (1.0 - m_tan) + np.array([138.0, 124.0, 90.0]) * m_tan
-    q00 = q00 * (1.0 - m_dark) + np.array([38.0, 36.0, 28.0]) * m_dark
-    q00 = q00 * (1.0 - m_sage * 0.7) + np.array([98.0, 108.0, 74.0]) * (m_sage * 0.7)
-    grain0 = rng.normal(0.0, 2.5, (H, H, 1)).astype(np.float32)
-    alb[:H, :H] = q00 + grain0 - ripstop[:H, :H, None] * 6.0
-    bump[:H, :H] = ripstop[:H, :H] * 0.6 + n2 * 0.32
+    n3 = (n3 - n3.mean()) / (n3.std() + 1e-5)
+    base_uni = np.ones((H, H, 3), dtype=np.float32) * np.array([68.0, 78.0, 52.0])
+    m_tan = np.clip((n1 * 0.6 + n2 * 0.5 - 0.35) * 14.0, 0.0, 1.0)[..., None]
+    m_dark = np.clip((-n1 * 0.65 - n2 * 0.45 - 0.48) * 14.0, 0.0, 1.0)[..., None]
+    m_sage = np.clip((n2 * 0.5 + n3 * 0.6 - 0.55) * 12.0, 0.0, 1.0)[..., None]
+    q00 = base_uni * (1.0 - m_tan) + np.array([136.0, 122.0, 88.0]) * m_tan
+    q00 = q00 * (1.0 - m_dark) + np.array([34.0, 34.0, 26.0]) * m_dark
+    q00 = q00 * (1.0 - m_sage * 0.8) + np.array([94.0, 104.0, 70.0]) * (m_sage * 0.8)
+    grain0 = rng.normal(0.0, 2.2, (H, H, 1)).astype(np.float32)
+    alb[:H, :H] = q00 + grain0 - ripstop[:H, :H, None] * 7.0
+    bump[:H, :H] = ripstop[:H, :H] * 0.7 + n3 * 0.25
 
     # Q10: Matte Coyote / Ranger Green Cordura Plate Carrier & MOLLE rows
     cord = np.sin(np.arange(H) * 0.9)[None, :] * np.sin(np.arange(H) * 0.9)[:, None]
@@ -772,17 +788,18 @@ def paint_gear_pbr():
         os.path.join(OUT_DIR, "gear-ao.webp"), "WEBP", quality=88
     )
 
-    # Convert MakeHuman CC0 brown_eye.png -> crisp bright 256x256 eye-albedo.webp
-    eye_img = Image.open(os.path.join(MH_DIR, "brown_eye.png")).convert("RGBA").resize((256, 256), Image.Resampling.LANCZOS)
-    sclera = Image.new("RGBA", (256, 256), (248, 248, 250, 255))
-    sclera.paste(eye_img, (0, 0), eye_img)
-    arr_e = np.array(sclera.convert("RGB"), dtype=np.float32)
-    # Brighten sclera outer ring cleanly while preserving crisp dark iris & pupil contrast
-    yy, xx = np.mgrid[0:256, 0:256]
-    rr = np.hypot(xx - 128.0, yy - 128.0) / 128.0
-    sclera_mask = np.clip((rr - 0.34) / 0.14, 0.0, 1.0)[..., None]
-    arr_e = arr_e * (1.0 - sclera_mask * 0.45) + np.array([248.0, 248.0, 250.0]) * (sclera_mask * 0.45)
-    Image.fromarray(np.clip(arr_e, 0, 255).astype(np.uint8), "RGB").save(os.path.join(OUT_DIR, "eye-albedo.webp"), "WEBP", quality=92)
+    # Composite MakeHuman's CC0 photographic brown_eye.png (dual left/right eye UVs) cleanly onto crisp sclera
+    eye_src = Image.open(os.path.join(MH_DIR, "brown_eye.png")).convert("RGBA").resize((256, 256), Image.Resampling.LANCZOS)
+    eye_rgba = np.array(eye_src, dtype=np.float32)
+    alpha = eye_rgba[:, :, 3:4] / 255.0
+    rgb = eye_rgba[:, :, :3]
+    # Gently lift dark iris tones without washing out the black pupil or sclera
+    luma = rgb.mean(axis=-1, keepdims=True)
+    iris_band = (luma > 22.0) & (luma < 125.0)
+    rgb = np.where(iris_band, np.clip(rgb * 1.45 + 10.0, 0.0, 255.0), rgb)
+    sclera = np.ones((256, 256, 3), dtype=np.float32) * np.array([232.0, 228.0, 224.0])
+    comp = sclera * (1.0 - alpha) + rgb * alpha
+    Image.fromarray(np.clip(comp, 0, 255).astype(np.uint8), "RGB").save(os.path.join(OUT_DIR, "eye-albedo.webp"), "WEBP", quality=92)
 
 
 def make_box(center, size, bone_i, uv_box=(0.55, 0.05, 0.95, 0.45), rx=0.0, ry=0.0, rz=0.0):
@@ -1083,16 +1100,15 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
     def mean_y(tri):
         return np.mean([V_kr[vi, 1] for vi, _ in tri])
 
-    # 1. Head + Neck skin mesh (extend cleanly down to chest collarbones so no collar gap ever opens)
-    neck_cut = chest_y + 0.105
+    # 1. Head + Neck skin mesh (cut cleanly inside the tactical collar so zero clavicle Z-fighting occurs)
+    neck_cut = chest_y + 0.132
     hi_head = extract_submesh(
         V_kr, N_kr, UV, body_quads,
-        lambda t: mean_y(t) >= neck_cut and mean_w(t, [2, 3]) > 0.55 and mean_w(t, [3]) > 0.12,
+        lambda t: mean_y(t) >= neck_cut and mean_w(t, [2, 3]) > 0.55 and mean_w(t, [3]) > 0.15,
         bi, bw, offset_mm=0.0
     )
 
-    # 2. Exposed Bare Forearms & 5-Fingered Hands (`hi_kong`)
-    # Cutoff based on smooth wrist/elbow blend along arm axis (no jagged diagonal steps)
+    # 2. Exposed Forearms & 5-Fingered Hands w/ smoothly painted fingerless shooter gloves (`hi_kong`)
     hi_hands = extract_submesh(
         V_kr, N_kr, UV, body_quads,
         lambda t: mean_w(t, [5, 6, 8, 9]) > 0.65 and (
@@ -1101,18 +1117,42 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
         bi, bw, offset_mm=0.0
     )
 
-    # 3. Combat Shirt (extends well below belt to hips_y - 0.11 so zero waist gap can ever appear)
+    # Crisp spatial ripstop fabric UV mapper in Q00 (0.04..0.46) so MultiCam never stretches into blurry spots
+    def fabric_uv(p, _u, _v):
+        theta = (math.atan2(float(p[0]), float(p[2])) / math.tau) + 0.5
+        uu = (theta * 2.0) % 1.0
+        vv = (float(p[1]) * 1.85) % 1.0
+        # Reflect-tile cleanly to avoid seam jumps
+        uu = uu * 2.0 if uu < 0.5 else (1.0 - uu) * 2.0
+        vv = vv * 2.0 if vv < 0.5 else (1.0 - vv) * 2.0
+        return (0.04 + 0.41 * uu, 0.04 + 0.41 * vv)
+
+    # 3. Loose Tailored Combat Shirt (inflated + waist relaxed so it hangs like BDU jacket, not spandex)
     hi_shirt = extract_submesh(
         V_kr, N_kr, UV, body_quads,
         lambda t: (
-            (mean_y(t) >= hips_y - 0.115 and mean_y(t) <= chest_y + 0.195 and mean_w(t, [0, 1, 2, 4, 7]) > 0.45 and mean_w(t, [3]) < 0.55)
+            (mean_y(t) >= hips_y - 0.115 and mean_y(t) <= chest_y + 0.165 and mean_w(t, [0, 1, 2, 4, 7]) > 0.45 and mean_w(t, [3]) < 0.45)
             or (mean_w(t, [4, 5, 7, 8]) > 0.60 and mean_y(t) >= arm_cut_y - 0.015)
         ),
-        bi, bw, offset_mm=4.4,
-        uv_remap=lambda p, u, v: (0.04 + 0.42 * u, 0.04 + 0.42 * v)
+        bi, bw, offset_mm=10.5,
+        uv_remap=fabric_uv,
     )
+    # Tailor torso outward around waist/belly so BDU jacket drapes smoothly
+    sh_p = hi_shirt["pos"]
+    sh_b0 = hi_shirt["bi"][:, 0]
+    for vi in range(len(sh_p)):
+        b = int(sh_b0[vi])
+        if b in (0, 1, 2) and sh_p[vi, 1] < chest_y + 0.12:
+            rx, rz = float(sh_p[vi, 0]), float(sh_p[vi, 2])
+            rad = math.hypot(rx, rz)
+            min_r = 0.128 if is_female else 0.145
+            if 0.04 < rad < min_r:
+                k = (rad * 0.45 + min_r * 0.55) / rad
+                sh_p[vi, 0] *= k
+                sh_p[vi, 2] *= k
+    hi_shirt["nrm"] = compute_vertex_normals(sh_p.astype(np.float64), hi_shirt["idx"].reshape(-1, 3)).astype(np.float32)
 
-    # 4. Tactical Cargo Trousers (extend up to hips_y + 0.09 under vest/belt -> solid overlap!)
+    # 4. Loose Tailored Cargo Combat Trousers (padded knee/thigh drape, zero tight leggings)
     hi_pants = extract_submesh(
         V_kr, N_kr, UV, body_quads,
         lambda t: (
@@ -1120,9 +1160,19 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
             and mean_y(t) <= hips_y + 0.095
             and mean_y(t) >= boot_y - 0.03
         ),
-        bi, bw, offset_mm=5.8,
-        uv_remap=lambda p, u, v: (0.04 + 0.42 * u, 0.04 + 0.42 * v)
+        bi, bw, offset_mm=13.5,
+        uv_remap=fabric_uv,
     )
+    pt_p = hi_pants["pos"]
+    for vi in range(len(pt_p)):
+        py_v = float(pt_p[vi, 1])
+        px_v = float(pt_p[vi, 0])
+        if py_v < hips_y + 0.02:
+            # Smooth inner-thigh crease slightly outward/downward for tactical cargo drape
+            if abs(px_v) < 0.075 and py_v > hips_y - 0.18:
+                pt_p[vi, 1] -= 0.022 * (1.0 - abs(px_v) / 0.075)
+                pt_p[vi, 2] *= 1.10
+    hi_pants["nrm"] = compute_vertex_normals(pt_p.astype(np.float64), hi_pants["idx"].reshape(-1, 3)).astype(np.float32)
 
     # 5. Tactical Boots (`hi_shoes`) -> feet + lower ankles mapped to Gear Q01 dark leather
     hi_boots_shell = extract_submesh(
@@ -1148,84 +1198,94 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
     UV_PATCH = (0.77, 0.78, 0.97, 0.97)
     UV_HELM = (0.54, 0.77, 0.73, 0.96)
 
-    # Plate carrier chest & back (scaled gently for female vs male)
-    vw = 0.255 if is_female else 0.295
-    vd = 0.205 if is_female else 0.235
+    # Sculpted Curved Tactical Plate Carrier Vest (chamfered torso contour instead of flat bricks)
+    vw = 0.245 if is_female else 0.278
+    vd = 0.215 if is_female else 0.245
     cy = chest_y + 0.055
-    # Front plate + back plate + shoulder straps
-    gear_parts.append(make_box((0, cy, -vd * 0.52), (vw, 0.27, 0.055), 2, UV_CORD))
-    gear_parts.append(make_box((0, cy, vd * 0.50), (vw, 0.27, 0.055), 2, UV_CORD))
-    gear_parts.append(make_box((0, cy - 0.04, 0.0), (vw + 0.035, 0.16, vd * 1.02), 2, UV_CORD))
+    vest_rings = []
+    for s, dy_v, rx_s, rz_s in [(0, -0.14, 1.03, 1.03), (1, -0.04, 1.05, 1.05), (2, 0.07, 1.01, 1.01), (3, 0.15, 0.90, 0.92)]:
+        ring = []
+        for a in np.linspace(0, math.tau, 20, endpoint=False):
+            # Chamfered hexagonal chest-plate cross-section
+            ca, sa = math.cos(a), math.sin(a)
+            px_v = ca * (vw * 0.56 * rx_s)
+            pz_v = sa * (vd * 0.58 * rz_s)
+            if abs(ca) < 0.65:
+                pz_v = math.copysign(min(abs(pz_v) + 0.014, vd * 0.58 * rz_s), pz_v)
+            ring.append([px_v, cy + dy_v, pz_v])
+        vest_rings.append(ring)
+    gear_parts.append(make_loft(vest_rings, 2, UV_CORD))
     for sx in (-1.0, 1.0):
-        gear_parts.append(make_box((sx * (vw * 0.36), cy + 0.155, 0.0), (0.055, 0.042, vd * 0.88), 2, UV_CORD))
-    # 3x chest PMAG rifle pouches + radio + flag patch
-    for mx in (-0.072, 0.0, 0.072):
-        gear_parts.append(make_box((mx, cy - 0.055, -vd * 0.52 - 0.038), (0.058, 0.125, 0.036), 2, UV_CORD))
-    gear_parts.append(make_box((vw * 0.42, cy + 0.04, -vd * 0.48 - 0.02), (0.045, 0.09, 0.032), 2, UV_DARK))
-    gear_parts.append(make_box((vw * 0.42 + 0.01, cy + 0.15, -vd * 0.48 - 0.02), (0.007, 0.15, 0.007), 2, UV_DARK))
-    gear_parts.append(make_box((0.0, cy + 0.078, -vd * 0.52 - 0.031), (0.088, 0.052, 0.008), 2, UV_PATCH))
+        gear_parts.append(make_box((sx * (vw * 0.34), cy + 0.165, 0.0), (0.058, 0.036, vd * 0.85), 2, UV_CORD))
+    # 3x rounded-feel chest mag pouches + side radio + tactical flag patch
+    for mx in (-0.068, 0.0, 0.068):
+        gear_parts.append(make_box((mx, cy - 0.065, -vd * 0.56 - 0.018), (0.052, 0.115, 0.032), 2, UV_CORD))
+    gear_parts.append(make_box((vw * 0.44, cy + 0.03, -vd * 0.50 - 0.016), (0.042, 0.088, 0.028), 2, UV_DARK))
+    gear_parts.append(make_box((vw * 0.44 + 0.01, cy + 0.14, -vd * 0.50 - 0.016), (0.006, 0.14, 0.006), 2, UV_DARK))
+    gear_parts.append(make_box((0.0, cy + 0.072, -vd * 0.56 - 0.008), (0.082, 0.048, 0.008), 2, UV_PATCH))
 
-    # Tactical collar cuff + rolled mid-forearm sleeve cuffs centered strictly on forearm mesh ring
+    # Double-layered sculpted BDU Combat Collar (tucks head/neck seam completely!) + forearm cuffs
     gear_parts.append(make_loft([
-        [[math.cos(a) * 0.068, neck_cut + 0.025, 0.01 + math.sin(a) * 0.066] for a in np.linspace(0, math.tau, 14, endpoint=False)],
-        [[math.cos(a) * 0.062, neck_cut + 0.075, 0.005 + math.sin(a) * 0.060] for a in np.linspace(0, math.tau, 14, endpoint=False)],
+        [[math.cos(a) * 0.082, neck_cut - 0.018, 0.006 + math.sin(a) * 0.080] for a in np.linspace(0, math.tau, 16, endpoint=False)],
+        [[math.cos(a) * 0.068, neck_cut + 0.022, 0.004 + math.sin(a) * 0.066] for a in np.linspace(0, math.tau, 16, endpoint=False)],
+        [[math.cos(a) * 0.064, neck_cut + 0.060, 0.002 + math.sin(a) * 0.062] for a in np.linspace(0, math.tau, 16, endpoint=False)],
     ], 2, (0.06, 0.06, 0.44, 0.44)))
     for e_i, sx in [(5, 1.0), (8, -1.0)]:
         arm_ring_m = (bi[:13380, 0] == e_i) & (np.abs(V_kr[:13380, 1] - arm_cut_y) < 0.04)
         ep = V_kr[:13380][arm_ring_m].mean(axis=0) if np.any(arm_ring_m) else V_kr[:13380][bi[:, 0] == e_i].mean(axis=0)
         gear_parts.append(make_loft([
-            [[ep[0] + math.cos(a) * 0.049, arm_cut_y - 0.016, ep[2] + math.sin(a) * 0.049] for a in np.linspace(0, math.tau, 12, endpoint=False)],
-            [[ep[0] + math.cos(a) * 0.053, arm_cut_y + 0.014, ep[2] + math.sin(a) * 0.053] for a in np.linspace(0, math.tau, 12, endpoint=False)],
+            [[ep[0] + math.cos(a) * 0.052, arm_cut_y - 0.018, ep[2] + math.sin(a) * 0.052] for a in np.linspace(0, math.tau, 12, endpoint=False)],
+            [[ep[0] + math.cos(a) * 0.056, arm_cut_y + 0.016, ep[2] + math.sin(a) * 0.056] for a in np.linspace(0, math.tau, 12, endpoint=False)],
         ], e_i, (0.06, 0.06, 0.44, 0.44)))
 
-    # Curved fitted Tactical Battle Belt + Cobra Buckle strictly on waist torso/pelvis vertices (exclude hanging arms!)
-    waist_m = (np.abs(V_kr[:13380, 1] - (hips_y + 0.02)) < 0.035) & (np.isin(bi[:13380, 0], [0, 1])) & (np.abs(V_kr[:13380, 0]) < 0.20)
-    w_verts = V_kr[:13380][waist_m]
-    belt_rx = float(np.percentile(np.abs(w_verts[:, 0]), 98)) + 0.010
-    belt_zf = float(-np.min(w_verts[:, 2])) + 0.010
-    belt_zb = float(np.max(w_verts[:, 2])) + 0.010
+    # Flush Fitted Tactical Battle Belt strictly hugging tailored pants waist (never protrudes!)
+    waist_verts = pt_p[np.abs(pt_p[:, 1] - (hips_y + 0.032)) < 0.015]
+    belt_rx = (float(np.percentile(np.abs(waist_verts[:, 0]), 90)) + 0.004) if len(waist_verts) else 0.155
+    belt_zf = (float(-np.percentile(waist_verts[:, 2], 4)) + 0.004) if len(waist_verts) else 0.118
+    belt_zb = (float(np.percentile(waist_verts[:, 2], 96)) + 0.004) if len(waist_verts) else 0.118
     belt_cz = 0.5 * (belt_zb - belt_zf)
     belt_rz = 0.5 * (belt_zb + belt_zf)
     belt_rings = []
-    for by_off in (-0.024, 0.0, 0.024):
-        belt_rings.append([[math.cos(a) * belt_rx, hips_y + 0.025 + by_off, belt_cz + math.sin(a) * belt_rz] for a in np.linspace(0, math.tau, 20, endpoint=False)])
+    for by_off in (-0.020, 0.0, 0.020):
+        belt_rings.append([[math.cos(a) * belt_rx, hips_y + 0.032 + by_off, belt_cz + math.sin(a) * belt_rz] for a in np.linspace(0, math.tau, 22, endpoint=False)])
     gear_parts.append(make_loft(belt_rings, 0, UV_DARK))
-    gear_parts.append(make_box((0.0, hips_y + 0.025, -belt_zf - 0.005), (0.056, 0.048, 0.014), 0, UV_CORD))
+    gear_parts.append(make_box((0.0, hips_y + 0.032, belt_cz - belt_rz - 0.003), (0.044, 0.038, 0.010), 0, UV_CORD))
     for h_i, k_i, sx in [(10, 11, 1.0), (13, 14, -1.0)]:
-        # Knee pad + thigh cargo pocket
+        # Contoured knee pad + cargo thigh pockets
         kp = KR_REST[k_i]
-        gear_parts.append(make_box((sx * 0.105, kp[1] + 0.01, -0.068), (0.095, 0.115, 0.032), k_i, UV_DARK))
-        gear_parts.append(make_box((sx * (0.145 if is_female else 0.162), hips_y - 0.18, 0.0), (0.028, 0.13, 0.105), h_i, UV_CORD))
+        gear_parts.append(make_box((sx * 0.105, kp[1] + 0.01, -0.072), (0.092, 0.112, 0.026), k_i, UV_DARK))
+        gear_parts.append(make_box((sx * (0.155 if is_female else 0.172), hips_y - 0.18, 0.0), (0.030, 0.145, 0.110), h_i, UV_CORD))
     # Pistol holster on right thigh
-    gear_parts.append(make_box((0.162 if is_female else 0.180, hips_y - 0.15, -0.01), (0.044, 0.14, 0.084), 10, UV_DARK))
+    gear_parts.append(make_box((0.170 if is_female else 0.188, hips_y - 0.15, -0.01), (0.044, 0.14, 0.084), 10, UV_DARK))
 
-    # Fitted fingerless tactical shooter gloves extracted directly from palm/wrist (bends smoothly with bare fingers!)
-    hi_glove = extract_submesh(
-        V_kr, N_kr, UV, body_quads,
-        lambda t: mean_w(t, [6, 9]) > 0.55 and np.mean([finger_mask[vi] for vi, _ in t]) < 0.30,
-        bi, bw, offset_mm=2.6,
-        uv_remap=lambda p, u, v: (0.08 + 0.34 * u, 0.58 + 0.34 * v)
-    )
-    gear_parts.append(hi_glove)
+    # Smooth low-profile wrist cuff + dorsal knuckle guard shell on hands (gloves cleanly painted on hi_hands, ZERO jagged triangles!)
+    for w_i, sx in [(6, 1.0), (9, -1.0)]:
+        wp = V_kr[:13380][bi[:, 0] == w_i].mean(axis=0) if np.any(bi[:, 0] == w_i) else KR_REST[w_i]
+        gear_parts.append(make_loft([
+            [[wp[0] + math.cos(a) * 0.036, wp[1] + 0.018, wp[2] + math.sin(a) * 0.036] for a in np.linspace(0, math.tau, 12, endpoint=False)],
+            [[wp[0] + math.cos(a) * 0.035, wp[1] - 0.012, wp[2] + math.sin(a) * 0.035] for a in np.linspace(0, math.tau, 12, endpoint=False)],
+        ], w_i, UV_DARK))
+        # Armored carbon knuckle bar on back of hand
+        gear_parts.append(make_box((wp[0] + sx * 0.024, wp[1] - 0.056, wp[2] - 0.012), (0.012, 0.024, 0.068), w_i, UV_DARK, rz=sx * -0.15))
 
     # Real 3D Hair + Tactical Headgear (Distinct Male & Female!)
     hc = info["head"]
     hz = 0.5 * (info["eyeL"][2] + info["eyeR"][2]) + 0.082
     hy = eye_y + 0.042
     if is_female:
-        # Swept-back hair crown lifted cleanly above forehead & brows
+        # Smooth contoured hair cap hugging the hairline & rising softly into crown volume
         hair_rings = []
         for s in range(7):
             t = s / 6.0
-            ry_ring = eye_y + 0.050 + 0.068 * math.sin(t * math.pi * 0.52)
-            rad_x = 0.083 * math.cos(t * math.pi * 0.45) + 0.009
-            rad_z = 0.102 * math.cos(t * math.pi * 0.44) + 0.012
+            ry_ring = eye_y + 0.028 + 0.096 * math.sin(t * math.pi * 0.52)
+            rad_x = 0.086 * math.cos(t * math.pi * 0.43) + 0.009
+            rad_z = 0.109 * math.cos(t * math.pi * 0.42) + 0.013
             ring = []
             for k in range(16):
                 a = (k / 16.0) * math.tau
                 x = math.cos(a) * rad_x
-                z = hz + 0.012 + math.sin(a) * rad_z
-                front_part = 0.014 * math.exp(-(x / 0.045) ** 2) if (math.sin(a) < -0.25 and s <= 2) else 0.0
+                z = hz + 0.006 + math.sin(a) * rad_z
+                front_part = 0.014 * math.exp(-(x / 0.042) ** 2) if (math.sin(a) < -0.20 and s <= 2) else 0.0
                 ring.append([x, ry_ring + front_part, z])
             hair_rings.append(ring)
         gear_parts.append(make_loft(hair_rings, 3, UV_HAIR))
@@ -1271,6 +1331,17 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
                 back_rings.append([[math.cos(a) * rx_b, by_r, hz + 0.032 + math.sin(a) * 0.085] for a in np.linspace(-0.2, math.pi + 0.2, 12)])
             gear_parts.append(make_loft(back_rings, 3, UV_HAIR))
         else:
+            # Soft swept temple locks tucking neatly behind the ears into a flowing tactical ponytail
+            for sx in (-1.0, 1.0):
+                temple_rings = []
+                for s in range(4):
+                    t = s / 3.0
+                    tx = sx * (0.070 + 0.008 * math.sin(t * math.pi))
+                    ty = eye_y + 0.050 - t * 0.032
+                    tz = hz - 0.018 + t * 0.078
+                    tr = 0.016 * (1.0 - 0.30 * t)
+                    temple_rings.append([[tx + math.cos(a) * tr * 0.65, ty + math.sin(a) * tr, tz] for a in np.linspace(0, math.tau, 8, endpoint=False)])
+                gear_parts.append(make_loft(temple_rings, 3, UV_HAIR))
             # Flowing tactical ponytail swept back & over her right shoulder (clearly visible in portrait & 3P!)
             pony_rings = []
             pony_spine = [
@@ -1286,17 +1357,20 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
                 pony_rings.append(ring)
             gear_parts.append(make_loft(pony_rings, 3, UV_HAIR))
 
-        # Snug arched comms headset hugging crown cleanly
+        # Snug arched comms headset with rounded Peltor earcups hugging crown cleanly
         for sx in (-1.0, 1.0):
-            gear_parts.append(make_box((sx * 0.086, eye_y - 0.005, hz + 0.01), (0.026, 0.064, 0.056), 3, UV_DARK))
+            cup_rings = []
+            for _s, ox, rr in [(0, 0.0, 0.023), (1, 0.010, 0.027), (2, 0.020, 0.018)]:
+                cup_rings.append([[sx * (0.076 + ox), eye_y - 0.005 + math.sin(a) * rr * 1.15, hz + 0.010 + math.cos(a) * rr] for a in np.linspace(0, math.tau, 12, endpoint=False)])
+            gear_parts.append(make_loft(cup_rings, 3, UV_DARK))
         band_rings = []
         for s in range(7):
             ang = -math.pi * 0.44 + (s / 6.0) * math.pi * 0.88
-            bx = math.sin(ang) * 0.094
+            bx = math.sin(ang) * 0.092
             by = hy + 0.002 + math.cos(ang) * 0.072
-            band_rings.append([[bx + math.cos(a) * 0.009, by + math.sin(a) * 0.009, hz + 0.01 + math.sin(a) * 0.014] for a in np.linspace(0, math.tau, 8, endpoint=False)])
+            band_rings.append([[bx + math.cos(a) * 0.008, by + math.sin(a) * 0.008, hz + 0.01 + math.sin(a) * 0.012] for a in np.linspace(0, math.tau, 8, endpoint=False)])
         gear_parts.append(make_loft(band_rings, 3, UV_DARK))
-        gear_parts.append(make_box((-0.074, eye_y - 0.032, hz - 0.055), (0.008, 0.008, 0.084), 3, UV_DARK, ry=-0.42))
+        gear_parts.append(make_box((-0.072, eye_y - 0.032, hz - 0.055), (0.006, 0.006, 0.078), 3, UV_DARK, ry=-0.42))
     else:
         # Male short military buzz/fade hair cap + high-cut FAST Helmet sitting cleanly above eyebrows!
         hair_rings = []
@@ -1308,23 +1382,30 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
             hair_rings.append([[math.cos(a) * rx_r, ry_r, hz + math.sin(a) * rz_r] for a in np.linspace(0, math.tau, 16, endpoint=False)])
         gear_parts.append(make_loft(hair_rings, 3, UV_HAIR))
 
-        # High-cut FAST Ballistic Helmet raised cleanly above eyebrows & tilted slightly back
-        # Proper OPS-CORE FAST Ballistic Helmet profile (covers crown cleanly with side rails)
+        # Snug rounded OPS-CORE comms headset + sleek NVG goggles resting on high-cut FAST Helmet
         helm_rings = []
         for s in range(6):
             t = s / 5.0
-            ry_r = eye_y + 0.036 + 0.088 * math.sin(t * math.pi * 0.5)
-            rx_r = 0.108 * math.cos(t * math.pi * 0.44) + 0.008
-            rz_r = 0.126 * math.cos(t * math.pi * 0.44) + 0.010
+            ry_r = eye_y + 0.034 + 0.090 * math.sin(t * math.pi * 0.5)
+            rx_r = 0.105 * math.cos(t * math.pi * 0.44) + 0.008
+            rz_r = 0.124 * math.cos(t * math.pi * 0.44) + 0.010
             helm_rings.append([[math.cos(a) * rx_r, ry_r, hz + 0.014 + math.sin(a) * rz_r] for a in np.linspace(0, math.tau, 18, endpoint=False)])
         gear_parts.append(make_loft(helm_rings, 3, UV_HELM))
-        # NVG mount + raised goggles + ARC side rails + comms earcups + boom mic
-        gear_parts.append(make_box((0.0, eye_y + 0.072, hz - 0.112), (0.042, 0.042, 0.018), 3, UV_DARK))
-        gear_parts.append(make_box((0.0, eye_y + 0.048, hz - 0.112), (0.136, 0.030, 0.024), 3, UV_DARK))
+        # Curved NVG shroud + rounded ballistic goggles resting on forehead rim
+        gog_rings = []
+        for ang_arc in np.linspace(-0.78, 0.78, 9):
+            gx, gz = math.sin(ang_arc) * 0.108, hz + 0.014 - math.cos(ang_arc) * 0.126
+            nx_a, nz_a = math.sin(ang_arc), -math.cos(ang_arc)
+            gog_rings.append([[gx + nx_a * math.cos(a) * 0.012, eye_y + 0.052 + math.sin(a) * 0.016, gz + nz_a * math.cos(a) * 0.012] for a in np.linspace(0, math.tau, 10, endpoint=False)])
+        gear_parts.append(make_loft(gog_rings, 3, UV_DARK))
+        gear_parts.append(make_box((0.0, eye_y + 0.078, hz - 0.114), (0.036, 0.036, 0.014), 3, UV_DARK))
         for sx in (-1.0, 1.0):
-            gear_parts.append(make_box((sx * 0.104, eye_y + 0.038, hz + 0.014), (0.014, 0.022, 0.12), 3, UV_CORD))
-            gear_parts.append(make_box((sx * 0.092, eye_y - 0.004, hz + 0.01), (0.030, 0.068, 0.060), 3, UV_DARK))
-        gear_parts.append(make_box((-0.078, eye_y - 0.032, hz - 0.055), (0.008, 0.008, 0.084), 3, UV_DARK, ry=-0.42))
+            # Sleek rounded cylindrical Peltor comms earcups
+            cup_rings = []
+            for s, ox, rr in [(0, 0.0, 0.026), (1, 0.012, 0.030), (2, 0.024, 0.020)]:
+                cup_rings.append([[sx * (0.082 + ox), eye_y - 0.004 + math.sin(a) * rr * 1.18, hz + 0.012 + math.cos(a) * rr] for a in np.linspace(0, math.tau, 12, endpoint=False)])
+            gear_parts.append(make_loft(cup_rings, 3, UV_DARK))
+        gear_parts.append(make_box((-0.076, eye_y - 0.032, hz - 0.055), (0.006, 0.006, 0.080), 3, UV_DARK, ry=-0.42))
 
     hi_gear = merge_parts(gear_parts)
     hi_eyes = build_eyes(info)
