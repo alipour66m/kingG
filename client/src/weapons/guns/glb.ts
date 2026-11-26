@@ -54,12 +54,12 @@ const GLB_DEFS: Partial<Record<WeaponId, GlbWeaponDef>> = {
   },
   shotgun: {
     asset: "assets/weapons/shotgun.glb",
-    muzzle: [0, 0.025, -0.613],
-    length: 0.935,
+    muzzle: [0, 0.023, -0.630],
+    length: 0.97,
     gripAnchor: [0, -0.055, 0.047],
     foreAnchor: [0, -0.032, -0.285],
-    sightY: 0.072,
-    sightLine: { front: [0, 0.072, -0.604], rear: [0, 0.072, 0.020] },
+    sightY: 0.088,
+    sightLine: { front: [0, 0.088, -0.620], rear: [0, 0.088, 0.040] },
     accentPos: [0.019, 0.025, -0.07],
     accentSize: [0.0025, 0.005, 0.024],
   },
@@ -99,7 +99,22 @@ function prepareGlbRoot(id: WeaponId, src: THREE.Object3D, def: GlbWeaponDef): {
   const pivots: Record<string, THREE.Group> = {};
   let tris = 0;
 
-  while (clone.children.length > 0) root.add(clone.children[0]!);
+  while (clone.children.length > 0) {
+    const ch = clone.children[0]!;
+    clone.remove(ch);
+    // Promote GLTFLoader Object3D pivot nodes ("frame"/"mag"/"slide"/"bolt") to THREE.Group so gunInstance finds them.
+    if (!(ch as THREE.Mesh).isMesh && !(ch as THREE.Group).isGroup && ch.name) {
+      const grp = new THREE.Group();
+      grp.name = ch.name;
+      grp.position.copy(ch.position);
+      grp.quaternion.copy(ch.quaternion);
+      grp.scale.copy(ch.scale);
+      while (ch.children.length > 0) grp.add(ch.children[0]!);
+      root.add(grp);
+    } else {
+      root.add(ch);
+    }
+  }
   root.traverse((o) => {
     if ((o as THREE.Group).isGroup && o !== root) pivots[o.name.split("/").pop()!] = o as THREE.Group;
     const m = o as THREE.Mesh;

@@ -506,14 +506,26 @@ def main():
         small_tex=256,
     )
 
-    # 4. Tactical Pump Shotgun (`shotgun`)
-    sg_scale = 1.08
+    # 4. Tactical Pump Shotgun w/ Red Dot Optic & Side Laser (`shotgun`)
+    sg_scale = 1.12
     sg_off = (0.0, 0.072 - sg_scale * 0.152, -0.145)
     compose_weapons(
-        [{
-            "path": os.path.join(zz_dir, "assets_hq_pump_shotgun.glb"),
-            "classify": lambda _n: "frame",
-        }],
+        [
+            {
+                "path": os.path.join(zz_dir, "assets_hq_pump_shotgun.glb"),
+                "classify": lambda _n: "frame",
+            },
+            {
+                "path": os.path.join(zz_dir, "assets_hq_red_dot.glb"),
+                "local_offset": (0.0, 0.130, -0.091),
+                "classify": lambda _n: "frame",
+            },
+            {
+                "path": os.path.join(zz_dir, "assets_hq_laser.glb"),
+                "local_offset": (-0.017, 0.096, 0.103),
+                "classify": lambda _n: "frame",
+            },
+        ],
         os.path.join(OUT_DIR, "shotgun.glb"),
         sg_scale,
         sg_off,

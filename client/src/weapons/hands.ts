@@ -27,23 +27,21 @@ import { resources } from "../engine/res/scope";
 import { releaseGeometryAfterUpload } from "../engine/geometry-release";
 
 // ------------------------------------------------------------------------------------------------ dimensions (m)
-/** palm: thickness (x), width along the grip (y), length heel → knuckles (z) */
-const PT = 0.036, PW = 0.106, PL = 0.09;
-/** finger rows along the grip axis (index → pinky): 26 mm apart, the fat fingers touch side by side */
-const FY = [0.039, 0.013, -0.013, -0.038];
-/** finger radius (the wrap solver's offset) — fat, SHORT kong fingers: round a gun's grip they reach its front corner
- *  (a row of fingers seen from the side), not all the way round to the far side (four fingertips seen end-on) */
-const FR = [0.0148, 0.0154, 0.0149, 0.0132];
-const FL: number[][] = [[0.034, 0.024, 0.02], [0.037, 0.026, 0.021], [0.035, 0.025, 0.02], [0.028, 0.02, 0.017]];
-const TR = [0.0164, 0.0148, 0.0136];
-const TL = [0.03, 0.025, 0.021];
+/** palm: realistic slender tactical human proportions — thickness (x), width along grip (y), length heel -> knuckles (z) */
+const PT = 0.025, PW = 0.084, PL = 0.082;
+/** finger rows along the grip axis (index -> pinky): 20 mm spacing matching real human metacarpals */
+const FY = [0.030, 0.010, -0.010, -0.029];
+/** slender articulated human finger radii & phalanx lengths (metres) */
+const FR = [0.0092, 0.0096, 0.0091, 0.0080];
+const FL: number[][] = [[0.036, 0.024, 0.020], [0.040, 0.026, 0.021], [0.037, 0.024, 0.020], [0.029, 0.019, 0.017]];
+const TR = [0.0114, 0.0100, 0.0088];
+const TL = [0.031, 0.025, 0.021];
 /** the thumb base (palm space): heel end, index side, grip face */
-const T0 = new THREE.Vector3(-PT / 2 + 0.013, PW / 2 - 0.004, PL / 2 - 0.024);
-// long enough to always leave the frame (the 55° viewmodel projection holds the guns further out; a 0.9 m forearm
-// ended in view as a ragged fur stump)
+const T0 = new THREE.Vector3(-PT / 2 + 0.009, PW / 2 - 0.004, PL / 2 - 0.020);
+// long enough to always leave the frame cleanly
 const FORE_LEN = 1.5;
-/** forearm / cuff girth multiplier */
-const ARM_K = 1.45;
+/** realistic athletic human wrist/forearm girth */
+const ARM_K = 0.88;
 
 /** the v2 kong arms — a gorilla forearm that swells to ~2× the wrist
  *  right behind a thick banana-peel cuff, big pointed fur clumps that break the silhouette, a skin (not peel) back of the
@@ -75,13 +73,12 @@ let mats: HandMats | null = null;
 export function handMaterials(): HandMats {
   if (mats) return mats;
   const sk = skinTex(), pt = peelTex(), ft = furTex();
-  // soft, slightly waxy kong skin: vertex colours carry the tones (creases, nails, knuckles), a fine pore bump
-  const glove = new THREE.MeshStandardMaterial({ color: "#ffffff", vertexColors: true, roughness: 0.58, metalness: 0, bumpMap: sk, bumpScale: 0.5, envMapIntensity: 0.7 });
-  // the peel: ripe yellow with sugar spots + fibres (texture) × vertex tones (darker edges), a satin sheen like the guns'
-  const peel = new THREE.MeshPhysicalMaterial({ color: "#ffffff", vertexColors: true, map: pt.map, bumpMap: pt.bump, bumpScale: 0.6, roughness: 0.42, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.35, envMapIntensity: 0.6 });
-  // fur clumps: vertex colours (dark roots → lit tips, darker clump edges) × a fine strand texture along each clump;
-  // double-sided: a lifted clump tip shows its underside
-  const fur = new THREE.MeshStandardMaterial({ color: "#ffffff", vertexColors: true, map: ft.map, bumpMap: ft.bump, bumpScale: 1.1, roughness: 0.84, metalness: 0, envMapIntensity: 0.55, side: THREE.DoubleSide });
+  // soft realistic human skin: vertex colours carry warm skin tones (creases, nails), fine pore bump
+  const glove = new THREE.MeshStandardMaterial({ color: "#ffffff", vertexColors: true, roughness: 0.54, metalness: 0, bumpMap: sk, bumpScale: 0.45, envMapIntensity: 0.55 });
+  // matte Nomex/Cordura tactical shooter glove shell & watch cuff
+  const peel = new THREE.MeshStandardMaterial({ color: "#ffffff", vertexColors: true, map: pt.map, bumpMap: pt.bump, bumpScale: 0.7, roughness: 0.82, metalness: 0.04, envMapIntensity: 0.4 });
+  // tactical MultiCam ripstop sleeve
+  const fur = new THREE.MeshStandardMaterial({ color: "#ffffff", vertexColors: true, map: ft.map, bumpMap: ft.bump, bumpScale: 0.85, roughness: 0.86, metalness: 0, envMapIntensity: 0.45, side: THREE.DoubleSide });
   glove.name = "vm-skin"; peel.name = "vm-peel"; fur.name = "vm-fur";
   mats = { glove, peel, fur };
   return mats;
@@ -102,33 +99,37 @@ function skinTex(): THREE.Texture {
 /** banana peel: ripe yellow, faint fibres, brown sugar spots + specks (map, sRGB) and their relief (bump) — tileable */
 function peelTex(): { map: THREE.Texture; bump: THREE.Texture } {
   const S = 256, c = canvas(S, S), g = c.getContext("2d")!, b = canvas(S, S), gb = b.getContext("2d")!, r = rng(23);
-  g.fillStyle = "#2f332c"; g.fillRect(0, 0, S, S);
+  // Tactical Nomex / Kevlar shooter glove weave
+  g.fillStyle = "#22252a"; g.fillRect(0, 0, S, S);
   gb.fillStyle = "#808080"; gb.fillRect(0, 0, S, S);
-  for (let y = 0; y < S; y += 6) {
-    g.fillStyle = y % 12 === 0 ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.06)";
-    g.fillRect(0, y, S, 2);
-    gb.fillStyle = y % 12 === 0 ? "rgba(60,60,60,0.55)" : "rgba(180,180,180,0.45)";
-    gb.fillRect(0, y, S, 2);
+  for (let y = 0; y < S; y += 4) {
+    for (let x = 0; x < S; x += 4) {
+      const alt = ((x + y) >> 2) & 1;
+      g.fillStyle = alt ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.14)";
+      g.fillRect(x, y, 3, 3);
+      gb.fillStyle = alt ? "rgba(165,165,165,0.6)" : "rgba(95,95,95,0.6)";
+      gb.fillRect(x, y, 3, 3);
+    }
   }
-  for (let i = 0; i < 600; i++) { g.fillStyle = `rgba(20,22,18,${0.08 + r() * 0.12})`; g.fillRect(r() * S, r() * S, 2, 2); }
+  for (let i = 0; i < 400; i++) { g.fillStyle = `rgba(16,18,22,${0.08 + r() * 0.1})`; g.fillRect(r() * S, r() * S, 2, 2); }
   const map = resources.root.texture("tex.actor", new THREE.CanvasTexture(c)); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;
   const bump = resources.root.texture("tex.actor", new THREE.CanvasTexture(b)); bump.wrapS = bump.wrapT = THREE.RepeatWrapping; bump.anisotropy = 4;
   return { map, bump };
 }
 
-/** fur strands along v (a near-white multiply map: the clump colours live in the vertex colours) + their relief */
+/** MultiCam Tactical Ripstop sleeve weave (colour + bump) matching Operator uniforms */
 function furTex(): { map: THREE.Texture; bump: THREE.Texture } {
   const W = 256, H = 256;
   const c = canvas(W, H), g = c.getContext("2d")!, b = canvas(W, H), gb = b.getContext("2d")!, r = rng(11);
-  g.fillStyle = "#525b44"; g.fillRect(0, 0, W, H);
+  g.fillStyle = "#48513c"; g.fillRect(0, 0, W, H);
   gb.fillStyle = "#808080"; gb.fillRect(0, 0, W, H);
-  const tones = ["rgba(56,64,46,0.5)", "rgba(96,94,70,0.4)", "rgba(38,42,32,0.45)"];
-  for (let i = 0; i < 36; i++) {
+  const tones = ["rgba(118,108,78,0.52)", "rgba(42,46,34,0.55)", "rgba(82,92,64,0.48)", "rgba(62,56,42,0.45)"];
+  for (let i = 0; i < 48; i++) {
     g.fillStyle = tones[Math.floor(r() * tones.length)];
-    g.beginPath(); g.ellipse(r() * W, r() * H, 16 + r() * 34, 10 + r() * 20, r() * Math.PI, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(r() * W, r() * H, 12 + r() * 32, 8 + r() * 18, r() * Math.PI, 0, Math.PI * 2); g.fill();
   }
-  for (let i = 0; i < W; i += 8) {
-    g.fillStyle = "rgba(0,0,0,0.08)"; g.fillRect(i, 0, 1, H); g.fillRect(0, i, W, 1);
+  for (let i = 0; i < W; i += 6) {
+    g.fillStyle = "rgba(0,0,0,0.09)"; g.fillRect(i, 0, 1, H); g.fillRect(0, i, W, 1);
     gb.fillStyle = "rgba(255,255,255,0.22)"; gb.fillRect(i, 0, 1, H); gb.fillRect(0, i, W, 1);
   }
   const map = resources.root.texture("tex.actor", new THREE.CanvasTexture(c)); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = 8;
@@ -137,11 +138,10 @@ function furTex(): { map: THREE.Texture; bump: THREE.Texture } {
 }
 
 // ------------------------------------------------------------------------------------------------ geometry
-// palette — the third-person kong's (the sculpt: deep chocolate fur ~#431c0c, cream fists and
-// fingers ~#dc9659), peel #f4c218
-const SKIN = new THREE.Color("#292b2e"), SKIN_SH = new THREE.Color("#1b1d1f"), CREASE = new THREE.Color("#141517"), NAIL = new THREE.Color("#3c4046");
-const PALM = new THREE.Color("#202225"), PEEL_IN = new THREE.Color("#242722"), PEEL_EDGE = new THREE.Color("#1a1c18"), WHITE = new THREE.Color(1, 1, 1);
-const FUR_ROOT = new THREE.Color("#454d38"), FUR_MID = new THREE.Color("#586248"), FUR_TIP = new THREE.Color("#6b7458"), FUR_CORE = new THREE.Color("#4e5640");
+// Realistic human operator skin fingers + dark fingerless tactical glove shell + MultiCam combat sleeve
+const SKIN = new THREE.Color("#d59d7e"), SKIN_SH = new THREE.Color("#b3785c"), CREASE = new THREE.Color("#8f5a44"), NAIL = new THREE.Color("#ebcfbf");
+const PALM = new THREE.Color("#26292e"), PEEL_IN = new THREE.Color("#3a4032"), PEEL_EDGE = new THREE.Color("#181a1d"), WHITE = new THREE.Color("#d0d3d8");
+const FUR_ROOT = new THREE.Color("#6e735c"), FUR_MID = new THREE.Color("#82886f"), FUR_TIP = new THREE.Color("#90967c"), FUR_CORE = new THREE.Color("#565c49");
 
 function colorize(g: THREE.BufferGeometry, c: THREE.Color) {
   const n = g.attributes.position.count, a = new Float32Array(n * 3);
@@ -329,10 +329,10 @@ function buildHandGeo(mirror: boolean, v2 = false): HandGeo {
   const sx = mirror ? -1 : 1;
   const skinParts: THREE.BufferGeometry[] = [], peelParts: THREE.BufferGeometry[] = [], furParts: THREE.BufferGeometry[] = [];
   // ---- bones (bind pose: open flat hand, palm at x = PX0)
-  const PX0 = 0.03 + PT / 2;
+  const PX0 = 0.022 + PT / 2;
   const root = new THREE.Bone(); root.name = "root";
   const palm = new THREE.Bone(); palm.name = "palm"; palm.position.set(sx * PX0, 0, 0); root.add(palm);
-  const wrist = new THREE.Bone(); wrist.name = "wrist"; wrist.position.set(sx * 0.004, 0, PL / 2 - 0.01); palm.add(wrist);
+  const wrist = new THREE.Bone(); wrist.name = "wrist"; wrist.position.set(sx * 0.002, 0, PL / 2 - 0.008); palm.add(wrist);
   const bones: THREE.Bone[] = [root, palm, wrist];
   const fingerBones: THREE.Bone[][] = [];
   for (let f = 0; f < 4; f++) {
@@ -361,56 +361,27 @@ function buildHandGeo(mirror: boolean, v2 = false): HandGeo {
   // wrapped in peel (faceted like a banana: five soft ridges along the hand) up to the knuckle row
   const pc = world(palm);
   {
-    const g = rbox(PT, PW, PL, 0.0165, 5); g.translate(pc.x, pc.y, pc.z);
-    skinParts.push(skin(paint(g, (p, c) => { c.copy(PALM); const inner = (pc.x - p.x) * sx / (PT / 2); if (inner > 0.6) c.lerp(SKIN_SH, 0.35); }), B_PALM));
-    // the back of the hand: a peel shell over the outboard face, from the wrist to just short of the knuckles
-    const dome = new THREE.SphereGeometry(1, 28, 18);
-    { const p = dome.attributes.position as THREE.BufferAttribute;
-      for (let i = 0; i < p.count; i++) {
-        const x = p.getX(i), y = p.getY(i), z = p.getZ(i), th = Math.atan2(y, x);
-        // banana facets: five flattened faces round the long axis (z)
-        const k = 1 - 0.05 * (1 - Math.abs(Math.cos(th * 2.5)));
-        p.setXYZ(i, x * k, y * k, z);
-      } }
-    dome.scale(PT * 0.56, PW * 0.55, PL * 0.5); dome.translate(pc.x + sx * PT * 0.22, pc.y, pc.z + 0.004);
-    const dc = new THREE.Vector3(pc.x + sx * PT * 0.22, pc.y, pc.z + 0.004);
-    if (!v2) peelParts.push(skin(paint(dome, (p, c) => { c.copy(WHITE); const e = Math.abs(p.z - dc.z) / (PL * 0.5); if (e > 0.82) c.lerp(PEEL_EDGE, (e - 0.82) * 2.5); }), B_PALM));
-    else {
-      // v2: the back of the hand is bare kong skin (the target art): four soft tendon ridges running to the knuckles, a
-      // darker tan toward the wrist, the peel only as the cuff
-      const p = dome.attributes.position as THREE.BufferAttribute;
-      for (let i = 0; i < p.count; i++) {
-        const x = p.getX(i), y = p.getY(i), z = p.getZ(i), out = (x - dc.x) * sx;
-        if (out <= 0) continue;
-        let rid = 0; for (let f = 0; f < 4; f++) rid += Math.exp(-(((y - FY[f]) / 0.0085) ** 2));
-        const fade = Math.max(0, Math.min(1, (dc.z - z) / (PL * 0.5) + 0.6));   // strongest toward the knuckles
-        p.setX(i, x + sx * 0.0055 * rid * fade * (out / (PT * 0.56)));
-      }
-      dome.computeVertexNormals();
-      skinParts.push(skin(paint(dome, (q, c) => {
-        // value shapes the form: the mid-back a step darker, the tendon crests and the knuckle end lighter, the wrist end dark
-        c.copy(SKIN).lerp(SKIN_SH, 0.28);
-        let rid = 0; for (let f = 0; f < 4; f++) rid += Math.exp(-(((q.y - FY[f]) / 0.007) ** 2));
-        const w = (q.z - dc.z) / (PL * 0.5);
-        if (w < 0) c.lerp(SKIN, Math.min(1, -w * 1.3)); else c.lerp(CREASE, 0.35 * w);
-        c.lerp(NAIL, 0.18 * Math.min(1, rid) * Math.max(0, Math.min(1, 0.6 - w)));
-      }), B_PALM));
-    }
-    // thumb-index webbing: a soft wedge from the thumb base to the index knuckle (blends onto the thumb bone)
-    { const a = new THREE.Vector3(pc.x + sx * (T0.x - 0.004), T0.y - 0.004, T0.z), bk = new THREE.Vector3(pc.x + sx * (-PT / 2 + FR[0] + 0.004), FY[0], -PL / 2 + 0.012);
-      const d = bk.clone().sub(a), L = d.length(); const w = new THREE.CapsuleGeometry(0.012, L, 4, 12); w.scale(1, 1, 0.8);
-      w.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize())); w.translate((a.x + bk.x) / 2, (a.y + bk.y) / 2, (a.z + bk.z) / 2);
-      skinParts.push(skin(colorize(w, SKIN), B_PALM, B_T, (q) => Math.max(0, Math.min(1, 1 - q.clone().sub(a).dot(d) / (L * L))))); }
-    // the knuckle row: a skin ridge across the front of the palm with four knuckle bumps
-    const k = new THREE.CapsuleGeometry(0.0135, PW - 0.03, 4, 12); k.translate(pc.x + sx * 0.002, pc.y, pc.z - PL / 2 + 0.008);
-    skinParts.push(skin(colorize(k, SKIN), B_PALM));
+    const g = rbox(PT, PW, PL, 0.010, 4); g.translate(pc.x, pc.y, pc.z);
+    peelParts.push(skin(paint(g, (p, c) => { c.copy(PALM); const inner = (pc.x - p.x) * sx / (PT / 2); if (inner > 0.6) c.lerp(PEEL_EDGE, 0.35); }), B_PALM));
+    // Tactical Mechanix back-of-hand glove shell + low-profile sculpted hard-knuckle armor pad
+    const dome = new THREE.SphereGeometry(1, 24, 16);
+    dome.scale(PT * 0.50, PW * 0.51, PL * 0.48); dome.translate(pc.x + sx * PT * 0.16, pc.y, pc.z + 0.004);
+    const dc = new THREE.Vector3(pc.x + sx * PT * 0.16, pc.y, pc.z + 0.004);
+    peelParts.push(skin(paint(dome, (p, c) => { c.copy(WHITE); const e = Math.abs(p.z - dc.z) / (PL * 0.48); if (e > 0.78) c.lerp(PEEL_EDGE, (e - 0.78) * 2.2); }), B_PALM));
+    // Sculpted ballistic knuckle guard across metacarpals
+    const kg = rbox(0.011, PW * 0.84, 0.020, 0.004, 3);
+    kg.translate(pc.x + sx * (PT * 0.48), pc.y, pc.z - PL * 0.32);
+    peelParts.push(skin(colorize(kg, new THREE.Color("#2e3239")), B_PALM));
     for (let f = 0; f < 4; f++) {
-      const kb = new THREE.SphereGeometry(1, 12, 8);
-      // v2: big knuckles (a kong walks on them) — proud of the hand's back, a lighter crest catching the light
-      if (v2) { kb.scale(0.0135, FR[f] * 1.02, 0.0145); kb.translate(pc.x + sx * (PT / 2 + 0.0005), FY[f], pc.z - PL / 2 + 0.012); skinParts.push(skin(paint(kb, (q, c) => { c.copy(SKIN); const up = (q.x - (pc.x + sx * (PT / 2 + 0.0005))) * sx / 0.0135; if (up > 0.3) c.lerp(NAIL, 0.35 * (up - 0.3)); }), B_PALM)); continue; }
-      kb.scale(0.009, FR[f] * 0.95, 0.011); kb.translate(pc.x + sx * (PT / 2 - 0.004), FY[f], pc.z - PL / 2 + 0.01);
-      skinParts.push(skin(colorize(kb, SKIN), B_PALM));
+      const kb = new THREE.SphereGeometry(1, 10, 8);
+      kb.scale(0.0065, FR[f] * 0.88, 0.0085); kb.translate(pc.x + sx * (PT * 0.46), FY[f], pc.z - PL / 2 + 0.012);
+      peelParts.push(skin(colorize(kb, new THREE.Color("#333840")), B_PALM));
     }
+    // thumb-index webbing inside gloved palm
+    { const a = new THREE.Vector3(pc.x + sx * (T0.x - 0.003), T0.y - 0.003, T0.z), bk = new THREE.Vector3(pc.x + sx * (-PT / 2 + FR[0] + 0.002), FY[0], -PL / 2 + 0.010);
+      const d = bk.clone().sub(a), L = d.length(); const w = new THREE.CapsuleGeometry(0.0085, L, 4, 10); w.scale(1, 1, 0.8);
+      w.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize())); w.translate((a.x + bk.x) / 2, (a.y + bk.y) / 2, (a.z + bk.z) / 2);
+      peelParts.push(skin(colorize(w, PALM), B_PALM, B_T, (q) => Math.max(0, Math.min(1, 1 - q.clone().sub(a).dot(d) / (L * L))))); }
   }
   // ---- fingers + thumb: each ONE continuous sculpted tube along its 3 bones (bind pose straight along −Z), skinned with
   // a smooth blend across each joint so a curled finger bends like a real one; a knuckle swell at each joint, a rounded
@@ -468,54 +439,65 @@ function buildHandGeo(mirror: boolean, v2 = false): HandGeo {
   {
     const tb = bones.slice(B_T, B_T + 3), p = world(tb[0]);
     skinParts.push(chain(p, TL, TR[0] * (v2 ? 0.92 : 0.84), v2 ? 0.2 : 0.24, B_T, v2 ? 0.1 : 0.05, 0.86, 1.04));
-    // thenar mound: the fat muscle pad between the thumb root and the palm heel (no sausage joint)
-    const m = new THREE.SphereGeometry(1, 20, 14); m.scale(PT * 0.55, TR[0] * 1.9, TL[0] * 0.95);
-    m.translate(p.x + sx * PT * 0.12, p.y - TR[0] * 0.6, p.z + TL[0] * 0.15);
-    skinParts.push(skin(colorize(m, SKIN), B_PALM, B_T, (q) => Math.max(0, Math.min(0.6, (p.z - q.z) / (TL[0] * 1.2)))));
+    // thenar mound: slim gloved palm-thumb muscle pad
+    const m = new THREE.SphereGeometry(1, 16, 12); m.scale(PT * 0.50, TR[0] * 1.65, TL[0] * 0.85);
+    m.translate(p.x + sx * PT * 0.10, p.y - TR[0] * 0.5, p.z + TL[0] * 0.15);
+    peelParts.push(skin(colorize(m, PALM), B_PALM, B_T, (q) => Math.max(0, Math.min(0.6, (p.z - q.z) / (TL[0] * 1.2)))));
   }
-  // ---- the peel cuff round the wrist: three stacked peel bands (each a little tilted, a dark seam where one overlaps
-  // the next) flaring onto the forearm, then the peel's petals folded back over the fur (yellow outside, cream inside)
+  // ---- Sleek slim tactical wrist cuff + optional tactical watch (left wrist) + natural MultiCam sleeve
   const wc = world(wrist);
   const blend = (p: THREE.Vector3) => (p.z - wc.z) / 0.035;
   if (!v2) {
-    const Z0 = -0.012, Z1 = 0.082, N = 36, AN = 48;
+    const Z0 = -0.008, Z1 = 0.056, N = 18, AN = 32;
     const rAt = (z: number) => {
       const t = (z - Z0) / (Z1 - Z0);
-      let r = 0.05 + 0.017 * t;
-      // three bands: each bulges, the seams between them dip (the next band's edge lies over it)
-      const band = (t * 3) % 1; r += 0.0045 * Math.sin(Math.PI * band) - 0.002;
-      // rolled lips at both ends
-      if (t < 0.06) r -= 0.006 * (1 - t / 0.06) ** 2; if (t > 0.94) r -= 0.008 * ((t - 0.94) / 0.06) ** 2;
-      return r;
+      return 0.034 + 0.0055 * t + 0.0018 * Math.sin(Math.PI * t);
     };
     const pos: number[] = [], idx: number[] = [], cols: number[] = [];
     for (let i = 0; i <= N; i++) {
-      const z = Z0 + (Z1 - Z0) * (i / N), t = i / N, bandI = Math.min(2, Math.floor(t * 3)), band = (t * 3) % 1;
+      const z = Z0 + (Z1 - Z0) * (i / N), t = i / N;
       for (let j = 0; j <= AN; j++) {
         const a = (j / AN) * Math.PI * 2;
-        // each band tilted a little round the arm (a wrapped strip, not a lathe ring)
-        const tilt = 0.006 * Math.sin(a + bandI * 2.1);
-        const r = rAt(z) * (1 + 0.025 * Math.sin(a * 3 + bandI));
-        pos.push(wc.x + Math.cos(a) * r * 1.0, wc.y + Math.sin(a) * r * 1.08, wc.z + z + tilt);
-        const seam = band < 0.12 && bandI > 0 ? 1 - band / 0.12 : 0;
-        const c = WHITE.clone().lerp(PEEL_EDGE, 0.75 * seam);
+        const r = rAt(z);
+        pos.push(wc.x + Math.cos(a) * r * 0.88, wc.y + Math.sin(a) * r * 1.06, wc.z + z);
+        const c = WHITE.clone();
+        if (t > 0.62) c.lerp(PEEL_EDGE, 0.35); // sleek velcro strap band accent
         cols.push(c.r, c.g, c.b);
       }
     }
     for (let i = 0; i < N; i++) for (let j = 0; j < AN; j++) { const a = i * (AN + 1) + j, b = a + AN + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
     const cg = new THREE.BufferGeometry(); cg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); cg.setIndex(idx); cg.computeVertexNormals();
     cg.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
-    // Tactical Velcro glove cuff + combat shirt sleeve (smooth cylinder, no spiky fur clumps or banana peel flaps)
     peelParts.push(skin(cg, B_PALM, B_WRIST, blend));
+    // Bare wrist skin transition under strap
+    const wrSkin = new THREE.CylinderGeometry(0.033, 0.035, 0.032, 20);
+    wrSkin.rotateX(Math.PI / 2); wrSkin.scale(0.86, 1.04, 1); wrSkin.translate(wc.x, wc.y, wc.z + 0.058);
+    skinParts.push(skin(colorize(wrSkin, SKIN), B_PALM, B_WRIST, blend));
+    // Sleek matte tactical sport chronograph on left wrist
+    if (mirror) {
+      const watch = new THREE.CylinderGeometry(0.017, 0.018, 0.009, 20);
+      watch.rotateZ(Math.PI / 2);
+      watch.translate(wc.x - 0.032, wc.y + 0.002, wc.z + 0.044);
+      peelParts.push(skin(colorize(watch, new THREE.Color("#16181c")), B_WRIST));
+      const strap = new THREE.CylinderGeometry(0.0355, 0.0355, 0.018, 24);
+      strap.rotateX(Math.PI / 2); strap.scale(0.88, 1.06, 1); strap.translate(wc.x, wc.y, wc.z + 0.044);
+      peelParts.push(skin(colorize(strap, new THREE.Color("#191b1f")), B_WRIST));
+    }
   }
   if (!v2) {
-    const rAt = (z: number) => { const t = z / FORE_LEN; return (0.042 + 0.022 * Math.sin(Math.min(1, t / 0.4) * Math.PI / 2) - 0.008 * Math.max(0, (t - 0.5) / 0.5)) * 0.92 * ARM_K; };
+    const rAt = (z: number) => { const t = z / FORE_LEN; return (0.040 + 0.020 * Math.sin(Math.min(1, t / 0.35) * Math.PI / 2) - 0.007 * Math.max(0, (t - 0.5) / 0.5)) * ARM_K; };
     const prof: Array<[number, number]> = [];
-    for (let i = 0; i <= 16; i++) { const z = (i / 16) * FORE_LEN; prof.push([rAt(z), z]); }
+    for (let i = 0; i <= 18; i++) { const z = (i / 18) * FORE_LEN; prof.push([rAt(z), z]); }
     const fa = new THREE.LatheGeometry(prof.map(([r, z]) => new THREE.Vector2(r, z)), 24);
     fa.rotateX(Math.PI / 2);
+    fa.scale(0.92, 1.02, 1);
     fa.translate(wc.x, wc.y, wc.z + 0.068);
     furParts.push(skin(colorize(fa, FUR_TIP), B_PALM, B_WRIST, (p) => (p.z - wc.z) / 0.05));
+    // Rolled combat sleeve cuff fold right above wrist
+    const cuff = new THREE.TorusGeometry(0.036, 0.0065, 10, 24);
+    cuff.scale(0.92, 1.02, 1.15);
+    cuff.translate(wc.x, wc.y, wc.z + 0.072);
+    furParts.push(skin(colorize(cuff, FUR_MID), B_WRIST));
   }
   if (v2) buildArm2(wc, mirror, peelParts, skinParts, furParts);
   // ---- merge: group 0 = skin, group 1 = peel, group 2 = fur

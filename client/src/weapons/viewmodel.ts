@@ -60,16 +60,16 @@ export const VM_HOLD: Record<WeaponId, Hold> = {
   pistol: {
     // right of centre, barrel converging on the crosshair, forearms down
     pos: [0.242, -0.198, -0.5], rot: [0.02, 0.22, -0.18], scale: 0.822, elR: [0.1, -1.0, -0.4], adsScale: 0.587,
-    r: { at: [0, -0.07, 0.046], up: [0, 0.884, -0.467], palm: [1, 0, 0], a: 0.031, b: 0.046 },
+    r: { at: [0, -0.046, 0.036], up: [0, 0.884, -0.467], palm: [1, 0, 0], a: 0.020, b: 0.028 },
     l: null, recoil: [0.045, 0.08, 0.025, 0.012, 26],   // calmer kicks (less random roll / yaw)
-    ads: { sight: [0, 0.075, 0.05], dist: 0.3 }, reload: "pistol",
-    magGrip: { at: [0, -0.218, 0.102], up: [0, 0.884, -0.467], palm: [-1, 0, 0], a: 0.03, b: 0.042 },
+    ads: { sight: [0, 0.058, 0.06], dist: 0.3 }, reload: "pistol",
+    magGrip: { at: [0, -0.18, 0.08], up: [0, 0.884, -0.467], palm: [-1, 0, 0], a: 0.024, b: 0.032 },
   },
   smg: {
     // right of centre, barrel converging on the crosshair, forearms down
     pos: [0.314, -0.272, -0.53], rot: [-0.03, 0.21, -0.2], scale: 0.92, elR: [0.1, -1.0, -0.4], adsScale: 0.559,
-    r: { at: [0, -0.063, 0.042], up: [0, 0.953, -0.302], palm: [1, 0, 0], a: 0.028, b: 0.04 },
-    l: { at: [0, -0.065, -0.176], up: [0, 1, -0.06], palm: [-1, 0, 0], a: 0.02, b: 0.02 },
+    r: { at: [0, -0.052, 0.042], up: [0, 0.953, -0.302], palm: [1, 0, 0], a: 0.022, b: 0.028 },
+    l: { at: [0, -0.062, -0.176], up: [0, 1, -0.06], palm: [-1, 0, 0], a: 0.018, b: 0.018 },
     recoil: [0.022, 0.026, 0.01, 0.006, 34],
     ads: { sight: [0, 0.114, 0.02], dist: 0.3 }, reload: "mag",
     magGrip: { at: [0, -0.14, -0.05], up: [0, 0.923, 0.384], palm: [-1, 0, 0], a: 0.025, b: 0.036 },
@@ -77,21 +77,20 @@ export const VM_HOLD: Record<WeaponId, Hold> = {
   ar: {
     // right of centre, barrel converging on the crosshair, forearms down
     pos: [0.337, -0.243, -0.53], rot: [0.11, 0.21, -0.2], scale: 0.62, elR: [0.1, -1.0, -0.4], adsScale: 0.464,
-    r: { at: [0, -0.063, 0.031], up: [0, 0.923, -0.385], palm: [1, 0, 0], a: 0.025, b: 0.034 },
-    // the left palm on the NEAR side of the lower tube, fingers over the top, forearm down —
-    // the back of the glove faces the camera (hidden under the tube behind the drum it read as an open C-ring)
-    l: { at: [-0.012, -0.035, -0.43], up: [0, 0.08, 1], palm: [-1, 0, 0], a: 0.04, b: 0.045 },
+    r: { at: [0, -0.052, 0.031], up: [0, 0.923, -0.385], palm: [1, 0, 0], a: 0.022, b: 0.028 },
+    // Left palm wraps snugly under the ribbed M16A2 handguard
+    l: { at: [-0.004, 0.015, -0.37], up: [0, 0.08, 1], palm: [-1, 0, 0], a: 0.026, b: 0.030 },
     recoil: [0.03, 0.03, 0.01, 0.006, 30],
     ads: { sight: [0, 0.13, 0.0], dist: 0.32 }, reload: "mag",
-    magGrip: { at: [0, -0.14, -0.2], up: [0, 1, 0], palm: [-1, 0, 0], a: 0.07, b: 0.07 },
+    magGrip: { at: [0, -0.14, -0.2], up: [0, 1, 0], palm: [-1, 0, 0], a: 0.06, b: 0.06 },
   },
   shotgun: {
     // right of centre, barrel converging on the crosshair, forearms down
     pos: [0.316, -0.197, -0.53], rot: [0.08, 0.21, -0.2], scale: 1.0, elR: [0.1, -1.0, -0.4], adsScale: 0.561,
-    r: { at: [0, -0.06, 0.047], up: [0, 0.827, -0.562], palm: [1, 0, 0], a: 0.039, b: 0.048 },
-    l: { at: [0, -0.045, -0.275], up: [0, 0.05, -1], palm: [0, -1, 0], a: 0.05, b: 0.075 },
+    r: { at: [0, -0.052, 0.047], up: [0, 0.827, -0.562], palm: [1, 0, 0], a: 0.024, b: 0.030 },
+    l: { at: [0, -0.022, -0.285], up: [0, 0.05, -1], palm: [0, -1, 0], a: 0.028, b: 0.032 },
     recoil: [0.09, 0.2, 0.04, 0.02, 16],
-    ads: { sight: [0, 0.07, 0.02], dist: 0.34 }, reload: "shell",
+    ads: { sight: [0, 0.088, 0.04], dist: 0.34 }, reload: "shell",
     port: [0.07, 0.03, -0.06],
   },
   sniper: {
@@ -118,11 +117,10 @@ export const VM_HOLD: Record<WeaponId, Hold> = {
 /** consumables are held in the right fist, low right; the use animation brings them up to the mouth */
 // right of centre like the guns (bbox centre >= 0.60), low, left of the hotbar's first slot
 export const ITEM_HOLD = { pos: (flag("fp3") ? [0.115, -0.22, -0.46] : [0.24, -0.15, -0.44]) as V3, rot: [0.12, -0.3, 0.05] as V3, scale: 0.6 };
-/** hand size in gun space (kong hands are big) */
-const HAND_K = 1.3;
-/** the glove's size in camera space, the same on every gun (HAND_K × the gun's scale would give the re-posed,
- *  bigger guns 0.64-1.13 × gloves — a pistol hand 70 % bigger than the rocket's) */
-const HAND_W = 0.94;   // (big kong gloves)
+/** hand size in gun space (realistic anatomical human operator proportions) */
+const HAND_K = 1.04;
+/** the glove's size in camera space, matched to realistic human hands gripping full-scale PBR weapons */
+const HAND_W = 0.72;
 /** where the forearms go (camera space): off the bottom corners, behind the view */
 // both elbows BELOW the hands, not behind the camera: the forearms drop out of the bottom edge a short way from the
 // gloves instead of running from the gun back to the camera as two huge fur planks
