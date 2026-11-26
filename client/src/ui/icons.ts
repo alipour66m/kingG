@@ -114,8 +114,11 @@ export function drawGlyph(g: CanvasRenderingContext2D, id: GlyphId, x: number, y
 }
 
 // ------------------------------------------------------------------------------------------------ items
+const PUBLIC_BASE: string = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
+const WEAPON_3D_ICONS = new Set(["pistol", "smg", "ar", "shotgun", "sniper", "rocket"]);
 const imgCache = new Map<string, HTMLImageElement>();
-export const itemIconUrl = (id: string) => tacticalItemUrl(id) ?? "";
+export const itemIconUrl = (id: string) =>
+  WEAPON_3D_ICONS.has(id) ? `${PUBLIC_BASE}assets/ui/icons/${id}.webp` : (tacticalItemUrl(id) ?? "");
 /** shared, preloaded <img> for an item (decode() it before drawing to a canvas) */
 export function itemImage(id: string): HTMLImageElement {
   let im = imgCache.get(id);

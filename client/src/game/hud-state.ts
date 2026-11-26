@@ -11,12 +11,12 @@ import type { HudState } from "../ui/api";
 
 /** Rarity-tiered tactical weapon display names while preserving the 6 compact wire IDs. */
 export function weaponVariantName(id: WeaponId, rarity: number): string {
-  if (id === "pistol") return rarity >= 2 ? "Desert Eagle (.45 ACP)" : "P92 (9mm)";
-  if (id === "smg") return rarity >= 2 ? "Vector (9mm)" : "UMP45 (.45 ACP)";
-  if (id === "ar") return rarity >= 2 ? "AKM (7.62mm)" : "M416 (5.56mm)";
-  if (id === "shotgun") return "S12K (12 Gauge)";
-  if (id === "sniper") return rarity >= 3 ? "AWM (.300 Magnum)" : "Kar98k (7.62mm)";
-  return "RPG-7 (HEAT)";
+  if (id === "pistol") return rarity >= 2 ? "Glock 17 Tactical (9mm)" : "Glock 17 (9mm)";
+  if (id === "smg") return rarity >= 2 ? "Tactical PDW (9mm)" : "Suppressed SMG (9mm)";
+  if (id === "ar") return rarity >= 2 ? "M16 A2 Custom (5.56mm)" : "M16 A2 (5.56mm)";
+  if (id === "shotgun") return rarity >= 2 ? "Pump Tactical RDS (12G)" : "Pump Shotgun (12G)";
+  if (id === "sniper") return rarity >= 3 ? "Precision Bolt 4x (.308)" : "Hunting Rifle 4x (.308)";
+  return "AT4 Launcher (HEAT)";
 }
 
 /** what each gun is for, on the pickup card and the inventory cards */
