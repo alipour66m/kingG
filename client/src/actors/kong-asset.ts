@@ -104,6 +104,7 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
       const [
         maleGltf, femaleGltf, f2Gltf, f3Gltf,
         mAlb, mNrm, mAo,
+        sgAlb, sgNrm, sgAo, sEyeAlb,
         fAlb, f2Alb, f3Alb, fNrm, fAo,
         gAlb, gdAlb, gnAlb, gNrm, gAo,
         eyeAlb,
@@ -113,6 +114,8 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
         assets.model("assets/actors/operators/female2.glb"),
         assets.model("assets/actors/operators/female3.glb"),
         tex("male-skin-albedo", true), tex("male-skin-normal", false), tex("male-skin-ao", false),
+        tex("soldier-gear-albedo", true), tex("soldier-gear-normal", false), tex("soldier-gear-ao", false),
+        tex("soldier-eye-albedo", true),
         tex("female-skin-albedo", true), tex("female2-skin-albedo", true), tex("female3-skin-albedo", true),
         tex("female-skin-normal", false), tex("female-skin-ao", false),
         tex("gear-albedo", true), tex("gear-desert-albedo", true), tex("gear-night-albedo", true),
@@ -124,7 +127,8 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
         gender: OperatorGender,
         scene: THREE.Object3D,
         sAlb: THREE.Texture, sNrm: THREE.Texture, sAo: THREE.Texture,
-        gearAlb: THREE.Texture,
+        gearAlb: THREE.Texture, gearNrm: THREE.Texture, gearAo: THREE.Texture,
+        eyeMap: THREE.Texture,
       ): KongAsset => {
         const byName = new Map<string, THREE.BufferGeometry>();
         scene.traverse((o) => {
@@ -167,15 +171,15 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
           const skin = actorLook(
             new THREE.MeshPhysicalMaterial({
               map: sAlb, normalMap: sNrm, aoMap: sAo, aoMapIntensity: 0.75,
-              roughness: gender === "male" ? 0.56 : 0.50, metalness: 0,
-              sheen: 0.16, sheenColor: new THREE.Color("#f0b59c"), sheenRoughness: 0.65,
+              roughness: gender === "male" ? 0.68 : 0.50, metalness: 0,
+              sheen: gender === "male" ? 0.08 : 0.16, sheenColor: new THREE.Color("#f0b59c"), sheenRoughness: 0.65,
               name: `${gender}-skin-${tier}`,
             }),
             { key: `${gender}-skin-${tier}`, spec: 0.35 },
           );
           const gear = actorLook(
             new THREE.MeshStandardMaterial({
-              map: gearAlb, normalMap: gNrm, aoMap: gAo, aoMapIntensity: 0.85,
+              map: gearAlb, normalMap: gearNrm, aoMap: gearAo, aoMapIntensity: 0.85,
               roughness: 0.74, metalness: 0.04, envMapIntensity: 0.55,
               name: `${gender}-gear-${tier}`,
             }),
@@ -183,14 +187,14 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
           );
           const shoe = actorLook(
             new THREE.MeshStandardMaterial({
-              map: gearAlb, normalMap: gNrm, aoMap: gAo, aoMapIntensity: 0.9,
+              map: gearAlb, normalMap: gearNrm, aoMap: gearAo, aoMapIntensity: 0.9,
               roughness: 0.52, metalness: 0.06, envMapIntensity: 0.6,
               name: `${gender}-shoe-${tier}`,
             }),
             { key: `${gender}-shoe-${tier}`, spec: 0.38 },
           );
           const eye = new THREE.MeshPhysicalMaterial({
-            map: eyeAlb, roughness: 0.08, metalness: 0, clearcoat: 1.0, clearcoatRoughness: 0.04,
+            map: eyeMap, roughness: 0.08, metalness: 0, clearcoat: 1.0, clearcoatRoughness: 0.04,
             name: `${gender}-eye-${tier}`,
           });
           eye.defines = { USE_UV: "" };
@@ -210,10 +214,10 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
       };
 
       return {
-        male: buildOne("male", maleGltf.scene, mAlb, mNrm, mAo, gAlb),
-        female: buildOne("female", femaleGltf.scene, fAlb, fNrm, fAo, gAlb),
-        female2: buildOne("female2", f2Gltf.scene, f2Alb, fNrm, fAo, gdAlb),
-        female3: buildOne("female3", f3Gltf.scene, f3Alb, fNrm, fAo, gnAlb),
+        male: buildOne("male", maleGltf.scene, mAlb, mNrm, mAo, sgAlb, sgNrm, sgAo, sEyeAlb),
+        female: buildOne("female", femaleGltf.scene, fAlb, fNrm, fAo, gAlb, gNrm, gAo, eyeAlb),
+        female2: buildOne("female2", f2Gltf.scene, f2Alb, fNrm, fAo, gdAlb, gNrm, gAo, eyeAlb),
+        female3: buildOne("female3", f3Gltf.scene, f3Alb, fNrm, fAo, gnAlb, gNrm, gAo, eyeAlb),
       };
     } catch (e) {
       console.warn("[operators] fallback:", e);
