@@ -21,6 +21,7 @@ import { bindingText, glyphFamily, lookText, onLabelsChange, pauseText } from ".
 import { glyph, PB } from "../settings/pad";
 import { device } from "../settings/device";
 import { preferences } from "../settings/preferences";
+import { mountOpPicker } from "./op-picker";
 
 const NAME_KEY = "kr-callsign", MODE_KEY = "kr-mode", DIFF_KEY = "kr-bot-difficulty";
 const NAME_MAX = 14;
@@ -133,14 +134,13 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   const links = h("div", "tn-play-links", play);
   const btnRange = h("button", "tn-play-link", links); btnRange.type = "button"; btnRange.innerHTML = `${ICON.target}<span>Firing range</span>`;
   const btnGuide = h("button", "tn-play-link", links); btnGuide.type = "button"; btnGuide.innerHTML = `${ICON.book}<span>Learn controls</span>`;
-  const btnGender = h("button", "tn-play-link", links); btnGender.type = "button";
-  const OP_ORDER = ["male", "female", "female2", "female3"] as const;
-  const OP_NAMES: Record<(typeof OP_ORDER)[number], string> = { male: "Male (Vanguard)", female: "Female (Valkyrie)", female2: "Female (Nomad)", female3: "Female (Nightfall)" };
-  const renderGender = (g: (typeof OP_ORDER)[number]) => { btnGender.innerHTML = `<span>Operator: ${OP_NAMES[g] ?? "Male (Vanguard)"}</span>`; };
-  preferences.subscribe((p) => renderGender(p.operatorGender));
-  btnGender.addEventListener("click", () => {
-    const i = OP_ORDER.indexOf(preferences.value.operatorGender);
-    preferences.set({ operatorGender: OP_ORDER[(i + 1) % OP_ORDER.length]! });
+  const opPop = h("details", "tn-play-pop tn-op-pop", links);
+  const opSum = h("summary", "tn-play-link", opPop);
+  const opPanel = h("div", "tn-play-panel tn-op-panel", opPop);
+  opPop.addEventListener("toggle", () => { if (opPop.open) mountOpPicker(opPanel); });
+  const OP_NAMES: Record<string, string> = { male: "Vanguard", mira: "Mira", acu: "Tracker", ranger: "Ranger", female: "Valkyrie", female2: "Nomad", female3: "Nightfall" };
+  preferences.subscribe((p) => {
+    opSum.innerHTML = `${ICON.friends}<span>Operator: ${OP_NAMES[p.operatorGender] ?? "Vanguard"}</span>`;
   });
   // (.room .kr-btn = the controller's first focus when Play is disabled, e.g. a guest waiting: only while in a room, and
   // after Play in the DOM so a host lands on Start match)
@@ -220,8 +220,8 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   });
   paintMode(); paintDifficulty();
 
-  // ---------------- popovers (callsign edit, friends): one open at a time; outside click / Esc / B closes
-  const pops = [csPop, frPop];
+  // ---------------- popovers (callsign edit, friends, operator): one open at a time; outside click / Esc / B closes
+  const pops = [csPop, frPop, opPop];
   for (const p of pops) p.addEventListener("toggle", () => {
     if (p.open) {
       for (const q of pops) if (q !== p && q.open) q.open = false;

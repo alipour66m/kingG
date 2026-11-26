@@ -24,6 +24,9 @@ Not covered by the MIT licence; each keeps its own.
 | Basis Universal transcoder (Binomial) | Apache-2.0 | `public/assets/actors/basis/` |
 | MakeHuman anatomical human base mesh, targets & eyes (`makehumancommunity/makehuman`) | CC0 1.0 Universal | `public/assets/actors/operators/female*.glb`, `public/assets/actors/operators/female*.webp`, `public/assets/actors/operators/gear*.webp`, `public/assets/actors/operators/eye-albedo.webp` |
 | Soldier Full Tactical Gear (LowPolyGameReady) by DanlyVostok (`https://sketchfab.com/1799danly`) | CC BY 4.0 | `public/assets/actors/operators/male.glb`, `public/assets/actors/operators/male-skin-*.webp`, `public/assets/actors/operators/soldier-gear-*.webp`, `public/assets/actors/operators/soldier-eye-albedo.webp` |
+| Mira by Korpusenko (`https://sketchfab.com/3d-models/mira-573a125189704a7685389ca6a13d7350`) | CC BY 4.0 | `public/assets/actors/operators/mira.glb`, `public/assets/actors/operators/mira-*.webp` |
+| Soldier by shnizelinbag (`https://sketchfab.com/3d-models/soldier-b40490094278489d8f936a5fbce96deb`) | CC BY 4.0 | `public/assets/actors/operators/acu.glb`, `public/assets/actors/operators/acu-*.webp` |
+| Army soldier Character by joneborden123 (`https://sketchfab.com/3d-models/army-soldier-character-cc995450452744ec8f852d8bf5f335d6`) | CC BY 4.0 | `public/assets/actors/operators/ranger.glb`, `public/assets/actors/operators/ranger-*.webp` |
 | Glock 17 (`g17.glb`) and M16 A2 (`m16a2.glb`) weapon models (`user77` via `LeoOpenBotDevelopment/Three.js-3D-FPS-Game`) | CC BY 4.0 | `public/assets/weapons/g17.glb`, `public/assets/weapons/m16a2.glb` |
 | Tactical SMG, Pump Shotgun, Hunting Sniper & 4x Scope (`zees-games/zed-gs-weapons`), Launcher (`Quaternius` / `Kenney` / `zees-games`) | MIT / CC0 1.0 | `public/assets/weapons/smg.glb`, `public/assets/weapons/shotgun.glb`, `public/assets/weapons/sniper.glb`, `public/assets/weapons/rocket.glb` |
 

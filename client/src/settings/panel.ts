@@ -116,16 +116,21 @@ export function audioCategory(): Category {
   };
 }
 
+import type { OperatorGender } from "../actors/api";
+
+const OP_OPTS: Array<{ v: OperatorGender; label: string }> = [
+  { v: "male", label: "Vanguard" }, { v: "mira", label: "Mira" }, { v: "acu", label: "Tracker" }, { v: "ranger", label: "Ranger" },
+  { v: "female", label: "Valkyrie" }, { v: "female2", label: "Nomad" }, { v: "female3", label: "Nightfall" },
+];
+
 export function accessibilityCategory(): Category {
   return {
     id: "a11y", name: "Accessibility",
     sections: [{ id: "operator", name: "Operator", rows: () => [
-      { kind: "seg", id: "operatorGender", label: "Character model", options: () => [
-          { v: "male", label: "Male" }, { v: "female", label: "Valkyrie" }, { v: "female2", label: "Nomad" }, { v: "female3", label: "Nightfall" },
-        ],
+      { kind: "seg", id: "operatorGender", label: "Character model", options: () => OP_OPTS,
         get: () => preferences.value.operatorGender,
-        set: (v) => preferences.set({ operatorGender: (v === "female" || v === "female2" || v === "female3") ? v : "male" }),
-        help: () => ({ eb: "Operator", title: "Character model", viz: "hud", body: ["Choose between the Male and three Female tactical operator models. Updates your lobby showcase and your in-match character."] }) },
+        set: (v) => preferences.set({ operatorGender: (OP_OPTS.some((o) => o.v === v) ? v : "male") as OperatorGender }),
+        help: () => ({ eb: "Operator", title: "Character model", viz: "hud", body: ["Pick your tactical operator for matches."] }) },
     ] }, { id: "comfort", name: "Comfort & readability", rows: () => [
       toggle("reducedMotion", "Reduced camera motion", () => ({ eb: "Comfort", title: "Reduced camera motion", viz: "hud",
         body: ["Removes decorative shake, bob, landing dip and camera roll, and stills menu motion. Aim and gameplay recoil remain accurate."] })),

@@ -124,7 +124,7 @@ const CSS = `
 .tn-play-live.is-off i { background: var(--kong-text-faint); }
 .tn-play-live b { font-weight: 800; color: var(--kong-text); }
 .tn-play-live .sep { letter-spacing: 0; }
-.tn-play-links { display: flex; gap: ${T(12)}; margin-top: ${T(58)}; }
+.tn-play-links { position: relative; display: flex; flex-wrap: wrap; gap: ${T(12)}; margin-top: ${T(44)}; }
 
 /* the one primary: the big yellow Play (512×80, Lilita 38 with the 5px dark outline) */
 .kr-lobby .tn-play-cta { position: relative; top: 0; display: flex; align-items: center; justify-content: space-between; gap: ${T(24)};
@@ -160,7 +160,7 @@ html.kr-calm .tn-play-spin { animation: none; }
 
 /* ---------------- private lobby room */
 .tn-play-coderow, .tn-play-roster, .tn-play-leavebar { display: none; }
-.tn-play[data-ui="room"] .tn-play-display, .tn-play[data-ui="room"] .tn-play-links > :not(.tn-play-leavebar) { display: none; }
+.tn-play[data-ui="room"] .tn-play-display, .tn-play[data-ui="room"] .tn-play-links > :not(.tn-play-leavebar):not(.tn-op-pop) { display: none; }
 .tn-play[data-ui="room"] .tn-play-coderow { display: flex; align-items: center; gap: ${T(24)}; }
 .tn-play[data-ui="room"] .tn-play-leavebar { display: flex; }
 .tn-play[data-ui="room"] .tn-play-roster { display: grid; }

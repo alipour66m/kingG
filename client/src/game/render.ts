@@ -73,6 +73,7 @@ import { ANN_ECON, OFFERS, Offer, SOLO_LIFE } from "../../../shared/sim/economy"
 import { ECON, SWIM_FLOAT_Y, UW_EYE, SWIM_EYE, DIVE_MIN_DEPTH } from "../../../shared/sim/const";
 import { bananaStand, tickStands } from "../weapons/stand";
 import { BOMB } from "../../../shared/sim/const";
+import type { OperatorGender } from "../actors/api";
 import { bombSlot } from "../../../shared/sim/player";
 import { killBaseWeapon, killMythic, MYTHIC_R, MYTHICS, mythicIndexOfPoi, mythicOf } from "../../../shared/sim/mythic";
 
@@ -83,7 +84,7 @@ const FIRE_RUMBLE: Record<string, [number, number, number, number]> = {
 };
 
 export interface Kits {
-  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo"; gender?: "male" | "female" | "female2" | "female3" }) => Promise<KongActor>;
+  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo"; gender?: OperatorGender }) => Promise<KongActor>;
   /** give a match kong back to the session pool (index.ts) instead of disposing it — the next match reuses it */
   releaseKong?: (a: KongActor, variant: number) => void;
   createGlider: (ctx: Engine) => Promise<GliderProps>;

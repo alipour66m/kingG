@@ -13,6 +13,7 @@
 import * as THREE from "three";
 import type { Engine } from "../engine/engine";
 import type { KongActor, KongPose } from "../actors/api";
+import type { OperatorGender } from "../actors/api";
 import type { GliderProps } from "../actors/glider";
 import type { PlaneProps } from "../actors/plane";
 import { resources } from "../engine/res/scope";
@@ -21,7 +22,7 @@ import { preferences } from "../settings/preferences";
 
 export interface TitleScene { update(dt: number, t: number): void; setVisible(v: boolean): void; group: THREE.Group; /** prewarm owns the camera */ freeze: boolean }
 export interface TitleKits {
-  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo"; gender?: "male" | "female" | "female2" | "female3" }) => Promise<KongActor>;
+  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo"; gender?: OperatorGender }) => Promise<KongActor>;
   createGlider: (ctx: Engine) => Promise<GliderProps>;
 }
 
