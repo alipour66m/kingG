@@ -1,0 +1,5 @@
+{
+  "note": "Male and Female tactical operator meshes and textures generated from MakeHuman CC0 base assets and original procedural PBR maps",
+  "source": "makehumancommunity/makehuman (base.obj, male/female macrodetails targets, low-poly eyes, brown_eye.png) + tools/actors/build-operators.py",
+  "licence": "CC0-1.0 / MIT"
+}

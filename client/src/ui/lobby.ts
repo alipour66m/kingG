@@ -20,6 +20,7 @@ import { matchSeats } from "../../../shared/sim/const";
 import { bindingText, glyphFamily, lookText, onLabelsChange, pauseText } from "../settings/labels";
 import { glyph, PB } from "../settings/pad";
 import { device } from "../settings/device";
+import { preferences } from "../settings/preferences";
 
 const NAME_KEY = "kr-callsign", MODE_KEY = "kr-mode", DIFF_KEY = "kr-bot-difficulty";
 const NAME_MAX = 14;
@@ -132,6 +133,10 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   const links = h("div", "tn-play-links", play);
   const btnRange = h("button", "tn-play-link", links); btnRange.type = "button"; btnRange.innerHTML = `${ICON.target}<span>Firing range</span>`;
   const btnGuide = h("button", "tn-play-link", links); btnGuide.type = "button"; btnGuide.innerHTML = `${ICON.book}<span>Learn controls</span>`;
+  const btnGender = h("button", "tn-play-link", links); btnGender.type = "button";
+  const renderGender = (g: "male" | "female") => { btnGender.innerHTML = `<span>Operator: ${g === "female" ? "Female" : "Male"}</span>`; };
+  preferences.subscribe((p) => renderGender(p.operatorGender));
+  btnGender.addEventListener("click", () => { preferences.set({ operatorGender: preferences.value.operatorGender === "male" ? "female" : "male" }); });
   // (.room .kr-btn = the controller's first focus when Play is disabled, e.g. a guest waiting: only while in a room, and
   // after Play in the DOM so a host lands on Start match)
   const leaveBar = h("div", "tn-play-leavebar", links);

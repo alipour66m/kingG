@@ -17,10 +17,11 @@ import type { GliderProps } from "../actors/glider";
 import type { PlaneProps } from "../actors/plane";
 import { resources } from "../engine/res/scope";
 import { flag } from "../flags";
+import { preferences } from "../settings/preferences";
 
 export interface TitleScene { update(dt: number, t: number): void; setVisible(v: boolean): void; group: THREE.Group; /** prewarm owns the camera */ freeze: boolean }
 export interface TitleKits {
-  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo" }) => Promise<KongActor>;
+  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo"; gender?: "male" | "female" }) => Promise<KongActor>;
   createGlider: (ctx: Engine) => Promise<GliderProps>;
 }
 
@@ -43,12 +44,13 @@ export function createTitleScene(engine: Engine, plane: PlaneProps, kits: TitleK
   const F = { ...FRAME, ...((globalThis as { __krTitle?: Partial<typeof FRAME> }).__krTitle ?? {}) };
   let hero: KongActor | null = null;
   const heroPose: KongPose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vy: 0, vz: 0, state: "idle", crouch: false, sprint: false, weapon: "ar", fired: false, reloading: false, hurt: false, team: 0, friendly: false };
-  void kits.createKong(engine, { variant: 0, lod: "hi" }).then((a) => {
+  void kits.createKong(engine, { variant: 0, lod: "hi", gender: preferences.value.operatorGender }).then((a) => {
     hero = a; group.add(a.object);
     // a warm studio key from the camera keeps the face lit; the sunset in the art sits behind its right shoulder
     const ex = a as KongActor & { setLook?(o: { key?: number }): void; animator?: { overlay: ((o: { R(b: "head", x: number): void }) => void) | null } };
     ex.setLook?.({ key: 0.5 });
     if (ex.animator) ex.animator.overlay = (o) => { if (heroPose.state === "emote") o.R("head", 0.2); };
+    preferences.subscribe((p) => { hero?.setGender?.(p.operatorGender); });
   });
 
   // ---- the key art: the scene background while the title draws, cover-fitted to the canvas

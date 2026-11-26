@@ -119,7 +119,11 @@ export function audioCategory(): Category {
 export function accessibilityCategory(): Category {
   return {
     id: "a11y", name: "Accessibility",
-    sections: [{ id: "comfort", name: "Comfort & readability", rows: () => [
+    sections: [{ id: "operator", name: "Operator", rows: () => [
+      { kind: "seg", id: "operatorGender", label: "Character model", options: () => [{ v: "male", label: "Male" }, { v: "female", label: "Female" }],
+        get: () => preferences.value.operatorGender, set: (v) => preferences.set({ operatorGender: v === "female" ? "female" : "male" }),
+        help: () => ({ eb: "Operator", title: "Character model", viz: "hud", body: ["Choose between the Male and Female tactical operator models. Updates your lobby showcase and your in-match character."] }) },
+    ] }, { id: "comfort", name: "Comfort & readability", rows: () => [
       toggle("reducedMotion", "Reduced camera motion", () => ({ eb: "Comfort", title: "Reduced camera motion", viz: "hud",
         body: ["Removes decorative shake, bob, landing dip and camera roll, and stills menu motion. Aim and gameplay recoil remain accurate."] })),
       slider("hudScale", "HUD size", 1, 1.5, 0.05, pct, () => ({ eb: "Readability", title: "HUD size", viz: "hud", body: ["Increase health, inventory and match information. The preview uses the real HUD parts."] })),

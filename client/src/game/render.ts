@@ -83,7 +83,7 @@ const FIRE_RUMBLE: Record<string, [number, number, number, number]> = {
 };
 
 export interface Kits {
-  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo" }) => Promise<KongActor>;
+  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo"; gender?: "male" | "female" }) => Promise<KongActor>;
   /** give a match kong back to the session pool (index.ts) instead of disposing it — the next match reuses it */
   releaseKong?: (a: KongActor, variant: number) => void;
   createGlider: (ctx: Engine) => Promise<GliderProps>;
@@ -1009,7 +1009,7 @@ export class GameRender implements EventSink {
     this.dropCamera(dt, inPlane || dead || victory || !!spec || !!myVeh || !!this.caster);
     // actors: my own kong in first person while falling /
     // gliding — arms in frame in freefall, fists on the bar + legs below under the glider
-    if (inPlane && !this.meActor && !this.meActorPending) { this.meActorPending = true; void this.kits.createKong(this.engine, { variant: Math.max(0, cm.me) % 6 }).then((a) => { this.meActor = a; a.setOutfit?.(outfitFor(cm.me, cm.seed)); a.setVisible(false); this.engine.scene.add(a.object); patchTree(this.engine, a.object); }); }
+    if (inPlane && !this.meActor && !this.meActorPending) { this.meActorPending = true; void this.kits.createKong(this.engine, { variant: Math.max(0, cm.me) % 6, gender: preferences.value.operatorGender }).then((a) => { this.meActor = a; a.setOutfit?.(outfitFor(cm.me, cm.seed)); a.setVisible(false); this.engine.scene.add(a.object); patchTree(this.engine, a.object); }); }
     if (inPlane) this.ensureMyGlider();
     this.windStreaks(dt, inPlane || dead || victory || !!spec);
     // (and drawn once off-screen while riding: programs, buffers and textures are warm before the exit / deploy frame)
@@ -1018,11 +1018,11 @@ export class GameRender implements EventSink {
       void this.engine.compileObjects(roots).then(() => { if (this.cm.pred.st === PS.Plane) this.engine.warmDraw(roots); });
     }
     if (!victory && !spec && !dead && (p.st === PS.Freefall || p.st === PS.Glide)) {
-      if (!this.meActor && !this.meActorPending) { this.meActorPending = true; void this.kits.createKong(this.engine, { variant: Math.max(0, cm.me) % 6 }).then((a) => { this.meActor = a; a.setOutfit?.(outfitFor(cm.me, cm.seed)); this.engine.scene.add(a.object); patchTree(this.engine, a.object); }); }
+      if (!this.meActor && !this.meActorPending) { this.meActorPending = true; void this.kits.createKong(this.engine, { variant: Math.max(0, cm.me) % 6, gender: preferences.value.operatorGender }).then((a) => { this.meActor = a; a.setOutfit?.(outfitFor(cm.me, cm.seed)); this.engine.scene.add(a.object); patchTree(this.engine, a.object); }); }
       if (this.meActor?.pov) { const mp = this.mePose; this.dropBody(V3); mp.x = V3.x; mp.y = V3.y; mp.z = V3.z; mp.yaw = this.input.yaw; mp.pitch = this.input.pitch; mp.vx = p.vx; mp.vy = p.vy; mp.vz = p.vz; mp.state = p.st === PS.Glide ? "glide" : "freefall"; mp.weapon = null; mp.team = p.team; mp.friendly = true; this.meActor.setVisible(true); cam.updateMatrixWorld(); this.meActor.pov(cam, mp, dt); }
     } else if (myVeh && p.seat === 0 && this.rideThird) {
       // at the bars, seen from behind: my own kong drives
-      if (!this.meActor && !this.meActorPending) { this.meActorPending = true; void this.kits.createKong(this.engine, { variant: Math.max(0, cm.me) % 6 }).then((a) => { this.meActor = a; a.setOutfit?.(outfitFor(cm.me, cm.seed)); a.setVisible(false); this.engine.scene.add(a.object); patchTree(this.engine, a.object); }); }
+      if (!this.meActor && !this.meActorPending) { this.meActorPending = true; void this.kits.createKong(this.engine, { variant: Math.max(0, cm.me) % 6, gender: preferences.value.operatorGender }).then((a) => { this.meActor = a; a.setOutfit?.(outfitFor(cm.me, cm.seed)); a.setVisible(false); this.engine.scene.add(a.object); patchTree(this.engine, a.object); }); }
       if (this.meActor) { const mp = this.mePose; this.seatPose(mp, myVeh, 0, myVeh.yaw + myVeh.oyaw, 0); mp.weapon = null; mp.team = p.team; mp.friendly = true; mp.crouch = false; mp.sprint = false; this.meActor.setVisible(true); this.meActor.apply(mp, dt); }
     } else if (this.meActor && !victory) this.meActor.setVisible(false);
     // scope (the only zoom in the game)
@@ -1579,7 +1579,7 @@ export class GameRender implements EventSink {
     V3.set(this.vsX, this.vsY, this.vsZ);
     if (!this.meActor && !this.meActorPending) {
       this.meActorPending = true;
-      void this.kits.createKong(this.engine, { variant: Math.max(0, cm.me) % 6 }).then((a) => { this.meActor = a; a.setOutfit?.(outfitFor(cm.me, cm.seed)); this.engine.scene.add(a.object); patchTree(this.engine, a.object); });
+      void this.kits.createKong(this.engine, { variant: Math.max(0, cm.me) % 6, gender: preferences.value.operatorGender }).then((a) => { this.meActor = a; a.setOutfit?.(outfitFor(cm.me, cm.seed)); this.engine.scene.add(a.object); patchTree(this.engine, a.object); });
     }
     const k = (performance.now() - this.victoryAt) / 1000;
     // the kong faces the SUN (face and chest lit) and the camera stands in front of it, low, looking up —

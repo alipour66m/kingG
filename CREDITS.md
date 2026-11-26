@@ -22,6 +22,7 @@ Not covered by the MIT licence; each keeps its own.
 | Fonts: Barlow Condensed, Roboto, Rubik, Lilita One, Nunito | SIL Open Font License 1.1 (texts in `public/assets/ui/licenses/`) | `public/assets/ui/*.woff2`, `public/assets/ui/toon/*.woff2` |
 | Draco 3D decoder (Google) | Apache-2.0 | `public/assets/decoders/draco/` |
 | Basis Universal transcoder (Binomial) | Apache-2.0 | `public/assets/actors/basis/` |
+| MakeHuman anatomical human base mesh, targets & eyes (`makehumancommunity/makehuman`) | CC0 1.0 Universal | `public/assets/actors/operators/` |
 
 ## Free sounds and textures (CC0, credited with thanks)
 

@@ -161,8 +161,7 @@
       "tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;"
     ],
     "client/src/actors/kong-asset.ts": [
-      "const tl = new THREE.TextureLoader();",
-      "new GLTFLoader().loadAsync(BASE + \"kong.glb\"),"
+      "const tl = new THREE.TextureLoader();"
     ],
     "client/src/actors/kong.ts": [
       "this.texs = this.datas.map((d) => { const t = new THREE.DataTexture(d, ROW, MAX_KONGS, THREE.RGBAFormat, THREE.FloatType); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t; });",
