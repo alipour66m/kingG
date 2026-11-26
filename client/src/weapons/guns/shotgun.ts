@@ -44,6 +44,29 @@ export function buildShotgun(): GunSpec {
   block(b, [0, 0.012, 0.22], [0.042, 0.072, 0.26], C.polymer, "matte", [0.08, 0, 0], 0.008);
   block(b, [0, -0.002, 0.35], [0.044, 0.125, 0.026], C.gunmetalDark, "matte", [0, 0, 0], 0.005);
 
+  // ---- AK-style stamped receiver: raised side stampings, hinged top cover, oversized charging handle
+  for (const sx of [1, -1]) {
+    block(b, [sx * 0.0245, 0.022, 0.045], [0.004, 0.040, 0.07], C.gunmetalLight, "metal", [0, 0, 0], 0.0015);
+    block(b, [sx * 0.0245, 0.022, -0.115], [0.004, 0.040, 0.06], C.gunmetalLight, "metal", [0, 0, 0], 0.0015);
+    block(b, [sx * 0.0262, 0.030, 0.045], [0.0015, 0.006, 0.05], C.gunmetalDark, "matte", [0, 0, 0], 0.0004);
+  }
+  block(b, [0, 0.0555, 0.05], [0.040, 0.012, 0.10], C.gunmetalDark, "metal", [0, 0, 0], 0.003);
+  block(b, [0.0475, 0.032, -0.012], [0.016, 0.010, 0.010], C.gunmetalDark, "metal", [0, 0, 0], 0.002);
+  b.add(new THREE.SphereGeometry(0.0085, 12, 10), C.gunmetalDark, "metal", tf([0.058, 0.032, -0.012]));
+
+  // ---- detachable box magazine, canted forward like the real S12K (tube feed stays the reload model)
+  b.add(rbox(0.032, 0.15, 0.046, 0.005, 2), C.gunmetalDark, "metal", tf([0, -0.07, -0.118], [0.3, 0, 0]));
+  for (let i = 0; i < 5; i++) {
+    const dy = -0.05 + i * 0.025;
+    b.add(rbox(0.0335, 0.003, 0.0475, 0.0008, 1), C.gunmetalLight, "metal", tf([0, -0.07 + dy * Math.cos(0.3), -0.118 + dy * Math.sin(0.3)], [0.3, 0, 0]));
+  }
+  b.add(rbox(0.036, 0.012, 0.05, 0.003, 2), C.gunmetal, "metal", tf([0, -0.147, -0.142], [0.3, 0, 0]));
+
+  // ---- vent rib over the barrel (kept below the sight line) + compensator slots
+  block(b, [0, BY + 0.0185, -0.36], [0.010, 0.004, 0.44], C.gunmetalDark, "matte", [0, 0, 0], 0.001);
+  for (let i = 0; i < 8; i++) block(b, [0, BY + 0.0192, -0.17 - i * 0.052], [0.006, 0.0016, 0.020], "#0b0d10", "matte", [0, 0, 0], 0.0004);
+  for (let i = 0; i < 3; i++) block(b, [0, BY + 0.0172, mzZ + 0.004 + i * 0.0055], [0.006, 0.004, 0.0035], "#0b0d10", "matte", [0, 0, 0], 0.0004);
+
   // ---- rarity accent
   const acc = b.sub("accent");
   for (const sx of [1, -1]) accentGem(b, acc, [sx * 0.025, 0.024, -0.09], [sx, 0, 0], 0.008);

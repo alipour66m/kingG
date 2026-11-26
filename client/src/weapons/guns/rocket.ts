@@ -51,6 +51,21 @@ export function buildRocket(): GunSpec {
   block(b, [0, Y - R - 0.01, -0.08], [0.042, 0.03, 0.065], C.gunmetalDark, "metal", [0, 0, 0], 0.005);
   b.add(rbox(0.034, 0.12, 0.042, 0.007, 3), C.polymer, "matte", tf([0, Y - R - 0.075, -0.08], [0.08, 0, 0]));
 
+  // ---- rubberised front + rear bumpers, yellow stencil band
+  b.add(ringGeo(R + 0.012, R + 0.001, 0.03, 0.005, 32), "#15171a", "matte", tf([0, Y, Z0 + 0.06], [Math.PI / 2, 0, 0]));
+  b.add(ringGeo(R + 0.012, R + 0.001, 0.03, 0.005, 32), "#15171a", "matte", tf([0, Y, 0.36], [Math.PI / 2, 0, 0]));
+  b.add(ringGeo(R + 0.0112, R + 0.006, 0.016, 0.001, 28), "#d8b623", "matte", tf([0, Y, 0.14], [Math.PI / 2, 0, 0]));
+
+  // ---- shoulder pad, sling D-ring, red safety indicator
+  block(b, [0, Y - R - 0.006, 0.31], [0.05, 0.02, 0.10], "#15171a", "matte", [0, 0, 0], 0.005);
+  b.add(new THREE.TorusGeometry(0.014, 0.003, 8, 20), C.steelDark, "metal", tf([0, Y + R + 0.012, Z0 + 0.14], [0, Math.PI / 2, 0]));
+  block(b, [0.026, Y - R - 0.012, 0.095], [0.006, 0.012, 0.02], C.red, "matte", [0, 0, 0], 0.001);
+
+  // ---- collimator: glinting front lens, dark rear lens, eyecup
+  b.add(filletCyl(0.0165, 0.002, 0.0004, 20), "#8fd6ff", "emissive", tf([-0.06, Y + 0.07, -0.0272], [Math.PI / 2, 0, 0]));
+  b.add(filletCyl(0.0165, 0.004, 0.001, 20), "#0d1a26", "gloss", tf([-0.06, Y + 0.07, 0.1065], [Math.PI / 2, 0, 0]));
+  b.add(ringGeo(0.0215, 0.0155, 0.012, 0.002, 20), "#15171a", "matte", tf([-0.06, Y + 0.07, 0.112], [Math.PI / 2, 0, 0]));
+
   const acc = b.sub("accent");
   for (const sx of [1, -1]) block(acc, [sx * (R + 0.01), Y, 0.14], [0.004, 0.01, 0.04], C.white, "emissive", [0, 0, 0], 0.001);
 

@@ -80,6 +80,30 @@ export function buildSniper(): GunSpec {
   tube(b, [0, SY + 0.028, -0.09], [0, 1, 0], 0.014, 0.024, C.gunmetalDark, "metal", 0.002, 16);
   tube(b, [0.028, SY, -0.09], [1, 0, 0], 0.014, 0.024, C.gunmetalDark, "metal", 0.002, 16);
 
+  // ---- barrel flutes (exposed section) + muzzle-brake side ports
+  for (let k = 0; k < 4; k++) {
+    const a = k * Math.PI / 2;
+    block(b, [Math.cos(a) * 0.0158, BY + Math.sin(a) * 0.0158, -0.4825], [0.0028, 0.0028, 0.205], C.gunmetalDark, "matte", [0, 0, a], 0.0006);
+  }
+  for (const sx of [1, -1]) for (const z of [BZ0 + 0.02, BZ0 + 0.035, BZ0 + 0.05]) block(b, [sx * 0.0205, BY, z], [0.002, 0.016, 0.008], "#0c0e11", "matte", [0, 0, 0], 0.0004);
+
+  // ---- scope: sunshade, glinting objective lens, parallax knob, turret caps
+  b.add(ringGeo(0.036, 0.0335, 0.05, 0.0008, 28), C.gunmetalDark, "matte", tf([0, SY, S0 - 0.03], [Math.PI / 2, 0, 0]));
+  b.add(filletCyl(0.0255, 0.0015, 0.0004, 24), "#4aa8d8", "emissive", tf([0, SY, S0 - 0.0112], [Math.PI / 2, 0, 0]));
+  tube(b, [-0.028, SY, -0.09], [-1, 0, 0], 0.011, 0.014, C.gunmetal, "metal", 0.0015, 16);
+  tube(b, [0, SY + 0.0405, -0.09], [0, 1, 0], 0.0105, 0.009, C.gunmetal, "metal", 0.0015, 16);
+
+  // ---- stock hardware: cheek-riser knobs, ribbed buttpad, forend M-LOK slots, receiver screws, bipod crossbar
+  for (const sx of [1, -1]) {
+    tube(b, [sx * 0.0255, Y + 0.056, 0.28], [1, 0, 0], 0.007, 0.008, C.gunmetal, "metal", 0.0015, 12);
+    for (let i = 0; i < 4; i++) block(b, [sx * 0.0285, Y, -0.22 - i * 0.04], [0.002, 0.012, 0.022], "#0c0e11", "matte", [0, 0, 0], 0.0004);
+  }
+  for (let i = 0; i < 7; i++) block(b, [0, Y - 0.07 + i * 0.02, 0.4585], [0.040, 0.003, 0.003], "#101214", "matte", [0, 0, 0], 0.0006);
+  screw(b, [0.0255, RT + 0.01, -0.07], [1, 0, 0], 0.004);
+  screw(b, [0.0255, RT + 0.01, 0.08], [1, 0, 0], 0.004);
+  screw(b, [-0.0255, RT + 0.01, -0.07], [-1, 0, 0], 0.004);
+  tube(b, [0, Y - 0.036, -0.17], [1, 0, 0], 0.007, 0.07, C.gunmetalDark, "metal", 0.0015, 12);
+
   // rarity accent
   const acc = b.sub("accent");
   for (const sx of [1, -1]) block(acc, [sx * 0.029, Y + 0.01, -0.14], [0.003, 0.007, 0.034], C.white, "emissive", [0, 0, 0], 0.001);

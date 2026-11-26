@@ -73,6 +73,37 @@ export function buildAr(): GunSpec {
   sightDot(b, new THREE.Vector3(0, 0.122, -0.44), 0.0020, "#55ff77");
   const R = new THREE.Vector3(0, 0.13, 0.0);
 
+  // ---- M-LOK slot rows under the handguard, gas block, barrel flutes
+  for (let i = 0; i < 7; i++) block(b, [0, 0.0216, -0.215 - i * 0.036], [0.014, 0.002, 0.02], C.steelDark, "matte", [0, 0, 0], 0.0005);
+  block(b, [0, 0.050, -0.51], [0.024, 0.024, 0.03], C.gunmetal, "metal", [0, 0, 0], 0.003);
+  for (let k = 0; k < 4; k++) {
+    const a = k * Math.PI / 2;
+    block(b, [Math.cos(a) * 0.0103, BY + Math.sin(a) * 0.0103, -0.585], [0.0024, 0.0024, 0.13], C.gunmetalDark, "matte", [0, 0, a], 0.0004);
+  }
+  // 3-prong flash hider slots
+  for (let k = 0; k < 3; k++) {
+    const a = Math.PI / 6 + k * (Math.PI * 2 / 3);
+    block(b, [Math.cos(a) * 0.0146, BY + Math.sin(a) * 0.0146, mzZ + 0.012], [0.0035, 0.0035, 0.026], "#0b0d10", "matte", [0, 0, a], 0.0004);
+  }
+  b.add(new THREE.SphereGeometry(0.0022, 10, 8), "#ff2a2a", "emissive", tf([0.010, 0.091, -0.3785]));
+
+  // ---- lower receiver controls: forward assist, selector, mag release, bolt catch
+  block(b, [0.026, 0.040, 0.04], [0.008, 0.010, 0.012], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+  block(b, [-0.0215, 0.016, 0.006], [0.004, 0.010, 0.024], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+  block(b, [0.0225, 0.002, -0.10], [0.006, 0.012, 0.012], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+  block(b, [-0.0215, 0.026, -0.07], [0.004, 0.008, 0.016], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+  block(b, [0.0215, 0.098, opticZ], [0.006, 0.006, 0.02], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+
+  // ---- stock: ribbed rubber buttpad + sling QD
+  for (let i = 0; i < 6; i++) block(b, [0, -0.04 + i * 0.02, 0.3665], [0.034, 0.004, 0.004], "#101214", "matte", [0, 0, 0], 0.0008);
+  b.add(new THREE.TorusGeometry(0.007, 0.0017, 8, 18), C.steelDark, "metal", tf([0.024, 0.04, 0.2], [0, Math.PI / 2, 0]));
+
+  // ---- PMAG: ribbed sides following the curve
+  for (let i = 0; i < 7; i++) {
+    const dy = -0.055 + i * 0.0183;
+    for (const sx of [1, -1]) mag.add(rbox(0.0016, 0.004, 0.05, 0.0006, 1), C.gunmetalDark, "matte", tf([sx * 0.0135, -0.095 + dy * Math.cos(0.14), -0.146 - dy * Math.sin(0.14)], [-0.14, 0, 0]));
+  }
+
   // rarity accent
   const acc = b.sub("accent");
   for (const sx of [1, -1]) block(acc, [sx * 0.022, 0.046, -0.08], [0.003, 0.007, 0.032], C.white, "emissive", [0, 0, 0], 0.001);

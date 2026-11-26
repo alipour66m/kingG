@@ -65,6 +65,34 @@ export function buildPistol(): GunSpec {
   // recoil guide rod under barrel
   b.add(ringGeo(0.0065, 0.003, 0.01, 0.001, 16), C.steel, "metal", tf([0, 0.03, -0.186], [Math.PI / 2, 0, 0]));
 
+  // ---- slide detailing: flat rear cocking ridge, front dovetail, brass loaded-chamber indicator
+  block(slide, [0, 0.0695, 0.042], [0.022, 0.004, 0.046], C.gunmetalDark, "matte", [0, 0, 0], 0.001);
+  block(slide, [0, 0.0695, -0.17], [0.012, 0.004, 0.03], C.gunmetalDark, "matte", [0, 0, 0], 0.001);
+  block(slide, [0.0175, 0.0585, -0.0455], [0.0022, 0.004, 0.012], C.brass, "metal", [0, 0, 0], 0.0005);
+  block(slide, [-0.0175, 0.0585, -0.0455], [0.0022, 0.004, 0.012], C.brass, "metal", [0, 0, 0], 0.0005);
+
+  // ---- under-rail tactical weapon light (the lens glows)
+  block(b, [0, 0.0, -0.152], [0.030, 0.024, 0.052], C.polymer, "matte", [0, 0, 0], 0.004);
+  block(b, [0, -0.0125, -0.152], [0.020, 0.006, 0.040], C.gunmetalDark, "metal", [0, 0, 0], 0.001);
+  b.add(filletCyl(0.0105, 0.010, 0.002, 18), C.gunmetalDark, "metal", alignY(new THREE.Vector3(0, 0.0, -0.182), FWD));
+  b.add(filletCyl(0.0078, 0.004, 0.0008, 18), "#fff4c8", "emissive", alignY(new THREE.Vector3(0, 0.0, -0.1875), FWD));
+
+  // ---- controls: magazine release, ambidextrous safety/decocker, skeletonised-hammer pin
+  block(b, [0.0188, 0.004, 0.012], [0.004, 0.009, 0.011], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+  for (const sx of [1, -1]) {
+    block(b, [sx * 0.0192, 0.040, 0.034], [0.004, 0.012, 0.016], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+    b.add(new THREE.SphereGeometry(0.0035, 10, 8), C.steelDark, "metal", tf([sx * 0.0192, 0.026, -0.052]));
+  }
+
+  // ---- stippled grip panels (horizontal ribs follow the raked grip) + lanyard loop
+  for (let i = 0; i < 8; i++) {
+    const dy = -0.046 + i * 0.0132;
+    for (const sx of [1, -1]) {
+      b.add(rbox(0.0014, 0.0035, 0.034, 0.0005, 1), C.gunmetal, "matte", tf([sx * 0.0188, -0.052 + dy * Math.cos(0.3), 0.042 - dy * Math.sin(0.3)], [gripPitch, 0, 0]));
+    }
+  }
+  b.add(new THREE.TorusGeometry(0.0065, 0.0017, 8, 18), C.steelDark, "metal", tf([0, -0.1275, 0.0685], [0, Math.PI / 2, 0]));
+
   // rarity accent gem on frame side
   const acc = b.sub("accent");
   for (const sx of [1, -1]) block(acc, [sx * 0.0185, 0.028, -0.075], [0.003, 0.006, 0.022], C.white, "emissive", [0, 0, 0], 0.001);

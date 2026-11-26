@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { filletCyl, rbox, ringGeo, tf, alignY } from "../lib/geo";
 import { PartBuilder } from "../lib/builder";
 import { C } from "../lib/mats";
-import { block, frontHood, rearPeep, sightDot, triggerGuard, FWD } from "./common";
+import { block, frontHood, rearPeep, sightDot, triggerGuard, tube, FWD } from "./common";
 import type { GunSpec } from "./types";
 
 export function buildSmg(): GunSpec {
@@ -52,7 +52,7 @@ export function buildSmg(): GunSpec {
   mag.add(rbox(0.028, 0.21, 0.044, 0.004, 2), C.polymer, "matte", tf([0, -0.125, -0.195], [-0.28, 0, 0]));
   // witness window + brass rounds hint + mag floorplate
   mag.add(rbox(0.029, 0.08, 0.014, 0.001, 1), C.brass, "metal", tf([0, -0.115, -0.192], [-0.28, 0, 0]));
-  mag.add(rbox(0.034, 0.016, 0.05, 0.003, 2), C.gunmetalDark, "matte", tf([0, -0.228, -0.224], [-0.28, 0, 0]));
+  mag.add(rbox(0.034, 0.016, 0.05, 0.003, 2), C.gunmetalDark, "matte", tf([0, -0.228, -0.165], [-0.28, 0, 0]));
 
   // ---- folding skeletal stock
   block(b, [0, 0.042, 0.095], [0.042, 0.052, 0.036], C.gunmetalDark, "metal", [0, 0, 0], 0.004);
@@ -66,6 +66,32 @@ export function buildSmg(): GunSpec {
   const R = new THREE.Vector3(0, 0.102, 0.02);
   rearPeep(b, R, 0.015, 0.0032, 0.082, C.gunmetalDark);
   sightDot(b, new THREE.Vector3(0, 0.105, -0.14), 0.0022, "#ff3a3a");
+
+  // ---- offset micro red-dot on a side mount (stays clear of the iron sight line)
+  block(b, [-0.027, 0.079, -0.105], [0.016, 0.008, 0.036], C.gunmetalDark, "metal", [0, 0, 0], 0.002);
+  block(b, [-0.033, 0.094, -0.105], [0.022, 0.022, 0.034], C.gunmetal, "metal", [0, 0, 0.5], 0.004);
+  b.add(filletCyl(0.0085, 0.003, 0.0006, 16), "#2a1216", "gloss", tf([-0.0335, 0.0945, -0.0875], [Math.PI / 2, 0, 0.5]));
+  sightDot(b, new THREE.Vector3(-0.0335, 0.0945, -0.0862), 0.0016, "#ff3030");
+
+  // ---- barrel shroud cooling rings
+  for (let i = 0; i < 4; i++) b.add(ringGeo(0.0213, 0.019, 0.006, 0.0006, 24), C.gunmetalDark, "matte", alignY(new THREE.Vector3(0, 0.036, -0.41 - i * 0.028), FWD));
+
+  // ---- controls: selector, magazine release, bolt-hold, sling QD
+  block(b, [-0.0235, 0.014, 0.006], [0.004, 0.010, 0.022], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+  block(b, [0.0215, -0.004, -0.14], [0.005, 0.012, 0.012], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+  block(b, [0.0245, 0.026, -0.02], [0.004, 0.008, 0.02], C.gunmetalLight, "metal", [0, 0, 0], 0.001);
+  b.add(new THREE.TorusGeometry(0.007, 0.0017, 8, 18), C.steelDark, "metal", tf([-0.026, 0.02, 0.1], [0, Math.PI / 2, 0]));
+
+  // ---- folding stock hinge + latch + cheek pad
+  tube(b, [0, 0.042, 0.1135], [1, 0, 0], 0.011, 0.056, C.steelDark, "metal", 0.002, 14);
+  block(b, [0, 0.07, 0.215], [0.026, 0.01, 0.12], C.polymer, "matte", [0, 0, 0], 0.003);
+  for (let i = 0; i < 4; i++) block(b, [0, 0.02 + i * 0.022 - 0.03, 0.3385], [0.026, 0.004, 0.004], C.gunmetal, "matte", [0, 0, 0], 0.0008);
+
+  // ---- magazine: side ribs following the raked stick
+  for (let i = 0; i < 8; i++) {
+    const dy = -0.08 + i * 0.0229;
+    for (const sx of [1, -1]) mag.add(rbox(0.0016, 0.004, 0.03, 0.0006, 1), C.gunmetalDark, "matte", tf([sx * 0.0145, -0.125 + dy * Math.cos(0.28), -0.195 - dy * Math.sin(0.28)], [-0.28, 0, 0]));
+  }
 
   // rarity accent
   const acc = b.sub("accent");
