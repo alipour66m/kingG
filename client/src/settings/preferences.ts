@@ -19,8 +19,8 @@ export interface Preferences {
   /** the minimap turns with you so
    *  your heading is always up; off = the classic north-up map with a turning arrow (the default) */
   minimapRotate: boolean;
-  /** player character operator gender ("male" | "female") */
-  operatorGender: "male" | "female";
+  /** player character operator variant */
+  operatorGender: "male" | "female" | "female2" | "female3";
   binds: Binds;
   /** the controller: bindings, look tuning, deadzones, aim assist, vibration (settings/pad.ts) */
   pad: PadPrefs;
@@ -39,7 +39,7 @@ export function normalizePreferences(raw: unknown): Preferences {
   for (const [k, [lo, hi]] of Object.entries(RANGES)) { const v = r[k]; if (typeof v === "number" && Number.isFinite(v)) (p as unknown as Record<string, unknown>)[k] = Math.max(lo, Math.min(hi, v)); }
   for (const k of FLAGS) if (typeof r[k] === "boolean") p[k] = r[k];
   if (r.dynamicRange === "full" || r.dynamicRange === "reduced") p.dynamicRange = r.dynamicRange;
-  if (r.operatorGender === "male" || r.operatorGender === "female") p.operatorGender = r.operatorGender;
+  if (r.operatorGender === "male" || r.operatorGender === "female" || r.operatorGender === "female2" || r.operatorGender === "female3") p.operatorGender = r.operatorGender;
   const b = r.binds as Record<string, unknown> | undefined;
   if (b && typeof b === "object") {
     const proposed = structuredClone(DEFAULT_BINDS), used = new Set<string>(); let valid = true;

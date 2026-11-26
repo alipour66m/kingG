@@ -31,6 +31,8 @@ MH_FILES = {
     "base.obj": "3dobjs/base.obj",
     "male.target": "targets/macrodetails/caucasian-male-young.target",
     "female.target": "targets/macrodetails/caucasian-female-young.target",
+    "female_af.target": "targets/macrodetails/african-female-young.target",
+    "female_as.target": "targets/macrodetails/asian-female-young.target",
     "male_muscle.target": "targets/macrodetails/universal-male-young-maxmuscle-averageweight.target",
     "female_fit.target": "targets/macrodetails/universal-female-young-averagemuscle-minweight.target",
     "eyes.obj": "eyes/low-poly/low-poly.obj",
@@ -409,7 +411,7 @@ def compute_concavity(V, N, tris):
     return np.clip(dot / 0.0045, 0.0, 1.0)
 
 
-def paint_skin_pbr(V, N, UV, quads, info, bi, prefix, is_female=False):
+def paint_skin_pbr(V, N, UV, quads, info, bi, prefix, is_female=False, variant="default"):
     """
     Rasterize MakeHuman canonical UV space into crisp 1024x1024 skin PBR maps
     (albedo, normal, ao) directly guided by real 3D anatomy & landmarks!
@@ -539,8 +541,19 @@ def paint_skin_pbr(V, N, UV, quads, info, bi, prefix, is_female=False):
     mottle = gaussian_filter(rng.normal(0.0, 1.0, (SZ, SZ)).astype(np.float32), 7.5)
     mottle = (mottle - mottle.mean()) / (mottle.std() + 1e-5)
 
-    # Base realistic skin albedo
-    base_rgb = np.array([224.0, 180.0, 154.0] if is_female else [212.0, 165.0, 134.0], dtype=np.float32)
+    # Base realistic skin albedo per operator variant
+    if variant == "desert":
+        base_rgb = np.array([178.0, 128.0, 96.0], dtype=np.float32)
+        lip_col = np.array([142.0, 82.0, 72.0], dtype=np.float32)
+        brow_col = np.array([28.0, 20.0, 16.0], dtype=np.float32)
+    elif variant == "night":
+        base_rgb = np.array([232.0, 194.0, 176.0], dtype=np.float32)
+        lip_col = np.array([178.0, 78.0, 88.0], dtype=np.float32)
+        brow_col = np.array([24.0, 20.0, 22.0], dtype=np.float32)
+    else:
+        base_rgb = np.array([224.0, 180.0, 154.0] if is_female else [212.0, 165.0, 134.0], dtype=np.float32)
+        lip_col = np.array([186.0, 108.0, 106.0] if is_female else [168.0, 110.0, 100.0], dtype=np.float32)
+        brow_col = np.array([42.0, 30.0, 24.0], dtype=np.float32)
     alb = np.ones((SZ, SZ, 3), dtype=np.float32) * base_rgb
     alb[..., 0] += mottle * 3.5 + pores * 2.5
     alb[..., 1] += mottle * 2.8 + pores * 2.0
@@ -566,7 +579,6 @@ def paint_skin_pbr(V, N, UV, quads, info, bi, prefix, is_female=False):
     lower_dist = ((ax / (lip_w * 0.92)) ** 2.1) + (((py - (lip_y - 0.0045)) / (lip_h * 0.85)) ** 2)
     lip_mask = np.clip(np.maximum(1.0 - upper_dist, 1.0 - lower_dist) * 2.0, 0.0, 1.0) * np.clip((-pz - 0.085) * 24.0, 0.0, 1.0)
     lip_seam = np.exp(-((py - lip_y) / 0.0014) ** 2) * np.exp(-(ax / lip_w) ** 4) * np.clip((-pz - 0.085) * 24.0, 0.0, 1.0)
-    lip_col = np.array([186.0, 108.0, 106.0] if is_female else [168.0, 110.0, 100.0], dtype=np.float32)
     alb = alb * (1.0 - lip_mask[..., None]) + lip_col * lip_mask[..., None]
     # Glossy subtle lower lip sheen & darker parting line
     alb -= lip_seam[..., None] * 48.0
@@ -590,7 +602,6 @@ def paint_skin_pbr(V, N, UV, quads, info, bi, prefix, is_female=False):
     brow_dy = np.abs(py - brow_y) / (0.0036 if is_female else 0.0046)
     hair_grain = 0.65 + 0.35 * np.clip(gaussian_filter(rng.normal(0.0, 1.0, (SZ, SZ)).astype(np.float32), (0.4, 1.8)) * 2.0 + 0.5, 0.0, 1.0)
     brow_mask = np.clip(1.0 - (brow_dx ** 3 + brow_dy ** 2), 0.0, 1.0) * np.clip((-pz - 0.085) * 24.0, 0.0, 1.0) * hair_grain
-    brow_col = np.array([42.0, 30.0, 24.0], dtype=np.float32)
     alb = alb * (1.0 - brow_mask[..., None] * 0.85) + brow_col * (brow_mask[..., None] * 0.85)
 
     # Male realistic 5-o'clock beard / jaw stubble (only on male face outer skin, never inner mouth UV!)
@@ -639,9 +650,13 @@ def paint_skin_pbr(V, N, UV, quads, info, bi, prefix, is_female=False):
     ao_u8 = np.clip(ao_val * 255.0, 0, 255).astype(np.uint8)
     alb_u8 = np.clip(alb, 0, 255).astype(np.uint8)
 
-    Image.fromarray(alb_u8, "RGB").save(os.path.join(OUT_DIR, f"{prefix}-skin-albedo.webp"), "WEBP", quality=90)
-    Image.fromarray(nrm_img, "RGB").save(os.path.join(OUT_DIR, f"{prefix}-skin-normal.webp"), "WEBP", quality=90)
-    Image.fromarray(np.stack([ao_u8, ao_u8, ao_u8], axis=-1), "RGB").save(os.path.join(OUT_DIR, f"{prefix}-skin-ao.webp"), "WEBP", quality=88)
+    alb_img = Image.fromarray(alb_u8, "RGB")
+    if variant != "default":
+        alb_img = alb_img.resize((512, 512), Image.Resampling.LANCZOS)
+    alb_img.save(os.path.join(OUT_DIR, f"{prefix}-skin-albedo.webp"), "WEBP", quality=90)
+    if variant == "default":
+        Image.fromarray(nrm_img, "RGB").save(os.path.join(OUT_DIR, f"{prefix}-skin-normal.webp"), "WEBP", quality=90)
+        Image.fromarray(np.stack([ao_u8, ao_u8, ao_u8], axis=-1), "RGB").save(os.path.join(OUT_DIR, f"{prefix}-skin-ao.webp"), "WEBP", quality=88)
 
 
 def paint_gear_pbr():
@@ -734,6 +749,24 @@ def paint_gear_pbr():
     Image.fromarray(np.clip(alb, 0, 255).astype(np.uint8), "RGB").save(
         os.path.join(OUT_DIR, "gear-albedo.webp"), "WEBP", quality=90
     )
+    # Paint variant albedos sharing the exact same crisp UV quadrants, normal & AO maps
+    for v_name, uni_c, tan_c, dark_c, sage_c, cord_c, hair_c, helm_c in [
+        ("desert", [176, 152, 114], [208, 190, 154], [116, 94, 68], [154, 134, 96], [158, 132, 92], [58, 34, 22], [164, 142, 108]),
+        ("night", [44, 48, 56], [66, 72, 82], [22, 24, 28], [52, 58, 68], [34, 38, 46], [20, 18, 22], [38, 42, 50]),
+    ]:
+        valb = alb.copy()
+        vq00 = np.ones((H, H, 3), dtype=np.float32) * np.array(uni_c, dtype=np.float32)
+        vq00 = vq00 * (1.0 - m_tan) + np.array(tan_c, dtype=np.float32) * m_tan
+        vq00 = vq00 * (1.0 - m_dark) + np.array(dark_c, dtype=np.float32) * m_dark
+        vq00 = vq00 * (1.0 - m_sage * 0.7) + np.array(sage_c, dtype=np.float32) * (m_sage * 0.7)
+        valb[:H, :H] = vq00 + grain0 - ripstop[:H, :H, None] * 6.0
+        valb[:H, H:] = np.ones((H, H, 3), dtype=np.float32) * np.array(cord_c, dtype=np.float32) + molle_stripe[..., None] * 10.0
+        vhair = np.ones((256, H, 3), dtype=np.float32) * np.array(hair_c, dtype=np.float32) + np.clip(strands, -1.5, 2.0)[..., None] * np.array([10.0, 7.5, 6.0])
+        valb[H : H + 256, H:] = vhair
+        valb[H + 256 :, H : H + 256] = np.array(helm_c, dtype=np.float32)
+        Image.fromarray(np.clip(valb, 0, 255).astype(np.uint8), "RGB").resize((512, 512), Image.Resampling.LANCZOS).save(
+            os.path.join(OUT_DIR, f"gear-{v_name}-albedo.webp"), "WEBP", quality=88
+        )
     Image.fromarray(nrm_img, "RGB").save(os.path.join(OUT_DIR, "gear-normal.webp"), "WEBP", quality=90)
     Image.fromarray(np.stack([ao_u8, ao_u8, ao_u8], axis=-1), "RGB").save(
         os.path.join(OUT_DIR, "gear-ao.webp"), "WEBP", quality=88
@@ -1033,7 +1066,7 @@ def build_eyes(info):
     }
 
 
-def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger_mask, info, is_female):
+def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger_mask, info, is_female, variant="default"):
     """Extract clothing layers + sculpted hair + helmet/headset + plate carrier + boots."""
     head_y = info["head"][1]
     eye_y = 0.5 * (info["eyeL"][1] + info["eyeR"][1])
@@ -1180,7 +1213,7 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
     hz = 0.5 * (info["eyeL"][2] + info["eyeR"][2]) + 0.082
     hy = eye_y + 0.042
     if is_female:
-        # Swept-back dark chestnut hair lifted cleanly above forehead & brows + natural parted hairline
+        # Swept-back hair crown lifted cleanly above forehead & brows
         hair_rings = []
         for s in range(7):
             t = s / 6.0
@@ -1197,21 +1230,63 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
             hair_rings.append(ring)
         gear_parts.append(make_loft(hair_rings, 3, UV_HAIR))
 
-        # Flowing tactical ponytail swept back & over her right shoulder (clearly visible in portrait & 3P!)
-        pony_rings = []
-        pony_spine = [
-            (0.018, hy + 0.032, hz + 0.102, 0.025),
-            (0.052, hy + 0.006, hz + 0.128, 0.033),
-            (0.084, hy - 0.052, hz + 0.118, 0.030),
-            (0.098, hy - 0.122, hz + 0.075, 0.024),
-            (0.096, hy - 0.195, hz + 0.035, 0.015),
-            (0.090, hy - 0.245, hz + 0.015, 0.005),
-        ]
-        for px0, py0, pz0, r in pony_spine:
-            ring = [[px0 + math.cos(a) * r, py0 + math.sin(a) * r * 0.85, pz0 + math.sin(a) * r * 0.5] for a in np.linspace(0, math.tau, 12, endpoint=False)]
-            pony_rings.append(ring)
-        gear_parts.append(make_loft(pony_rings, 3, UV_HAIR))
-        # Snug arched comms headset hugging her crown hair cleanly (no floating straight bar)
+        if variant == "desert":
+            # Desert Nomad: High braided crown bun + Tactical Field Cap + raised ballistic visor goggles
+            bun_rings = []
+            for s in range(5):
+                t = s / 4.0
+                r_b = 0.036 * math.sin(max(0.08, t) * math.pi) + 0.008
+                by = hy + 0.025 + t * 0.045
+                bz = hz + 0.098 + t * 0.035
+                bun_rings.append([[math.cos(a) * r_b, by + math.sin(a) * r_b * 0.9, bz + math.sin(a) * r_b * 0.5] for a in np.linspace(0, math.tau, 12, endpoint=False)])
+            gear_parts.append(make_loft(bun_rings, 3, UV_HAIR))
+            # Tactical Baseball Cap crown & curved brim
+            cap_rings = []
+            for s in range(6):
+                t = s / 5.0
+                ry_c = eye_y + 0.042 + 0.078 * math.sin(t * math.pi * 0.5)
+                rx_c = 0.095 * math.cos(t * math.pi * 0.46) + 0.006
+                rz_c = 0.114 * math.cos(t * math.pi * 0.46) + 0.008
+                cap_rings.append([[math.cos(a) * rx_c, ry_c, hz + 0.010 + math.sin(a) * rz_c] for a in np.linspace(0, math.tau, 16, endpoint=False)])
+            gear_parts.append(make_loft(cap_rings, 3, UV_CORD))
+            gear_parts.append(make_box((0.0, eye_y + 0.042, hz - 0.125), (0.145, 0.009, 0.078), 3, UV_CORD, rx=0.14))
+            gear_parts.append(make_box((0.0, eye_y + 0.056, hz - 0.105), (0.132, 0.028, 0.020), 3, UV_DARK))
+        elif variant == "night":
+            # Nightfall Raven: Sleek layered shoulder-length bob framing face + low-profile stealth headset
+            for sx in (-1.0, 1.0):
+                side_rings = []
+                for s in range(5):
+                    t = s / 4.0
+                    sx_r = sx * (0.082 + 0.014 * math.sin(t * math.pi * 0.7))
+                    sy_r = eye_y + 0.052 - t * 0.155
+                    sz_r = hz + 0.018 - 0.015 * math.sin(t * math.pi * 0.5)
+                    r_w = 0.022 * (1.0 - 0.35 * t)
+                    side_rings.append([[sx_r + math.cos(a) * r_w * 0.65, sy_r, sz_r + math.sin(a) * r_w * 1.9] for a in np.linspace(0, math.tau, 10, endpoint=False)])
+                gear_parts.append(make_loft(side_rings, 3, UV_HAIR))
+            back_rings = []
+            for s in range(5):
+                t = s / 4.0
+                by_r = hy + 0.045 - t * 0.165
+                rx_b = 0.086 * (1.0 - 0.12 * t)
+                back_rings.append([[math.cos(a) * rx_b, by_r, hz + 0.032 + math.sin(a) * 0.085] for a in np.linspace(-0.2, math.pi + 0.2, 12)])
+            gear_parts.append(make_loft(back_rings, 3, UV_HAIR))
+        else:
+            # Flowing tactical ponytail swept back & over her right shoulder (clearly visible in portrait & 3P!)
+            pony_rings = []
+            pony_spine = [
+                (0.018, hy + 0.032, hz + 0.102, 0.025),
+                (0.052, hy + 0.006, hz + 0.128, 0.033),
+                (0.084, hy - 0.052, hz + 0.118, 0.030),
+                (0.098, hy - 0.122, hz + 0.075, 0.024),
+                (0.096, hy - 0.195, hz + 0.035, 0.015),
+                (0.090, hy - 0.245, hz + 0.015, 0.005),
+            ]
+            for px0, py0, pz0, r in pony_spine:
+                ring = [[px0 + math.cos(a) * r, py0 + math.sin(a) * r * 0.85, pz0 + math.sin(a) * r * 0.5] for a in np.linspace(0, math.tau, 12, endpoint=False)]
+                pony_rings.append(ring)
+            gear_parts.append(make_loft(pony_rings, 3, UV_HAIR))
+
+        # Snug arched comms headset hugging crown cleanly
         for sx in (-1.0, 1.0):
             gear_parts.append(make_box((sx * 0.086, eye_y - 0.005, hz + 0.01), (0.026, 0.064, 0.056), 3, UV_DARK))
         band_rings = []
@@ -1260,8 +1335,15 @@ def build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger
     lo_eyes = hi_eyes
 
     # MIN tier (~1k tris): vertex-colored low-poly silhouette (`kmin` reads COLOR_0)
-    skin_c = np.array([0.82, 0.62, 0.50] if is_female else [0.76, 0.56, 0.44], dtype=np.float32)
-    gear_c = np.array([0.24, 0.27, 0.21], dtype=np.float32)
+    if variant == "desert":
+        skin_c = np.array([0.66, 0.48, 0.36], dtype=np.float32)
+        gear_c = np.array([0.52, 0.45, 0.33], dtype=np.float32)
+    elif variant == "night":
+        skin_c = np.array([0.85, 0.68, 0.58], dtype=np.float32)
+        gear_c = np.array([0.15, 0.16, 0.19], dtype=np.float32)
+    else:
+        skin_c = np.array([0.82, 0.62, 0.50] if is_female else [0.76, 0.56, 0.44], dtype=np.float32)
+        gear_c = np.array([0.24, 0.27, 0.21], dtype=np.float32)
     min_skin = decimate_part(merge_parts([hi_head, hi_hands]), cell_m=0.042)
     min_skin["col"] = np.tile(skin_c, (len(min_skin["pos"]), 1))
     min_gear = decimate_part(merge_parts([hi_gear, hi_shoes]), cell_m=0.045)
@@ -1378,10 +1460,12 @@ def main():
     paint_gear_pbr()
 
     configs = [
-        ("male", [("male.target", 1.0), ("male_muscle.target", 0.55)], 1.03, False),
-        ("female", [("female.target", 1.0), ("female_fit.target", 0.45)], 1.08, True),
+        ("male", [("male.target", 1.0), ("male_muscle.target", 0.55)], 1.03, False, "default"),
+        ("female", [("female.target", 1.0), ("female_fit.target", 0.45)], 1.08, True, "default"),
+        ("female2", [("female_af.target", 0.85), ("female.target", 0.15), ("female_fit.target", 0.55)], 1.07, True, "desert"),
+        ("female3", [("female_as.target", 0.85), ("female.target", 0.15), ("female_fit.target", 0.40)], 1.13, True, "night"),
     ]
-    for prefix, targets, sc, is_female in configs:
+    for prefix, targets, sc, is_female, variant in configs:
         V = V0.copy()
         for tf, amt in targets:
             V = apply_target(V, tf, amt)
@@ -1395,10 +1479,10 @@ def main():
         N_kr[:13380] = compute_vertex_normals(V_kr[:13380], np.array(all_tris, dtype=np.int32))
 
         print(f"[{prefix}] painting photorealistic PBR skin maps...")
-        paint_skin_pbr(V_kr, N_kr, UV, body_quads, info, bi, prefix, is_female=is_female)
+        paint_skin_pbr(V_kr, N_kr, UV, body_quads, info, bi, prefix, is_female=is_female, variant=variant)
 
         print(f"[{prefix}] building tactical meshes & LODs...")
-        meshes = build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger_mask, info, is_female)
+        meshes = build_tactical_gear_and_hair(V_kr, N_kr, UV, body_quads, bi, bw, W16, finger_mask, info, is_female, variant=variant)
         glb_path = os.path.join(OUT_DIR, f"{prefix}.glb")
         write_glb(meshes, glb_path)
         hi_tris = sum(len(meshes[k]["idx"]) // 3 for k in ("hi_kong", "hi_head", "hi_gear", "hi_shoes", "hi_eyes"))

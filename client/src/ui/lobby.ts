@@ -134,9 +134,14 @@ export function createLobby(actions: LobbyActions): LobbyScreen {
   const btnRange = h("button", "tn-play-link", links); btnRange.type = "button"; btnRange.innerHTML = `${ICON.target}<span>Firing range</span>`;
   const btnGuide = h("button", "tn-play-link", links); btnGuide.type = "button"; btnGuide.innerHTML = `${ICON.book}<span>Learn controls</span>`;
   const btnGender = h("button", "tn-play-link", links); btnGender.type = "button";
-  const renderGender = (g: "male" | "female") => { btnGender.innerHTML = `<span>Operator: ${g === "female" ? "Female" : "Male"}</span>`; };
+  const OP_ORDER = ["male", "female", "female2", "female3"] as const;
+  const OP_NAMES: Record<(typeof OP_ORDER)[number], string> = { male: "Male (Vanguard)", female: "Female (Valkyrie)", female2: "Female (Nomad)", female3: "Female (Nightfall)" };
+  const renderGender = (g: (typeof OP_ORDER)[number]) => { btnGender.innerHTML = `<span>Operator: ${OP_NAMES[g] ?? "Male (Vanguard)"}</span>`; };
   preferences.subscribe((p) => renderGender(p.operatorGender));
-  btnGender.addEventListener("click", () => { preferences.set({ operatorGender: preferences.value.operatorGender === "male" ? "female" : "male" }); });
+  btnGender.addEventListener("click", () => {
+    const i = OP_ORDER.indexOf(preferences.value.operatorGender);
+    preferences.set({ operatorGender: OP_ORDER[(i + 1) % OP_ORDER.length]! });
+  });
   // (.room .kr-btn = the controller's first focus when Play is disabled, e.g. a guest waiting: only while in a room, and
   // after Play in the DOM so a host lands on Start match)
   const leaveBar = h("div", "tn-play-leavebar", links);

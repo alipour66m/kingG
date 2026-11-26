@@ -69,10 +69,10 @@ export const VM_HOLD: Record<WeaponId, Hold> = {
     // right of centre, barrel converging on the crosshair, forearms down
     pos: [0.314, -0.272, -0.53], rot: [-0.03, 0.21, -0.2], scale: 0.92, elR: [0.1, -1.0, -0.4], adsScale: 0.559,
     r: { at: [0, -0.063, 0.042], up: [0, 0.953, -0.302], palm: [1, 0, 0], a: 0.028, b: 0.04 },
-    l: { at: [0, -0.06, -0.362], up: [0, 1, -0.06], palm: [-1, 0, 0], a: 0.02, b: 0.02 },
+    l: { at: [0, -0.065, -0.176], up: [0, 1, -0.06], palm: [-1, 0, 0], a: 0.02, b: 0.02 },
     recoil: [0.022, 0.026, 0.01, 0.006, 34],
-    ads: { sight: [0, 0.1, 0.02], dist: 0.3 }, reload: "mag",
-    magGrip: { at: [0, -0.142, -0.189], up: [0, 0.923, 0.384], palm: [-1, 0, 0], a: 0.025, b: 0.036 },
+    ads: { sight: [0, 0.114, 0.02], dist: 0.3 }, reload: "mag",
+    magGrip: { at: [0, -0.14, -0.05], up: [0, 0.923, 0.384], palm: [-1, 0, 0], a: 0.025, b: 0.036 },
   },
   ar: {
     // right of centre, barrel converging on the crosshair, forearms down
@@ -89,7 +89,7 @@ export const VM_HOLD: Record<WeaponId, Hold> = {
     // right of centre, barrel converging on the crosshair, forearms down
     pos: [0.316, -0.197, -0.53], rot: [0.08, 0.21, -0.2], scale: 1.0, elR: [0.1, -1.0, -0.4], adsScale: 0.561,
     r: { at: [0, -0.06, 0.047], up: [0, 0.827, -0.562], palm: [1, 0, 0], a: 0.039, b: 0.048 },
-    l: { at: [0, -0.085, -0.265], up: [0, 0.05, -1], palm: [0, -1, 0], a: 0.05, b: 0.075 },
+    l: { at: [0, -0.045, -0.275], up: [0, 0.05, -1], palm: [0, -1, 0], a: 0.05, b: 0.075 },
     recoil: [0.09, 0.2, 0.04, 0.02, 16],
     ads: { sight: [0, 0.07, 0.02], dist: 0.34 }, reload: "shell",
     port: [0.07, 0.03, -0.06],
@@ -100,9 +100,9 @@ export const VM_HOLD: Record<WeaponId, Hold> = {
     // right of centre, barrel converging on the crosshair, forearms down
     pos: [0.281, -0.222, -0.55], rot: [0.06, 0.22, -0.12], scale: 0.509, elR: [0.1, -1.0, -0.4], adsScale: 0.424,
     r: { at: [0, -0.03, 0.118], up: [0, 0.88, -0.48], palm: [1, 0, 0], a: 0.036, b: 0.034 },
-    l: { at: [0, 0.03, -0.22], up: [0, 0.05, -1], palm: [0, -1, 0], a: 0.05, b: 0.058 },
+    l: { at: [0, 0.01, -0.22], up: [0, 0.05, -1], palm: [0, -1, 0], a: 0.05, b: 0.058 },
     recoil: [0.09, 0.15, 0.03, 0.015, 12],
-    ads: { sight: [0, 0.25, 0.07], dist: 0.34 }, reload: "bolt",
+    ads: { sight: [0, 0.178, 0.07], dist: 0.34 }, reload: "bolt",
     port: [0.02, 0.13, 0.04],
   },
   rocket: {

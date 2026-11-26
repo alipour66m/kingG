@@ -56,8 +56,8 @@ export interface KongActor {
   pov?(camera: THREE.Camera, p: KongPose, dt: number): void;
   /** kong-variety (optional): wear this match's outfit; null = the default look */
   setOutfit?(o: KongOutfit | null): void;
-  /** operator character variant (male / female) */
-  setGender?(g: "male" | "female"): void;
+  /** operator character variant (male / female / female2 / female3) */
+  setGender?(g: "male" | "female" | "female2" | "female3"): void;
   /** swimming (optional): the animator's stroke counter (steps on each stroke's power moment) and its kind — 0 surface
    *  breaststroke, 1 crawl pull, 2 treading kick, 3 under water. render.ts plays the stroke sound + splash on a step. */
   swimEvt?(): number;

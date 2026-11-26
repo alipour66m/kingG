@@ -23,7 +23,8 @@ Not covered by the MIT licence; each keeps its own.
 | Draco 3D decoder (Google) | Apache-2.0 | `public/assets/decoders/draco/` |
 | Basis Universal transcoder (Binomial) | Apache-2.0 | `public/assets/actors/basis/` |
 | MakeHuman anatomical human base mesh, targets & eyes (`makehumancommunity/makehuman`) | CC0 1.0 Universal | `public/assets/actors/operators/` |
-| Glock 17 (`g17.glb`) and M16 A2 (`m16a2.glb`) weapon models (`user77` via `LeoOpenBotDevelopment/Three.js-3D-FPS-Game`) | CC BY 4.0 | `public/assets/weapons/` |
+| Glock 17 (`g17.glb`) and M16 A2 (`m16a2.glb`) weapon models (`user77` via `LeoOpenBotDevelopment/Three.js-3D-FPS-Game`) | CC BY 4.0 | `public/assets/weapons/g17.glb`, `public/assets/weapons/m16a2.glb` |
+| Tactical SMG, Pump Shotgun, Hunting Sniper & 4x Scope (`zees-games/zed-gs-weapons`), Launcher (`Quaternius` / `Kenney` / `zees-games`) | MIT / CC0 1.0 | `public/assets/weapons/smg.glb`, `public/assets/weapons/shotgun.glb`, `public/assets/weapons/sniper.glb`, `public/assets/weapons/rocket.glb` |
 
 ## Free sounds and textures (CC0, credited with thanks)
 

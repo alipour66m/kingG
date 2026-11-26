@@ -1,12 +1,14 @@
 """
-Extract clean, lightweight, coordinate-aligned PBR weapon GLBs from GitHub open-licensed models
-for Kong Royale (`public/assets/weapons/g17.glb` and `public/assets/weapons/m16a2.glb`).
+Extract clean, lightweight, coordinate-aligned PBR weapon GLBs from open-licensed GitHub repos
+for Kong Royale (`public/assets/weapons/*.glb`).
 
 Sources (see `public/assets/weapons/provenance.json` and `CREDITS.md`):
-- `leo_m16.glb` (`LeoOpenBotDevelopment/Three.js-3D-FPS-Game` -> `gun.glb`): actually Glock 17 (G17),
-  originally modeled by user77 (Sketchfab 7723ab14e70446ef8e06a134984f287f), CC BY 4.0.
-- `leo_g17.glb` (`LeoOpenBotDevelopment/Three.js-3D-FPS-Game` -> `biggun.glb`): actually M16 A2,
-  originally modeled by user77 (Sketchfab bd4ff595b593447f9a7f1d95f501fb6c), CC BY 4.0.
+- `pistol` -> `g17.glb` (CC BY 4.0, user77 via LeoOpenBotDevelopment/Three.js-3D-FPS-Game)
+- `ar`     -> `m16a2.glb` (CC BY 4.0, user77 via LeoOpenBotDevelopment/Three.js-3D-FPS-Game)
+- `smg`    -> `smg.glb` (MIT, zees-games/zed-gs-weapons: tactical_smg + red_dot + foregrip + suppressor)
+- `shotgun`-> `shotgun.glb` (MIT, zees-games/zed-gs-weapons: pump_shotgun)
+- `sniper` -> `sniper.glb` (MIT, zees-games/zed-gs-weapons: hunting_rifle + scope_4x)
+- `rocket` -> `rocket.glb` (CC0/MIT, zees-games/game-zombie-zone low-poly-guns launcher kitbash from Quaternius/Kenney CC0)
 
 Usage:
   python tools/weapons/extract-gh-weapons.py [raw_dir]
@@ -111,54 +113,66 @@ def world_mats(g):
     return w
 
 
+def tex_source(g, tex_idx: int) -> int:
+    t = g["textures"][tex_idx]
+    if "source" in t:
+        return t["source"]
+    ext = t.get("extensions", {}).get("EXT_texture_webp")
+    if ext and "source" in ext:
+        return ext["source"]
+    for v in t.get("extensions", {}).values():
+        if isinstance(v, dict) and "source" in v:
+            return v["source"]
+    raise KeyError(f"Texture {tex_idx} has no source: {t}")
+
+
 def srgb_to_lin(u8: int) -> float:
     c = u8 / 255.0
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
 
 
-def extract_weapon(
-    src_path: str,
+def sample_vertex_color(im: Image.Image | None, uv: tuple[float, float] | None, bcf) -> tuple[int, int, int]:
+    if im is not None and uv is not None:
+        w, h = im.size
+        u = uv[0] % 1.0
+        v = uv[1] % 1.0
+        px = min(w - 1, max(0, int(u * (w - 1) + 0.5)))
+        py = min(h - 1, max(0, int(v * (h - 1) + 0.5)))
+        r, gr, bl = im.getpixel((px, py))
+        return (
+            int(min(255, max(0, round(srgb_to_lin(r) * 255)))),
+            int(min(255, max(0, round(srgb_to_lin(gr) * 255)))),
+            int(min(255, max(0, round(srgb_to_lin(bl) * 255)))),
+        )
+    if bcf:
+        return tuple(int(min(255, max(0, round(c * 255)))) for c in bcf[:3])
+    return (64, 68, 72)
+
+
+def compose_weapons(
+    parts_spec: list[dict],
     out_path: str,
     scale: float,
     offset: tuple[float, float, float],
-    classify_part,
-    max_tex: int,
-    small_tex: int,
+    rot_y_180: bool = False,
+    max_tex: int = 512,
+    small_tex: int = 256,
+    bolt_filter=None,
 ):
-    g, b = load_glb(src_path)
-    wm = world_mats(g)
-
-    # Collect kept mesh nodes grouped by pivot name ("slide", "mag", "bolt", "frame")
-    kept_nodes = []
-    used_mats: dict[int, int] = {}
-    used_imgs: dict[int, tuple[int, bool]] = {}  # old_img_idx -> (new_img_idx, is_normal)
-
-    for ni, n in enumerate(g["nodes"]):
-        if "mesh" not in n:
-            continue
-        mesh = g["meshes"][n["mesh"]]
-        name = mesh.get("name", n.get("name", ""))
-        pivot = classify_part(name)
-        if pivot is None:
-            continue
-        kept_nodes.append((ni, name, pivot, mesh))
-        for p in mesh["primitives"]:
-            mi = p.get("material")
-            if mi is not None and mi not in used_mats:
-                used_mats[mi] = len(used_mats)
-                mat = g["materials"][mi]
-                pbr = mat.get("pbrMetallicRoughness", {})
-                for key, is_norm in (("baseColorTexture", False), ("metallicRoughnessTexture", False)):
-                    if key in pbr:
-                        ii = g["textures"][pbr[key]["index"]]["source"]
-                        if ii not in used_imgs:
-                            used_imgs[ii] = (len(used_imgs), is_norm)
-                if "normalTexture" in mat:
-                    ii = g["textures"][mat["normalTexture"]["index"]]["source"]
-                    if ii not in used_imgs:
-                        used_imgs[ii] = (len(used_imgs), True)
-
+    """
+    Combine 1 or more source GLB files into one aligned, compressed GLB.
+    parts_spec item: {path, local_offset=(0,0,0), classify=(name -> pivot|None)}
+    """
     bin_chunks = bytearray()
+    buffer_views = []
+    accessors = []
+    images = []
+    textures = []
+    materials = []
+    samplers = [{"magFilter": 9729, "minFilter": 9987, "wrapS": 10497, "wrapT": 10497}]
+    meshes = []
+    pivot_children: dict[str, list[int]] = {}
+    all_nodes = []
 
     def add_bv(raw: bytes, target: int | None = None) -> int:
         while len(bin_chunks) % 4 != 0:
@@ -172,171 +186,216 @@ def extract_weapon(
         buffer_views.append(bv)
         return idx
 
-    buffer_views = []
-    accessors = []
-    images = []
-    textures = []
-    materials = []
-    decoded_bc_imgs: dict[int, Image.Image] = {}
+    def finish_pt(px: float, py: float, pz: float):
+        if rot_y_180:
+            px, pz = -px, -pz
+        return (px * scale + offset[0], py * scale + offset[1], pz * scale + offset[2])
 
-    # Re-encode kept images cleanly as compact JPEG
-    old_to_new_img: dict[int, int] = {}
-    for old_ii, (new_ii, is_norm) in sorted(used_imgs.items(), key=lambda x: x[1][0]):
-        img_info = g["images"][old_ii]
-        bv = g["bufferViews"][img_info["bufferView"]]
-        raw = b[bv.get("byteOffset", 0) : bv.get("byteOffset", 0) + bv["byteLength"]]
-        im = Image.open(io.BytesIO(raw)).convert("RGB")
-        # Detect small detail maps vs main maps
-        cap = small_tex if max(im.size) <= 512 else max_tex
-        if max(im.size) > cap:
-            im = im.resize((cap, cap), Image.Resampling.LANCZOS)
-        decoded_bc_imgs[old_ii] = im
-        out_buf = io.BytesIO()
-        im.save(out_buf, format="JPEG", quality=92 if is_norm else 86, optimize=True)
-        bv_idx = add_bv(out_buf.getvalue())
-        old_to_new_img[old_ii] = len(images)
-        images.append({"bufferView": bv_idx, "mimeType": "image/jpeg"})
+    def finish_dir(nx: float, ny: float, nz: float):
+        if rot_y_180:
+            nx, nz = -nx, -nz
+        return (nx, ny, nz)
 
-    samplers = [{"magFilter": 9729, "minFilter": 9987, "wrapS": 10497, "wrapT": 10497}]
+    for ps in parts_spec:
+        g, b = load_glb(ps["path"])
+        wm = world_mats(g)
+        loc_off = ps.get("local_offset", (0.0, 0.0, 0.0))
+        classify = ps["classify"]
 
-    def add_tex(old_ii: int) -> int:
-        idx = len(textures)
-        textures.append({"sampler": 0, "source": old_to_new_img[old_ii]})
-        return idx
+        kept_nodes = []
+        used_mats: dict[int, int] = {}
+        used_imgs: dict[int, tuple[int, bool]] = {}
 
-    # Build new materials list
-    ordered_mats = sorted(used_mats.items(), key=lambda x: x[1])
-    mat_bc_img: dict[int, Image.Image | None] = {}
-    for old_mi, _new_mi in ordered_mats:
-        src_mat = g["materials"][old_mi]
-        pbr_src = src_mat.get("pbrMetallicRoughness", {})
-        pbr_dst: dict = {}
-        if "baseColorFactor" in pbr_src:
-            pbr_dst["baseColorFactor"] = pbr_src["baseColorFactor"]
-        if "metallicFactor" in pbr_src:
-            pbr_dst["metallicFactor"] = pbr_src["metallicFactor"]
-        if "roughnessFactor" in pbr_src:
-            pbr_dst["roughnessFactor"] = pbr_src["roughnessFactor"]
-        bc_im = None
-        if "baseColorTexture" in pbr_src:
-            ii = g["textures"][pbr_src["baseColorTexture"]["index"]]["source"]
-            pbr_dst["baseColorTexture"] = {"index": add_tex(ii)}
-            bc_im = decoded_bc_imgs.get(ii)
-        mat_bc_img[old_mi] = bc_im
-        if "metallicRoughnessTexture" in pbr_src:
-            ii = g["textures"][pbr_src["metallicRoughnessTexture"]["index"]]["source"]
-            pbr_dst["metallicRoughnessTexture"] = {"index": add_tex(ii)}
-        dst_mat: dict = {"name": src_mat.get("name", f"mat_{old_mi}"), "pbrMetallicRoughness": pbr_dst}
-        if "normalTexture" in src_mat:
-            ii = g["textures"][src_mat["normalTexture"]["index"]]["source"]
-            dst_mat["normalTexture"] = {"index": add_tex(ii)}
-        materials.append(dst_mat)
+        for ni, n in enumerate(g.get("nodes", [])):
+            if "mesh" not in n:
+                continue
+            mesh = g["meshes"][n["mesh"]]
+            name = mesh.get("name") or n.get("name") or f"part_{ni}"
+            pivot = classify(name)
+            if pivot is None:
+                continue
+            kept_nodes.append((ni, name, pivot, mesh))
+            for p in mesh["primitives"]:
+                mi = p.get("material")
+                if mi is not None and mi not in used_mats:
+                    used_mats[mi] = len(materials) + len(used_mats)
+                    mat = g["materials"][mi]
+                    pbr = mat.get("pbrMetallicRoughness", {})
+                    for key, is_norm in (("baseColorTexture", False), ("metallicRoughnessTexture", False)):
+                        if key in pbr:
+                            ii = tex_source(g, pbr[key]["index"])
+                            if ii not in used_imgs:
+                                used_imgs[ii] = (len(used_imgs), is_norm)
+                    for key, is_norm in (("normalTexture", True), ("occlusionTexture", False)):
+                        if key in mat:
+                            ii = tex_source(g, mat[key]["index"])
+                            if ii not in used_imgs:
+                                used_imgs[ii] = (len(used_imgs), is_norm)
 
-    def sample_vertex_color(im: Image.Image | None, uv: tuple[float, float] | None, bcf) -> tuple[int, int, int]:
-        if im is not None and uv is not None:
-            w, h = im.size
-            u = uv[0] % 1.0
-            v = uv[1] % 1.0
-            px = min(w - 1, max(0, int(u * (w - 1) + 0.5)))
-            py = min(h - 1, max(0, int(v * (h - 1) + 0.5)))
-            r, gr, bl = im.getpixel((px, py))
-            lr = int(min(255, max(0, round(srgb_to_lin(r) * 255))))
-            lg = int(min(255, max(0, round(srgb_to_lin(gr) * 255))))
-            lb = int(min(255, max(0, round(srgb_to_lin(bl) * 255))))
-            return (lr, lg, lb)
-        if bcf:
-            return tuple(int(min(255, max(0, round(c * 255)))) for c in bcf[:3])
-        return (64, 68, 72)
+        old_to_new_img: dict[int, int] = {}
+        decoded_bc_imgs: dict[int, Image.Image] = {}
+        for old_ii, (_ord_i, is_norm) in sorted(used_imgs.items(), key=lambda x: x[1][0]):
+            img_info = g["images"][old_ii]
+            bv = g["bufferViews"][img_info["bufferView"]]
+            raw = b[bv.get("byteOffset", 0) : bv.get("byteOffset", 0) + bv["byteLength"]]
+            im = Image.open(io.BytesIO(raw)).convert("RGB")
+            cap = small_tex if max(im.size) <= 512 else max_tex
+            if max(im.size) > cap:
+                im = im.resize((cap, cap), Image.Resampling.LANCZOS)
+            decoded_bc_imgs[old_ii] = im
+            out_buf = io.BytesIO()
+            im.save(out_buf, format="JPEG", quality=92 if is_norm else 86, optimize=True)
+            bv_idx = add_bv(out_buf.getvalue())
+            old_to_new_img[old_ii] = len(images)
+            images.append({"bufferView": bv_idx, "mimeType": "image/jpeg"})
 
-    meshes = []
-    pivot_children: dict[str, list[int]] = {}
-    all_nodes = []
+        tex_cache: dict[int, int] = {}
 
-    for ni, name, pivot, mesh in kept_nodes:
-        m = wm[ni]
-        prims = []
-        for p in mesh["primitives"]:
-            attrs = {}
-            pos_raw = read_acc(g, b, p["attributes"]["POSITION"])
-            nrm_raw = read_acc(g, b, p["attributes"]["NORMAL"]) if "NORMAL" in p["attributes"] else None
-            uv_raw = read_acc(g, b, p["attributes"]["TEXCOORD_0"]) if "TEXCOORD_0" in p["attributes"] else None
+        def get_tex(old_ii: int) -> int:
+            if old_ii not in tex_cache:
+                tex_cache[old_ii] = len(textures)
+                textures.append({"sampler": 0, "source": old_to_new_img[old_ii]})
+            return tex_cache[old_ii]
 
-            pts = []
-            xs, ys, zs = [], [], []
-            for v in pos_raw:
-                wx, wy, wz = xform_point(m, v)
-                nx = wx * scale + offset[0]
-                ny = wy * scale + offset[1]
-                nz = wz * scale + offset[2]
-                pts.append((nx, ny, nz))
-                xs.append(nx)
-                ys.append(ny)
-                zs.append(nz)
+        mat_bc_img: dict[int, Image.Image | None] = {}
+        for old_mi, _new_mi in sorted(used_mats.items(), key=lambda x: x[1]):
+            src_mat = g["materials"][old_mi]
+            pbr_src = src_mat.get("pbrMetallicRoughness", {})
+            pbr_dst: dict = {}
+            for fk in ("baseColorFactor", "metallicFactor", "roughnessFactor"):
+                if fk in pbr_src:
+                    pbr_dst[fk] = pbr_src[fk]
+            bc_im = None
+            if "baseColorTexture" in pbr_src:
+                ii = tex_source(g, pbr_src["baseColorTexture"]["index"])
+                pbr_dst["baseColorTexture"] = {"index": get_tex(ii)}
+                bc_im = decoded_bc_imgs.get(ii)
+            mat_bc_img[old_mi] = bc_im
+            if "metallicRoughnessTexture" in pbr_src:
+                ii = tex_source(g, pbr_src["metallicRoughnessTexture"]["index"])
+                pbr_dst["metallicRoughnessTexture"] = {"index": get_tex(ii)}
+            dst_mat: dict = {"name": src_mat.get("name", f"mat_{old_mi}"), "pbrMetallicRoughness": pbr_dst}
+            if "normalTexture" in src_mat:
+                ii = tex_source(g, src_mat["normalTexture"]["index"])
+                dst_mat["normalTexture"] = {"index": get_tex(ii)}
+            if "occlusionTexture" in src_mat:
+                ii = tex_source(g, src_mat["occlusionTexture"]["index"])
+                dst_mat["occlusionTexture"] = {"index": get_tex(ii)}
+            for mk in ("alphaMode", "doubleSided"):
+                if mk in src_mat:
+                    dst_mat[mk] = src_mat[mk]
+            materials.append(dst_mat)
 
-            pos_bytes = b"".join(struct.pack("<3f", *pt) for pt in pts)
-            bv_pos = add_bv(pos_bytes, 34962)
-            acc_pos = len(accessors)
-            accessors.append({
-                "bufferView": bv_pos,
-                "componentType": 5126,
-                "count": len(pts),
-                "type": "VEC3",
-                "min": [min(xs), min(ys), min(zs)],
-                "max": [max(xs), max(ys), max(zs)],
-            })
-            attrs["POSITION"] = acc_pos
+        def emit_mesh_node(mesh_name: str, pivot_name: str, prim_tuples):
+            prims = []
+            for p, v_indices_map, idx_subset in prim_tuples:
+                pos_raw = read_acc(g, b, p["attributes"]["POSITION"])
+                nrm_raw = read_acc(g, b, p["attributes"]["NORMAL"]) if "NORMAL" in p["attributes"] else None
+                uv_raw = read_acc(g, b, p["attributes"]["TEXCOORD_0"]) if "TEXCOORD_0" in p["attributes"] else None
+                old_mi = p.get("material")
+                bc_im = mat_bc_img.get(old_mi) if old_mi is not None else None
+                bcf = g["materials"][old_mi].get("pbrMetallicRoughness", {}).get("baseColorFactor") if old_mi is not None else None
 
-            if nrm_raw is not None:
-                nrms = [xform_dir(m, v) for v in nrm_raw]
-                nrm_bytes = b"".join(struct.pack("<3f", *v) for v in nrms)
-                bv_nrm = add_bv(nrm_bytes, 34962)
-                acc_nrm = len(accessors)
-                accessors.append({"bufferView": bv_nrm, "componentType": 5126, "count": len(nrms), "type": "VEC3"})
-                attrs["NORMAL"] = acc_nrm
+                pts, nrms, uvs, cols = [], [], [], []
+                xs, ys, zs = [], [], []
+                for orig_i in v_indices_map:
+                    wx, wy, wz = xform_point(wm[ni], pos_raw[orig_i])
+                    fx, fy, fz = finish_pt(wx + loc_off[0], wy + loc_off[1], wz + loc_off[2])
+                    pts.append((fx, fy, fz))
+                    xs.append(fx); ys.append(fy); zs.append(fz)
+                    if nrm_raw is not None:
+                        dnx, dny, dnz = xform_dir(wm[ni], nrm_raw[orig_i])
+                        nrms.append(finish_dir(dnx, dny, dnz))
+                    if uv_raw is not None:
+                        uvs.append(uv_raw[orig_i])
+                    cols.append(sample_vertex_color(bc_im, uv_raw[orig_i] if uv_raw else None, bcf))
 
-            if uv_raw is not None:
-                uv_bytes = b"".join(struct.pack("<2f", *t) for t in uv_raw)
-                bv_uv = add_bv(uv_bytes, 34962)
-                acc_uv = len(accessors)
-                accessors.append({"bufferView": bv_uv, "componentType": 5126, "count": len(uv_raw), "type": "VEC2"})
-                attrs["TEXCOORD_0"] = acc_uv
+                attrs = {}
+                bv_pos = add_bv(b"".join(struct.pack("<3f", *pt) for pt in pts), 34962)
+                attrs["POSITION"] = len(accessors)
+                accessors.append({
+                    "bufferView": bv_pos, "componentType": 5126, "count": len(pts),
+                    "type": "VEC3", "min": [min(xs), min(ys), min(zs)], "max": [max(xs), max(ys), max(zs)],
+                })
+                if nrms:
+                    bv_nrm = add_bv(b"".join(struct.pack("<3f", *v) for v in nrms), 34962)
+                    attrs["NORMAL"] = len(accessors)
+                    accessors.append({"bufferView": bv_nrm, "componentType": 5126, "count": len(nrms), "type": "VEC3"})
+                if uvs:
+                    bv_uv = add_bv(b"".join(struct.pack("<2f", *t) for t in uvs), 34962)
+                    attrs["TEXCOORD_0"] = len(accessors)
+                    accessors.append({"bufferView": bv_uv, "componentType": 5126, "count": len(uvs), "type": "VEC2"})
+                bv_col = add_bv(b"".join(struct.pack("<3B", *c) for c in cols), 34962)
+                attrs["COLOR_0"] = len(accessors)
+                accessors.append({"bufferView": bv_col, "componentType": 5121, "normalized": True, "count": len(cols), "type": "VEC3"})
 
-            # Write sampled linear RGB COLOR_0 (uint8 normalized) for held.ts / loot.ts single-mesh LOD bakes
-            old_mi = p.get("material")
-            bc_im = mat_bc_img.get(old_mi) if old_mi is not None else None
-            bcf = g["materials"][old_mi].get("pbrMetallicRoughness", {}).get("baseColorFactor") if old_mi is not None else None
-            cols = [sample_vertex_color(bc_im, uv_raw[i] if uv_raw else None, bcf) for i in range(len(pts))]
-            col_bytes = b"".join(struct.pack("<3B", *c) for c in cols)
-            bv_col = add_bv(col_bytes, 34962)
-            acc_col = len(accessors)
-            accessors.append({"bufferView": bv_col, "componentType": 5121, "normalized": True, "count": len(cols), "type": "VEC3"})
-            attrs["COLOR_0"] = acc_col
+                prim_dst: dict = {"attributes": attrs, "mode": p.get("mode", 4)}
+                if old_mi is not None:
+                    prim_dst["material"] = used_mats[old_mi]
+                if idx_subset is not None:
+                    if max(idx_subset) < 65536:
+                        idx_bytes = b"".join(struct.pack("<H", i) for i in idx_subset)
+                        ct = 5123
+                    else:
+                        idx_bytes = b"".join(struct.pack("<I", i) for i in idx_subset)
+                        ct = 5125
+                    bv_idx = add_bv(idx_bytes, 34963)
+                    prim_dst["indices"] = len(accessors)
+                    accessors.append({"bufferView": bv_idx, "componentType": ct, "count": len(idx_subset), "type": "SCALAR"})
+                prims.append(prim_dst)
 
-            prim_dst: dict = {"attributes": attrs, "mode": p.get("mode", 4)}
-            if old_mi is not None:
-                prim_dst["material"] = used_mats[old_mi]
-            if "indices" in p:
-                idx_raw = read_acc(g, b, p["indices"])
-                max_i = max(idx_raw)
-                if max_i < 65536:
-                    idx_bytes = b"".join(struct.pack("<H", i) for i in idx_raw)
-                    ct = 5123
-                else:
-                    idx_bytes = b"".join(struct.pack("<I", i) for i in idx_raw)
-                    ct = 5125
-                bv_idx = add_bv(idx_bytes, 34963)
-                acc_idx = len(accessors)
-                accessors.append({"bufferView": bv_idx, "componentType": ct, "count": len(idx_raw), "type": "SCALAR"})
-                prim_dst["indices"] = acc_idx
-            prims.append(prim_dst)
+            mesh_idx = len(meshes)
+            meshes.append({"name": mesh_name, "primitives": prims})
+            node_idx = len(all_nodes)
+            all_nodes.append({"name": mesh_name, "mesh": mesh_idx})
+            pivot_children.setdefault(pivot_name, []).append(node_idx)
 
-        mesh_idx = len(meshes)
-        meshes.append({"name": name, "primitives": prims})
-        node_idx = len(all_nodes)
-        all_nodes.append({"name": name, "mesh": mesh_idx})
-        pivot_children.setdefault(pivot, []).append(node_idx)
+        for ni, name, pivot, mesh in kept_nodes:
+            # Optional triangle-level split (e.g., sniper bolt knob inside "body")
+            if bolt_filter and pivot == "frame":
+                main_prims = []
+                bolt_prims = []
+                for p in mesh["primitives"]:
+                    pos_raw = read_acc(g, b, p["attributes"]["POSITION"])
+                    idx_raw = read_acc(g, b, p["indices"]) if "indices" in p else list(range(len(pos_raw)))
+                    pts_world = [finish_pt(*[x + loc_off[k] for k, x in enumerate(xform_point(wm[ni], v))]) for v in pos_raw]
+                    main_tris, bolt_tris = [], []
+                    for ti in range(0, len(idx_raw), 3):
+                        tri = idx_raw[ti : ti + 3]
+                        cx = sum(pts_world[i][0] for i in tri) / 3.0
+                        cy = sum(pts_world[i][1] for i in tri) / 3.0
+                        cz = sum(pts_world[i][2] for i in tri) / 3.0
+                        if bolt_filter(cx, cy, cz):
+                            bolt_tris.extend(tri)
+                        else:
+                            main_tris.extend(tri)
+                    def compact(tri_list):
+                        remap = {}
+                        v_map, i_out = [], []
+                        for vi in tri_list:
+                            if vi not in remap:
+                                remap[vi] = len(v_map)
+                                v_map.append(vi)
+                            i_out.append(remap[vi])
+                        return v_map, i_out
+                    if main_tris:
+                        vm, io_ = compact(main_tris)
+                        main_prims.append((p, vm, io_))
+                    if bolt_tris:
+                        vm, io_ = compact(bolt_tris)
+                        bolt_prims.append((p, vm, io_))
+                if main_prims:
+                    emit_mesh_node(name, "frame", main_prims)
+                if bolt_prims:
+                    emit_mesh_node(name + "_bolt", "bolt", bolt_prims)
+            else:
+                prim_tuples = []
+                for p in mesh["primitives"]:
+                    pos_raw = read_acc(g, b, p["attributes"]["POSITION"])
+                    idx_raw = read_acc(g, b, p["indices"]) if "indices" in p else None
+                    prim_tuples.append((p, list(range(len(pos_raw))), idx_raw))
+                emit_mesh_node(name, pivot, prim_tuples)
 
-    # Assemble pivot parent groups (frame/slide/mag/bolt) under root
     scene_roots = []
     for pivot_name, child_indices in pivot_children.items():
         grp_idx = len(all_nodes)
@@ -379,53 +438,128 @@ def extract_weapon(
 
 def main():
     raw_dir = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_RAW_DIR
+    zz_dir = os.path.join(raw_dir, "zz")
 
-    # 1. Glock 17 (leo_m16.glb) -> g17.glb (`pistol`)
-    # Sights aligned to (0, 0.058, 0.060) rear so palm sits high on grip, length ~0.254 m
+    # 1. Glock 17 (pistol)
     g17_scale = 1.25
     g17_off = (0.0, 0.058 - g17_scale * 0.116, 0.060 - g17_scale * (-0.148))
-
-    def classify_g17(name: str):
-        if "arm" in name:
-            return None
-        if name.startswith("g17_magazine_") or name.startswith("g17_bullet_"):
-            return "mag"
-        if name.startswith("g17_slide_"):
-            return "slide"
-        return "frame"
-
-    extract_weapon(
-        os.path.join(raw_dir, "leo_m16.glb"),
+    compose_weapons(
+        [{
+            "path": os.path.join(raw_dir, "leo_m16.glb"),
+            "classify": lambda n: None if "arm" in n else ("mag" if (n.startswith("g17_magazine_") or n.startswith("g17_bullet_")) else ("slide" if n.startswith("g17_slide_") else "frame")),
+        }],
         os.path.join(OUT_DIR, "g17.glb"),
         g17_scale,
         g17_off,
-        classify_g17,
+        rot_y_180=False,
         max_tex=512,
         small_tex=256,
     )
 
-    # 2. M16 A2 (leo_g17.glb) -> m16a2.glb (`ar`)
-    # Carry-handle sight aperture aligned to (0, 0.130, 0.000), length ~1.07 m
+    # 2. M16 A2 (ar)
     m16_scale = 0.96
     m16_off = (0.0, 0.130 - m16_scale * 0.212, -m16_scale * (-0.037))
-
-    def classify_m16(name: str):
-        if "arm" in name:
-            return None
-        if name.startswith("magazine"):
-            return "mag"
-        if name.startswith("m16a2_bolt_"):
-            return "bolt"
-        return "frame"
-
-    extract_weapon(
-        os.path.join(raw_dir, "leo_g17.glb"),
+    compose_weapons(
+        [{
+            "path": os.path.join(raw_dir, "leo_g17.glb"),
+            "classify": lambda n: None if "arm" in n else ("mag" if n.startswith("magazine") else ("bolt" if n.startswith("m16a2_bolt_") else "frame")),
+        }],
         os.path.join(OUT_DIR, "m16a2.glb"),
         m16_scale,
         m16_off,
-        classify_m16,
+        rot_y_180=False,
         max_tex=1024,
         small_tex=512,
+    )
+
+    # 3. Tactical SMG + Red Dot + Foregrip + Suppressor (`smg`)
+    # Sources use +Z forward; attach offsets are in unrotated +Z space before rot_y_180!
+    smg_scale = 1.12
+    smg_off = (0.0, -0.05 - smg_scale * 0.085, 0.042 - smg_scale * 0.065)
+    compose_weapons(
+        [
+            {
+                "path": os.path.join(zz_dir, "assets_hq_tactical_smg.glb"),
+                "classify": lambda n: "mag" if n == "magazine" else "frame",
+            },
+            {
+                "path": os.path.join(zz_dir, "assets_hq_red_dot.glb"),
+                "local_offset": (0.0, 0.2035, -0.048),
+                "classify": lambda _n: "frame",
+            },
+            {
+                "path": os.path.join(zz_dir, "assets_hq_foregrip.glb"),
+                "local_offset": (0.0, 0.1555, 0.130),
+                "classify": lambda _n: "frame",
+            },
+            {
+                "path": os.path.join(zz_dir, "assets_hq_suppressor.glb"),
+                "local_offset": (0.0, 0.1770, 0.262),
+                "classify": lambda _n: "frame",
+            },
+        ],
+        os.path.join(OUT_DIR, "smg.glb"),
+        smg_scale,
+        smg_off,
+        rot_y_180=True,
+        max_tex=512,
+        small_tex=256,
+    )
+
+    # 4. Tactical Pump Shotgun (`shotgun`)
+    sg_scale = 1.08
+    sg_off = (0.0, 0.072 - sg_scale * 0.152, -0.145)
+    compose_weapons(
+        [{
+            "path": os.path.join(zz_dir, "assets_hq_pump_shotgun.glb"),
+            "classify": lambda _n: "frame",
+        }],
+        os.path.join(OUT_DIR, "shotgun.glb"),
+        sg_scale,
+        sg_off,
+        rot_y_180=True,
+        max_tex=512,
+        small_tex=256,
+    )
+
+    # 5. Precision Bolt-Action Sniper + 4x Optic Scope (`sniper`)
+    sn_scale = 1.12
+    sn_off = (0.0, -0.02 - sn_scale * 0.035, 0.118 - sn_scale * 0.220)
+    compose_weapons(
+        [
+            {
+                "path": os.path.join(zz_dir, "assets_hq_hunting_rifle.glb"),
+                "classify": lambda n: "mag" if n == "magazine" else "frame",
+            },
+            {
+                "path": os.path.join(zz_dir, "assets_hq_scope_4x.glb"),
+                "local_offset": (0.0, 0.1737, -0.063),
+                "classify": lambda _n: "frame",
+            },
+        ],
+        os.path.join(OUT_DIR, "sniper.glb"),
+        sn_scale,
+        sn_off,
+        rot_y_180=True,
+        max_tex=512,
+        small_tex=256,
+        bolt_filter=lambda x, y, z: x > 0.028 and 0.04 < y < 0.16 and -0.08 < z < 0.10,
+    )
+
+    # 6. Modern Tactical Rocket Launcher (`rocket`) - already -Z forward!
+    rk_scale = 1.10
+    rk_off = (-0.020 * rk_scale, 0.110 - 0.036 * rk_scale, 0.13)
+    compose_weapons(
+        [{
+            "path": os.path.join(zz_dir, "assets_low-poly-guns_launcher.glb"),
+            "classify": lambda _n: "frame",
+        }],
+        os.path.join(OUT_DIR, "rocket.glb"),
+        rk_scale,
+        rk_off,
+        rot_y_180=False,
+        max_tex=512,
+        small_tex=256,
     )
 
 

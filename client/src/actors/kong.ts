@@ -20,7 +20,7 @@ import type { WorldCtx } from "../engine/engine";
 import type { KongActor, KongPose } from "./api";
 import { buildKongMin, buildKongParts, createKongMaterials, type KongMaterials, type MatKey, type PartGeo } from "./kong-parts";
 import { KongAnimator, NB, BONES, BONE_LIST, boneIndex, type BoneName } from "./kong-rig";
-import { loadOperatorAssets, USE_ASSET, EYE_GLSL, KONG_HS, FACE, KONG_VER, KONG_ALT, type KongAsset, type AssetMat, type OperatorGender } from "./kong-asset";
+import { loadOperatorAssets, OPERATOR_GENDERS, USE_ASSET, EYE_GLSL, KONG_HS, FACE, KONG_VER, KONG_ALT, type KongAsset, type AssetMat, type OperatorGender } from "./kong-asset";
 import { createWeaponsKit } from "../weapons/index";
 import type { WeaponsKit } from "../weapons/api";
 import type { Rarity, WeaponId } from "../../../shared/world/map";
@@ -92,9 +92,9 @@ const SHORTS = ["#ffffff", "#d8ded4", "#cfc6b4", "#bcc2be", "#e2ddd0", "#c4cbb8"
 interface Batch { tier: Tier | "shadow-lo" | "shadow-min" | "weapon" | "wshadow"; mat: MatKey | "proxy" | "weapon"; mesh: THREE.Mesh; geo: THREE.InstancedBufferGeometry; slotFade: THREE.InstancedBufferAttribute; n: number; list?: Array<[Slot, number]>; fade?: boolean;
   /** kong-variety: an accessory batch — 0..2 = hats (outfits.ts HAT_IDS), 3..5 = tops (TOP_IDS) */
   acc?: number;
-  /** operator gender batch filter (0 = male, 1 = female) */
-  gender?: 0 | 1 }
-interface Slot { idx: number; anim: KongAnimator; pose: KongPose | null; visible: boolean; alive: boolean; team: THREE.Color; rim: number; foe: boolean; friend: boolean; socket: THREE.Object3D; offSocket: THREE.Object3D | null; weaponVisible: boolean; weaponRarity: Rarity; px: number; inView: boolean; maxTier: Tier; shorts: THREE.Color; fur: number; lodBias: number; rimOverride: THREE.Color | null; rimOverrideK: number; fill: THREE.Color; key: number; hat: number; top: number; gender: 0 | 1; wpn: WeaponId | null; off: WeaponId | null; sockW: THREE.Matrix4; offW: THREE.Matrix4; wTier: number; shadow: boolean; wShadow: boolean; tier: Tier; prevTier: Tier; fade: number; seen: boolean; upTick: number; near: number; pov: boolean;
+  /** operator gender batch filter (0 = male, 1..3 = female variants) */
+  gender?: 0 | 1 | 2 | 3 }
+interface Slot { idx: number; anim: KongAnimator; pose: KongPose | null; visible: boolean; alive: boolean; team: THREE.Color; rim: number; foe: boolean; friend: boolean; socket: THREE.Object3D; offSocket: THREE.Object3D | null; weaponVisible: boolean; weaponRarity: Rarity; px: number; inView: boolean; maxTier: Tier; shorts: THREE.Color; fur: number; lodBias: number; rimOverride: THREE.Color | null; rimOverrideK: number; fill: THREE.Color; key: number; hat: number; top: number; gender: 0 | 1 | 2 | 3; wpn: WeaponId | null; off: WeaponId | null; sockW: THREE.Matrix4; offW: THREE.Matrix4; wTier: number; shadow: boolean; wShadow: boolean; tier: Tier; prevTier: Tier; fade: number; seen: boolean; upTick: number; near: number; pov: boolean;
   /** seconds of animation owed since the last full re-pose (the animation budget, ANIM_SMALL_S) */
   animDt: number;
   /** (caster) this kong's team outline colour, linear (null = none) — only drawn once kongOutlines() turned them on */
@@ -489,7 +489,7 @@ class KongManager {
     return weapon ? (this.velMatW ??= mk()) : (this.velMatB ??= mk());
   }
 
-  constructor(readonly ctx: WorldCtx, ops: { male: KongAsset; female: KongAsset } | null = null) {
+  constructor(readonly ctx: WorldCtx, ops: Record<OperatorGender, KongAsset> | null = null) {
     this.group.name = "kongs";
     for (let i = MAX_KONGS - 1; i >= 0; i--) this.free.push(i);
     this.texs = this.datas.map((d) => { const t = new THREE.DataTexture(d, ROW, MAX_KONGS, THREE.RGBAFormat, THREE.FloatType); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t; });
@@ -498,7 +498,7 @@ class KongManager {
     this.asset = ops?.male ?? null;
     if (ops) {
       this.tris = { ...ops.male.tris };
-      const variants: Array<[0 | 1, KongAsset]> = [[0, ops.male], [1, ops.female]];
+      const variants: Array<[0 | 1 | 2 | 3, KongAsset]> = OPERATOR_GENDERS.map((g, i) => [i as 0 | 1 | 2 | 3, ops[g]]);
       for (const [gender, opAsset] of variants) {
         for (const tier of [0, 1, 2] as Tier[]) {
           const M = opAsset.materials(tier);
@@ -856,7 +856,7 @@ class KongManager {
     const s: Slot = {
       idx, anim: new KongAnimator(seed), pose: null, visible: true, alive: true, team: new THREE.Color("#ffffff"), rim: 0, foe: false, friend: false, socket: new THREE.Object3D(), offSocket: null,
       weaponVisible: false, weaponRarity: "common", px: 0, inView: false, maxTier: 0, shorts: SHORTS[seed % SHORTS.length].clone(), fur: 0.9 + r(1) * 0.2, lodBias: 1, rimOverride: null, rimOverrideK: 0, fill: FILL.clone(), key: 0, hat: -1, top: -1,
-      gender: gender ? (gender === "female" ? 1 : 0) : ((seed & 1) as 0 | 1),
+      gender: (gender ? Math.max(0, OPERATOR_GENDERS.indexOf(gender)) : (seed & 3)) as 0 | 1 | 2 | 3,
       wpn: null, off: null, sockW: new THREE.Matrix4(), offW: new THREE.Matrix4(), wTier: -1, shadow: false, wShadow: false, tier: 1, prevTier: 1, fade: 0, seen: false, upTick: -9, near: 1, pov: false, outline: null, animDt: 0,
     };
     s.socket.name = "hand-socket";
@@ -1237,7 +1237,7 @@ export async function createKong(ctx: WorldCtx, opts: { variant?: number; lod?: 
       if (o?.shorts) { slot.shorts.set(o.shorts); slot.shorts.setRGB(-slot.shorts.r, -slot.shorts.g, -slot.shorts.b); }
       else slot.shorts.copy(SHORTS[(seed0 % SHORTS.length + SHORTS.length) % SHORTS.length]);
     },
-    setGender(gen) { slot.gender = gen === "female" ? 1 : 0; },
+    setGender(gen) { slot.gender = Math.max(0, OPERATOR_GENDERS.indexOf(gen)) as 0 | 1 | 2 | 3; },
   };
   return actor;
 }

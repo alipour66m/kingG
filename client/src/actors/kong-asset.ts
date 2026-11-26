@@ -7,7 +7,14 @@ import { actorLook } from "./look";
 import { releaseAfterUpload } from "../engine/texture-release";
 
 export type AssetMat = "kbody" | "khead" | "kgear" | "kshoe" | "keye" | "kmin";
-export type OperatorGender = "male" | "female";
+export type OperatorGender = "male" | "female" | "female2" | "female3";
+export const OPERATOR_GENDERS: readonly OperatorGender[] = ["male", "female", "female2", "female3"];
+export const OPERATOR_LABELS: Record<OperatorGender, string> = {
+  male: "Male (Vanguard)",
+  female: "Female (Valkyrie)",
+  female2: "Female (Nomad)",
+  female3: "Female (Nightfall)",
+};
 
 export interface KongAsset {
   tiers: Array<Array<{ mat: AssetMat; geo: THREE.BufferGeometry }>>;
@@ -73,9 +80,9 @@ function prep(src: THREE.BufferGeometry): THREE.BufferGeometry {
 
 const triCount = (g: THREE.BufferGeometry) => (g.index ? g.index.count : g.attributes.position.count) / 3;
 export const fullKongMaps = () => Promise.resolve();
-let opsCache: Promise<{ male: KongAsset; female: KongAsset } | null> | null = null;
+let opsCache: Promise<Record<OperatorGender, KongAsset> | null> | null = null;
 
-export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer): Promise<{ male: KongAsset; female: KongAsset } | null> {
+export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer): Promise<Record<OperatorGender, KongAsset> | null> {
   if (!USE_ASSET) return Promise.resolve(null);
   return (opsCache ??= (async () => {
     try {
@@ -95,21 +102,30 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
       };
 
       const [
-        maleGltf, femaleGltf,
+        maleGltf, femaleGltf, f2Gltf, f3Gltf,
         mAlb, mNrm, mAo,
-        fAlb, fNrm, fAo,
-        gAlb, gNrm, gAo,
+        fAlb, f2Alb, f3Alb, fNrm, fAo,
+        gAlb, gdAlb, gnAlb, gNrm, gAo,
         eyeAlb,
       ] = await Promise.all([
         assets.model("assets/actors/operators/male.glb"),
         assets.model("assets/actors/operators/female.glb"),
+        assets.model("assets/actors/operators/female2.glb"),
+        assets.model("assets/actors/operators/female3.glb"),
         tex("male-skin-albedo", true), tex("male-skin-normal", false), tex("male-skin-ao", false),
-        tex("female-skin-albedo", true), tex("female-skin-normal", false), tex("female-skin-ao", false),
-        tex("gear-albedo", true), tex("gear-normal", false), tex("gear-ao", false),
+        tex("female-skin-albedo", true), tex("female2-skin-albedo", true), tex("female3-skin-albedo", true),
+        tex("female-skin-normal", false), tex("female-skin-ao", false),
+        tex("gear-albedo", true), tex("gear-desert-albedo", true), tex("gear-night-albedo", true),
+        tex("gear-normal", false), tex("gear-ao", false),
         tex("eye-albedo", true),
       ]);
 
-      const buildOne = (gender: OperatorGender, scene: THREE.Object3D, sAlb: THREE.Texture, sNrm: THREE.Texture, sAo: THREE.Texture): KongAsset => {
+      const buildOne = (
+        gender: OperatorGender,
+        scene: THREE.Object3D,
+        sAlb: THREE.Texture, sNrm: THREE.Texture, sAo: THREE.Texture,
+        gearAlb: THREE.Texture,
+      ): KongAsset => {
         const byName = new Map<string, THREE.BufferGeometry>();
         scene.traverse((o) => {
           const m = o as THREE.Mesh;
@@ -151,7 +167,7 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
           const skin = actorLook(
             new THREE.MeshPhysicalMaterial({
               map: sAlb, normalMap: sNrm, aoMap: sAo, aoMapIntensity: 0.75,
-              roughness: gender === "female" ? 0.50 : 0.56, metalness: 0,
+              roughness: gender === "male" ? 0.56 : 0.50, metalness: 0,
               sheen: 0.16, sheenColor: new THREE.Color("#f0b59c"), sheenRoughness: 0.65,
               name: `${gender}-skin-${tier}`,
             }),
@@ -159,7 +175,7 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
           );
           const gear = actorLook(
             new THREE.MeshStandardMaterial({
-              map: gAlb, normalMap: gNrm, aoMap: gAo, aoMapIntensity: 0.85,
+              map: gearAlb, normalMap: gNrm, aoMap: gAo, aoMapIntensity: 0.85,
               roughness: 0.74, metalness: 0.04, envMapIntensity: 0.55,
               name: `${gender}-gear-${tier}`,
             }),
@@ -167,7 +183,7 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
           );
           const shoe = actorLook(
             new THREE.MeshStandardMaterial({
-              map: gAlb, normalMap: gNrm, aoMap: gAo, aoMapIntensity: 0.9,
+              map: gearAlb, normalMap: gNrm, aoMap: gAo, aoMapIntensity: 0.9,
               roughness: 0.52, metalness: 0.06, envMapIntensity: 0.6,
               name: `${gender}-shoe-${tier}`,
             }),
@@ -193,9 +209,12 @@ export function loadOperatorAssets(assets: Assets, renderer: THREE.WebGLRenderer
         };
       };
 
-      const male = buildOne("male", maleGltf.scene, mAlb, mNrm, mAo);
-      const female = buildOne("female", femaleGltf.scene, fAlb, fNrm, fAo);
-      return { male, female };
+      return {
+        male: buildOne("male", maleGltf.scene, mAlb, mNrm, mAo, gAlb),
+        female: buildOne("female", femaleGltf.scene, fAlb, fNrm, fAo, gAlb),
+        female2: buildOne("female2", f2Gltf.scene, f2Alb, fNrm, fAo, gdAlb),
+        female3: buildOne("female3", f3Gltf.scene, f3Alb, fNrm, fAo, gnAlb),
+      };
     } catch (e) {
       console.warn("[operators] fallback:", e);
       return null;

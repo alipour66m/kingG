@@ -83,7 +83,7 @@ const FIRE_RUMBLE: Record<string, [number, number, number, number]> = {
 };
 
 export interface Kits {
-  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo"; gender?: "male" | "female" }) => Promise<KongActor>;
+  createKong: (ctx: Engine, o?: { variant?: number; lod?: "hi" | "lo"; gender?: "male" | "female" | "female2" | "female3" }) => Promise<KongActor>;
   /** give a match kong back to the session pool (index.ts) instead of disposing it — the next match reuses it */
   releaseKong?: (a: KongActor, variant: number) => void;
   createGlider: (ctx: Engine) => Promise<GliderProps>;
